@@ -1,0 +1,60 @@
+import { v4 as uuid } from 'uuid';
+import { emptyStatus } from './common';
+import { ForeignAgentInvoice, ForeignAgentInvoiceVariant } from './foreignAgentInvoice';
+
+const nowIso = () => new Date().toISOString();
+
+export function createEmptyForeignAgentInvoice(variant: ForeignAgentInvoiceVariant, branch = 'KHI'): ForeignAgentInvoice {
+  return {
+    id: uuid(),
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+    variant,
+    branch,
+    documentNo: '',
+    documentDate: new Date().toISOString().slice(0, 10),
+    mawbJobNo: '',
+    mawbJobYear: new Date().getFullYear(),
+    mawbNo: '',
+    mawbDate: '',
+    dueDate: '',
+    runNo: '',
+    fAgentDocNo: '',
+    ppCc: 'PP',
+    fAgentCode: '',
+    fAgentName: '',
+    origin: '',
+    destination: '',
+    pieces: 0,
+    grossWeight: 0,
+    chargeWeight: 0,
+    remarks: '',
+    postInPkr: 'N',
+    currencyCode: 'USD',
+    exchangeRate: 0,
+    reference: '',
+    consignee: '',
+    bankCode: '',
+    bankDetailText: '',
+    receipts: [],
+    allocationLines: [],
+    chargeLines: [],
+    totalSelling: 0,
+    totalBuying: 0,
+    difference: 0,
+    profitSharePercent: 0,
+    handlingLines: [],
+    totalOtherCharges: 0,
+    totalInvoiceAmount: 0,
+    autoCalculateCost: 'N',
+    autoCalcLines: [],
+    printing: {
+      printOn: 'PLAIN_PAPER',
+      printIn: 'FOREIGN',
+      printHeadingAs: 'INVOICE',
+      printSignatorys: 'N',
+      printCopyType: 'ORIGINAL',
+    },
+    status: emptyStatus(),
+  };
+}

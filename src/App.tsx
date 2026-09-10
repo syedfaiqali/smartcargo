@@ -1,0 +1,136 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { theme } from './theme/theme';
+import { AppShell } from './layout/AppShell';
+import { HomePage } from './features/home/HomePage';
+import { AirlineCodesPage } from './features/masterData/AirlineCodesPage';
+import { OwnerCodesPage } from './features/masterData/OwnerCodesPage';
+import { PartyCodesPage } from './features/masterData/PartyCodesPage';
+import { ForeignAgentCodesPage } from './features/masterData/ForeignAgentCodesPage';
+import { AirportCodesPage } from './features/masterData/AirportCodesPage';
+import { SpoCodesPage } from './features/masterData/SpoCodesPage';
+import { CurrencyCodesPage } from './features/masterData/CurrencyCodesPage';
+import { AgentCodesPage } from './features/masterData/AgentCodesPage';
+import { BankCodesPage } from './features/masterData/BankCodesPage';
+import { PayableTypeCodesPage } from './features/masterData/PayableTypeCodesPage';
+import { ShippingLineCodesPage } from './features/masterData/ShippingLineCodesPage';
+import { SeaPortCodesPage } from './features/masterData/SeaPortCodesPage';
+import { AwbStockPage } from './features/awbStock/AwbStockPage';
+import { JobPage } from './features/jobMawb/JobPage';
+import { LocalInvoicePage } from './features/localInvoice/LocalInvoicePage';
+import { OtherChargesPayablePage } from './features/otherChargesPayable/OtherChargesPayablePage';
+import { ForeignAgentInvoicePage } from './features/foreignAgentInvoice/ForeignAgentInvoicePage';
+import { CoveringLetterPage } from './features/letters/CoveringLetterPage';
+import { LetterOfIssuancePage } from './features/letters/LetterOfIssuancePage';
+import { SeaExportJobPage } from './features/seaExportJob/SeaExportJobPage';
+import { ClearingVoucherPage } from './features/voucher/ClearingVoucherPage';
+import { JournalVoucherPage } from './features/voucher/JournalVoucherPage';
+import { AgingReportPage } from './features/financeReports/AgingReportPage';
+import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage';
+import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
+import { GroupCodesPage } from './features/financeSetup/GroupCodesPage';
+import { ControlCodesPage } from './features/financeSetup/ControlCodesPage';
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <AppShell>
+          <Routes>
+            <Route path="/finance" element={<ClearingVoucherPage kind="RECEIPT" />} />
+            <Route path="/finance/initial-setup/group-codes" element={<GroupCodesPage />} />
+            <Route path="/finance/initial-setup/control-codes" element={<ControlCodesPage />} />
+            <Route path="/finance/receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" />} />
+            <Route path="/finance/payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" />} />
+            <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />
+            <Route path="/finance/reports/ar-aging" element={<AgingReportPage kind="AR" />} />
+            <Route path="/finance/reports/ap-aging" element={<AgingReportPage kind="AP" />} />
+            <Route path="/finance/reports/bank-cash-ledger" element={<BankCashLedgerPage />} />
+            <Route path="/finance/reports/job-profitability" element={<JobProfitabilityPage />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/freight/initial-setup/airline-codes" element={<AirlineCodesPage />} />
+            <Route path="/freight/initial-setup/owner-codes" element={<OwnerCodesPage />} />
+            <Route path="/freight/initial-setup/party-codes" element={<PartyCodesPage />} />
+            <Route path="/freight/initial-setup/foreign-agent-codes" element={<ForeignAgentCodesPage />} />
+            <Route path="/freight/initial-setup/airport-codes" element={<AirportCodesPage />} />
+            <Route path="/freight/initial-setup/spo-codes" element={<SpoCodesPage />} />
+            <Route path="/freight/initial-setup/currency-codes" element={<CurrencyCodesPage />} />
+            <Route path="/freight/initial-setup/agent-codes" element={<AgentCodesPage />} />
+            <Route path="/freight/initial-setup/bank-codes" element={<BankCodesPage />} />
+            <Route path="/freight/initial-setup/payable-type-codes" element={<PayableTypeCodesPage />} />
+            <Route path="/freight/initial-setup/shipping-line-codes" element={<ShippingLineCodesPage />} />
+            <Route path="/freight/initial-setup/sea-port-codes" element={<SeaPortCodesPage />} />
+
+            <Route path="/freight/air-export/awb-stock" element={<AwbStockPage />} />
+            <Route
+              path="/freight/air-export/job-mawb"
+              element={
+                <JobPage
+                  kind="MAWB"
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Job (MAWB) Entry and Printing']}
+                  title="Job (MAWB) Entry and Printing"
+                />
+              }
+            />
+            <Route
+              path="/freight/air-export/job-hawb"
+              element={
+                <JobPage
+                  kind="HAWB"
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Job (HAWB) Entry and Printing']}
+                  title="Job (HAWB) Entry and Printing"
+                />
+              }
+            />
+            <Route path="/freight/air-export/local-invoices" element={<LocalInvoicePage />} />
+            <Route path="/freight/air-export/other-charges-payable" element={<OtherChargesPayablePage />} />
+            <Route
+              path="/freight/air-export/invoices-to-foreign-agents"
+              element={
+                <ForeignAgentInvoicePage
+                  variant="INVOICE_TO"
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Invoices To Foreign Agents']}
+                />
+              }
+            />
+            <Route
+              path="/freight/air-export/credit-notes-to-foreign-agents"
+              element={
+                <ForeignAgentInvoicePage
+                  variant="CREDIT_NOTE_TO"
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Credit Notes To Foreign Agents']}
+                />
+              }
+            />
+            <Route
+              path="/freight/air-export/invoices-received-from-foreign-agents"
+              element={
+                <ForeignAgentInvoicePage
+                  variant="INVOICE_RECEIVED"
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Invoices/Dr. Notes Received From Foreign Agents']}
+                />
+              }
+            />
+            <Route
+              path="/freight/air-export/credit-notes-received-from-foreign-agents"
+              element={
+                <ForeignAgentInvoicePage
+                  variant="CREDIT_NOTE_RECEIVED"
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Credit Notes Received From Foreign Agents']}
+                />
+              }
+            />
+            <Route path="/freight/air-export/covering-letter" element={<CoveringLetterPage />} />
+            <Route path="/freight/air-export/letter-of-issuance" element={<LetterOfIssuancePage />} />
+
+            <Route path="/freight/sea-export/jobs" element={<SeaExportJobPage />} />
+          </Routes>
+        </AppShell>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+}
+
+export default App;

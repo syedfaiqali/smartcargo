@@ -1,0 +1,69 @@
+import { AuditFields } from './common';
+
+export interface AirlineCode extends AuditFields {
+  code: string;
+  name: string;
+}
+
+export interface OwnerCode extends AuditFields {
+  code: string;
+  name: string;
+}
+
+export interface PartyCode extends AuditFields {
+  code: string;
+  name: string;
+  address: string;
+  creditLimit: number;
+}
+
+export interface ForeignAgentCode extends AuditFields {
+  code: string;
+  name: string;
+  address: string;
+}
+
+export interface AirportCode extends AuditFields {
+  code: string;
+  name: string;
+  country: string;
+}
+
+export interface SpoCode extends AuditFields {
+  code: string;
+  description: string;
+}
+
+export interface CurrencyCode extends AuditFields {
+  code: string;
+  name: string;
+  defaultExchangeRate: number;
+}
+
+export interface AgentCode extends AuditFields {
+  code: string;
+  name: string;
+  kind: 'CLEARING' | 'DELIVERY';
+}
+
+export interface BankCode extends AuditFields {
+  code: string;
+  name: string;
+  accountDetail: string;
+}
+
+export interface PayableTypeCode extends AuditFields {
+  code: string;
+  description: string;
+}
+
+export interface ShippingLineCode extends AuditFields {
+  code: string;
+  name: string;
+}
+
+export interface SeaPortCode extends AuditFields {
+  code: string;
+  name: string;
+  country: string;
+}
