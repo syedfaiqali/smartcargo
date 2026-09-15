@@ -30,6 +30,7 @@ import { themeColors } from '../../theme/themeColors';
 import { airlineRepo, ownerRepo } from '../../data/masterDataService';
 import {
   awbStockRepo,
+  calculateAwbCheckDigit,
   checkAwbRange,
   createSingleAwb,
   getStockSummary,
@@ -71,6 +72,9 @@ export function AwbStockPage() {
   const [rangeOwner, setRangeOwner] = useState(owners[0]?.code ?? '');
   const [rangeResult, setRangeResult] = useState<AwbRangeCheckResult | null>(null);
   const [message, setMessage] = useState<{ severity: 'success' | 'error'; text: string } | null>(null);
+
+  const rangeStartCheckDigit = useMemo(() => calculateAwbCheckDigit(rangeStart), [rangeStart]);
+  const rangeEndCheckDigit = useMemo(() => calculateAwbCheckDigit(rangeEnd), [rangeEnd]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- rows triggers recompute after mutations even though its value isn't read
   const summary = useMemo(() => (filterAirline ? getStockSummary(filterAirline) : null), [filterAirline, rows]);
@@ -121,6 +125,14 @@ export function AwbStockPage() {
       setMessage({ severity: 'error', text: 'Airline Code, Starting and Ending AWB No. are required.' });
       return;
     }
+    if (!/^\d{7}$/.test(rangeStart) || !/^\d{7}$/.test(rangeEnd)) {
+      setMessage({ severity: 'error', text: 'Enter a seven-digit AWB serial number. The final check digit is calculated automatically.' });
+      return;
+    }
+    if (Number(rangeEnd) < Number(rangeStart)) {
+      setMessage({ severity: 'error', text: 'Ending AWB No. must be greater than or equal to Starting AWB No.' });
+      return;
+    }
     setRangeResult(checkAwbRange({ airlineCode: rangeAirline, startAwbNo: rangeStart, endAwbNo: rangeEnd }));
   };
 
@@ -163,8 +175,18 @@ export function AwbStockPage() {
           >
             Delete
           </Button>
-          <Button variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={() => handleAction('new')}>
-            New AWB
+          <Button
+            variant="contained"
+            startIcon={<AddIcon fontSize="small" />}
+            onClick={() => {
+              setRangeResult(null);
+              setRangeStart('');
+              setRangeEnd('');
+              setRangeReceiptDate(today());
+              setRangeDialogOpen(true);
+            }}
+          >
+            New
           </Button>
         </>
       }
@@ -415,11 +437,47 @@ export function AwbStockPage() {
             </FormField>
           </FormRow>
           <FormRow>
-            <FormField xs={6} sm={6} md={6}>
-              <TextField label="Give Starting AWB No" fullWidth value={rangeStart} onChange={(e) => setRangeStart(e.target.value)} placeholder="001-1000" />
+            <FormField xs={8} sm={8} md={8}>
+              <TextField
+                label="Starting AWB No"
+                fullWidth
+                value={rangeStart}
+                onChange={(e) => setRangeStart(e.target.value.replace(/\D/g, '').slice(0, 7))}
+                placeholder="1234567"
+                inputProps={{ inputMode: 'numeric', maxLength: 7 }}
+                helperText="Seven-digit serial number"
+              />
             </FormField>
-            <FormField xs={6} sm={6} md={6}>
-              <TextField label="Give Ending AWB No" fullWidth value={rangeEnd} onChange={(e) => setRangeEnd(e.target.value)} placeholder="001-1099" />
+            <FormField xs={4} sm={4} md={4}>
+              <TextField
+                label="Check Digit"
+                fullWidth
+                value={rangeStartCheckDigit}
+                InputProps={{ readOnly: true }}
+                sx={{ '& .MuiInputBase-input': { fontWeight: 700 } }}
+              />
+            </FormField>
+          </FormRow>
+          <FormRow>
+            <FormField xs={8} sm={8} md={8}>
+              <TextField
+                label="Ending AWB No"
+                fullWidth
+                value={rangeEnd}
+                onChange={(e) => setRangeEnd(e.target.value.replace(/\D/g, '').slice(0, 7))}
+                placeholder="1234567"
+                inputProps={{ inputMode: 'numeric', maxLength: 7 }}
+                helperText="Seven-digit serial number"
+              />
+            </FormField>
+            <FormField xs={4} sm={4} md={4}>
+              <TextField
+                label="Check Digit"
+                fullWidth
+                value={rangeEndCheckDigit}
+                InputProps={{ readOnly: true }}
+                sx={{ '& .MuiInputBase-input': { fontWeight: 700 } }}
+              />
             </FormField>
           </FormRow>
           <FormRow>

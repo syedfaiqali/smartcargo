@@ -72,12 +72,40 @@ function enumerateRange(start: string, end: string): string[] {
   return result;
 }
 
+/**
+ * IATA AWB numbers have a seven-digit serial and a final check digit.  The
+ * check digit is the serial number's remainder when divided by seven.
+ */
+export function calculateAwbCheckDigit(serial: string): string {
+  if (!/^\d{7}$/.test(serial)) return '';
+  return String(Number(serial) % 7);
+}
+
+export function formatAirwayBillNumber(airlineCode: string, serial: string): string {
+  const checkDigit = calculateAwbCheckDigit(serial);
+  return checkDigit ? `${airlineCode}-${serial}${checkDigit}` : '';
+}
+
+function enumerateIataAwbRange(airlineCode: string, startSerial: string, endSerial: string): string[] {
+  const start = Number(startSerial);
+  const end = Number(endSerial);
+  if (end < start) return [];
+
+  const count = Math.min(end - start + 1, 100000);
+  return Array.from({ length: count }, (_, index) => {
+    const serial = String(start + index).padStart(7, '0');
+    return formatAirwayBillNumber(airlineCode, serial);
+  });
+}
+
 export function checkAwbRange(input: {
   airlineCode: string;
   startAwbNo: string;
   endAwbNo: string;
 }): AwbRangeCheckResult {
-  const candidates = enumerateRange(input.startAwbNo, input.endAwbNo);
+  const candidates = /^\d{7}$/.test(input.startAwbNo) && /^\d{7}$/.test(input.endAwbNo)
+    ? enumerateIataAwbRange(input.airlineCode, input.startAwbNo, input.endAwbNo)
+    : enumerateRange(input.startAwbNo, input.endAwbNo);
   const existing = new Set(
     awbStockRepo.find((i) => i.airlineCode === input.airlineCode).map((i) => i.awbNo)
   );
