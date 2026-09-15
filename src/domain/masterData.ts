@@ -67,3 +67,65 @@ export interface SeaPortCode extends AuditFields {
   name: string;
   country: string;
 }
+
+export interface SectorCode extends AuditFields {
+  code: string;
+  name: string;
+}
+
+export interface CountryCode extends AuditFields {
+  code: string;
+  name: string;
+}
+
+export interface CommodityCode extends AuditFields {
+  code: string;
+  description: string;
+}
+
+export interface ContainerType extends AuditFields {
+  code: string;
+  description: string;
+}
+
+export interface SubAgentParty extends AuditFields {
+  code: string;
+  name: string;
+  address: string;
+}
+
+export interface AssociateCode extends AuditFields {
+  code: string;
+  name: string;
+}
+
+export interface ChargeableCode extends AuditFields {
+  code: string;
+  description: string;
+}
+
+export interface InvoiceChargeCode extends AuditFields {
+  code: string;
+  description: string;
+}
+
+export interface SignatoryCode extends AuditFields {
+  code: string;
+  name: string;
+  designation: string;
+}
+
+export interface JobType extends AuditFields {
+  code: string;
+  description: string;
+}
+
+export interface JobStatusCode extends AuditFields {
+  code: string;
+  description: string;
+}
+
+export interface TermsAndConditions extends AuditFields {
+  code: string;
+  description: string;
+}

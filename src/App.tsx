@@ -16,6 +16,18 @@ import { BankCodesPage } from './features/masterData/BankCodesPage';
 import { PayableTypeCodesPage } from './features/masterData/PayableTypeCodesPage';
 import { ShippingLineCodesPage } from './features/masterData/ShippingLineCodesPage';
 import { SeaPortCodesPage } from './features/masterData/SeaPortCodesPage';
+import { SectorCodesPage } from './features/masterData/SectorCodesPage';
+import { CountryCodesPage } from './features/masterData/CountryCodesPage';
+import { CommodityCodesPage } from './features/masterData/CommodityCodesPage';
+import { ContainerTypesPage } from './features/masterData/ContainerTypesPage';
+import { SubAgentPartiesPage } from './features/masterData/SubAgentPartiesPage';
+import { AssociateCodesPage } from './features/masterData/AssociateCodesPage';
+import { ChargeableCodesPage } from './features/masterData/ChargeableCodesPage';
+import { InvoiceChargeCodesPage } from './features/masterData/InvoiceChargeCodesPage';
+import { SignatoryCodesPage } from './features/masterData/SignatoryCodesPage';
+import { JobTypesPage } from './features/masterData/JobTypesPage';
+import { JobStatusPage } from './features/masterData/JobStatusPage';
+import { TermsAndConditionsPage } from './features/masterData/TermsAndConditionsPage';
 import { AwbStockPage } from './features/awbStock/AwbStockPage';
 import { JobPage } from './features/jobMawb/JobPage';
 import { LocalInvoicePage } from './features/localInvoice/LocalInvoicePage';
@@ -62,6 +74,18 @@ function App() {
             <Route path="/freight/initial-setup/payable-type-codes" element={<PayableTypeCodesPage />} />
             <Route path="/freight/initial-setup/shipping-line-codes" element={<ShippingLineCodesPage />} />
             <Route path="/freight/initial-setup/sea-port-codes" element={<SeaPortCodesPage />} />
+            <Route path="/freight/initial-setup/sector-codes" element={<SectorCodesPage />} />
+            <Route path="/freight/initial-setup/country-codes" element={<CountryCodesPage />} />
+            <Route path="/freight/initial-setup/commodity-codes" element={<CommodityCodesPage />} />
+            <Route path="/freight/initial-setup/container-types" element={<ContainerTypesPage />} />
+            <Route path="/freight/initial-setup/sub-agent-parties" element={<SubAgentPartiesPage />} />
+            <Route path="/freight/initial-setup/associate-codes" element={<AssociateCodesPage />} />
+            <Route path="/freight/initial-setup/chargeable-codes" element={<ChargeableCodesPage />} />
+            <Route path="/freight/initial-setup/invoice-charge-codes" element={<InvoiceChargeCodesPage />} />
+            <Route path="/freight/initial-setup/signatory-codes" element={<SignatoryCodesPage />} />
+            <Route path="/freight/initial-setup/job-types" element={<JobTypesPage />} />
+            <Route path="/freight/initial-setup/job-status" element={<JobStatusPage />} />
+            <Route path="/freight/initial-setup/terms-and-conditions" element={<TermsAndConditionsPage />} />
 
             <Route path="/freight/air-export/awb-stock" element={<AwbStockPage />} />
             <Route

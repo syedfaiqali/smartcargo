@@ -3,15 +3,27 @@ import {
   AgentCode,
   AirlineCode,
   AirportCode,
+  AssociateCode,
   BankCode,
+  ChargeableCode,
+  CommodityCode,
+  ContainerType,
+  CountryCode,
   CurrencyCode,
   ForeignAgentCode,
+  InvoiceChargeCode,
+  JobStatusCode,
+  JobType,
   OwnerCode,
   PartyCode,
   PayableTypeCode,
   SeaPortCode,
+  SectorCode,
   ShippingLineCode,
+  SignatoryCode,
   SpoCode,
+  SubAgentParty,
+  TermsAndConditions,
 } from '../domain/masterData';
 import { isSeeded, markSeeded } from './localStore';
 import { Repository } from './repository';
@@ -36,6 +48,18 @@ export const bankRepo = new Repository<BankCode>('bankCodes');
 export const payableTypeRepo = new Repository<PayableTypeCode>('payableTypeCodes');
 export const shippingLineRepo = new Repository<ShippingLineCode>('shippingLineCodes');
 export const seaPortRepo = new Repository<SeaPortCode>('seaPortCodes');
+export const sectorRepo = new Repository<SectorCode>('sectorCodes');
+export const countryRepo = new Repository<CountryCode>('countryCodes');
+export const commodityRepo = new Repository<CommodityCode>('commodityCodes');
+export const containerTypeRepo = new Repository<ContainerType>('containerTypes');
+export const subAgentPartyRepo = new Repository<SubAgentParty>('subAgentParties');
+export const associateRepo = new Repository<AssociateCode>('associateCodes');
+export const chargeableRepo = new Repository<ChargeableCode>('chargeableCodes');
+export const invoiceChargeRepo = new Repository<InvoiceChargeCode>('invoiceChargeCodes');
+export const signatoryRepo = new Repository<SignatoryCode>('signatoryCodes');
+export const jobTypeRepo = new Repository<JobType>('jobTypes');
+export const jobStatusRepo = new Repository<JobStatusCode>('jobStatusCodes');
+export const termsRepo = new Repository<TermsAndConditions>('termsAndConditions');
 
 function seedIfEmpty() {
   if (isSeeded('masterData')) return;
@@ -137,6 +161,105 @@ function seedIfEmpty() {
       { code: 'AEJEA', name: 'Jebel Ali', country: 'UAE' },
       { code: 'CNSHA', name: 'Shanghai', country: 'China' },
       { code: 'SGSIN', name: 'Singapore', country: 'Singapore' },
+    ].map(withAudit)
+  );
+
+  sectorRepo.replaceAll(
+    [
+      { code: 'ME', name: 'Middle East' },
+      { code: 'FE', name: 'Far East' },
+      { code: 'EU', name: 'Europe' },
+      { code: 'NA', name: 'North America' },
+    ].map(withAudit)
+  );
+
+  countryRepo.replaceAll(
+    [
+      { code: 'PK', name: 'Pakistan' },
+      { code: 'AE', name: 'United Arab Emirates' },
+      { code: 'QA', name: 'Qatar' },
+      { code: 'TR', name: 'Turkey' },
+      { code: 'HK', name: 'Hong Kong' },
+      { code: 'CN', name: 'China' },
+      { code: 'SG', name: 'Singapore' },
+    ].map(withAudit)
+  );
+
+  commodityRepo.replaceAll(
+    [
+      { code: 'TEXT', description: 'Textiles / Garments' },
+      { code: 'RICE', description: 'Rice' },
+      { code: 'LEATH', description: 'Leather Goods' },
+      { code: 'GEN', description: 'General Cargo' },
+    ].map(withAudit)
+  );
+
+  containerTypeRepo.replaceAll(
+    [
+      { code: '20GP', description: "20' General Purpose" },
+      { code: '40GP', description: "40' General Purpose" },
+      { code: '40HC', description: "40' High Cube" },
+      { code: 'LCL', description: 'Less than Container Load' },
+    ].map(withAudit)
+  );
+
+  subAgentPartyRepo.replaceAll(
+    [
+      { code: 'SUB-01', name: 'Al Madina Cargo Services', address: 'Lahore' },
+      { code: 'SUB-02', name: 'Ocean Link Agencies', address: 'Karachi' },
+    ].map(withAudit)
+  );
+
+  associateRepo.replaceAll(
+    [
+      { code: 'ASC-01', name: 'Continental Freight Associates' },
+      { code: 'ASC-02', name: 'Silk Route Logistics' },
+    ].map(withAudit)
+  );
+
+  chargeableRepo.replaceAll(
+    [
+      { code: 'PP', description: 'Prepaid' },
+      { code: 'CC', description: 'Collect' },
+    ].map(withAudit)
+  );
+
+  invoiceChargeRepo.replaceAll(
+    [
+      { code: 'FRT', description: 'Freight Charges' },
+      { code: 'THC', description: 'Terminal Handling Charges' },
+      { code: 'DOC', description: 'Documentation Fee' },
+      { code: 'CUS', description: 'Customs Clearance' },
+    ].map(withAudit)
+  );
+
+  signatoryRepo.replaceAll(
+    [
+      { code: 'SIG-01', name: 'Ahmed Raza', designation: 'Branch Manager' },
+      { code: 'SIG-02', name: 'Bilal Khan', designation: 'Operations Head' },
+    ].map(withAudit)
+  );
+
+  jobTypeRepo.replaceAll(
+    [
+      { code: 'DIRECT', description: 'Direct Shipment' },
+      { code: 'CONSOL', description: 'Consolidated Shipment' },
+      { code: 'TRANSSHIP', description: 'Transshipment' },
+    ].map(withAudit)
+  );
+
+  jobStatusRepo.replaceAll(
+    [
+      { code: 'OPEN', description: 'Open' },
+      { code: 'IN_TRANSIT', description: 'In Transit' },
+      { code: 'CLOSED', description: 'Closed' },
+    ].map(withAudit)
+  );
+
+  termsRepo.replaceAll(
+    [
+      { code: 'STD', description: 'Standard freight forwarding terms and conditions apply.' },
+      { code: 'COD', description: 'Cash on delivery — payment due before release of cargo.' },
     ].map(withAudit)
   );
 
