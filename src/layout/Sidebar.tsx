@@ -37,6 +37,7 @@ export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [expanded, setExpanded] = useState<string | null>('freight');
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ 'freight:Initial Setup': true });
 
   const isFreightActive = location.pathname.startsWith('/freight');
 
@@ -127,39 +128,40 @@ export function Sidebar() {
                 </ListItemButton>
                 <Collapse in={isOpen} timeout="auto" unmountOnExit>
                   <List dense disablePadding>
-                    {mod.submenu.map((group) => (
-                      <Box key={group.label} sx={{ mb: 0.25 }}>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            display: 'block',
-                            color: themeColors.sidebarSectionLabel,
-                            px: 2.5,
-                            pt: 1.5,
-                            pb: 0.5,
-                            fontWeight: 700,
-                            fontSize: 10,
-                            letterSpacing: 0.8,
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {group.label}
-                        </Typography>
-                        {group.items.map((item) => (
+                    {mod.submenu.map((group) => {
+                      const groupKey = `${mod.key}:${group.label}`;
+                      const containsActiveScreen = group.items.some((item) => item.path === location.pathname);
+                      const isGroupOpen = expandedGroups[groupKey] ?? containsActiveScreen;
+                      return (
+                        <Box key={group.label} sx={{ mb: 0.25 }}>
                           <ListItemButton
-                            key={item.path}
-                            selected={location.pathname === item.path}
-                            onClick={() => navigate(item.path)}
-                            sx={{ ...navItemSx, py: 0.65 }}
+                            onClick={() => setExpandedGroups((current) => ({ ...current, [groupKey]: !isGroupOpen }))}
+                            sx={{ ...navItemSx, ml: 1, py: 0.7, color: themeColors.sidebarText }}
                           >
                             <ListItemText
-                              primary={item.label}
-                              primaryTypographyProps={{ fontSize: 12.5, sx: { whiteSpace: 'normal' } }}
+                              primary={group.label}
+                              primaryTypographyProps={{ fontSize: 12.5, fontWeight: 600 }}
                             />
+                            {isGroupOpen ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
                           </ListItemButton>
-                        ))}
-                      </Box>
-                    ))}
+                          <Collapse in={isGroupOpen} timeout="auto" unmountOnExit>
+                            {group.items.map((item) => (
+                              <ListItemButton
+                                key={item.path}
+                                selected={location.pathname === item.path}
+                                onClick={() => navigate(item.path)}
+                                sx={{ ...navItemSx, py: 0.65, pl: 4.5 }}
+                              >
+                                <ListItemText
+                                  primary={item.label}
+                                  primaryTypographyProps={{ fontSize: 12.5, sx: { whiteSpace: 'normal' } }}
+                                />
+                              </ListItemButton>
+                            ))}
+                          </Collapse>
+                        </Box>
+                      );
+                    })}
                   </List>
                 </Collapse>
               </Box>
