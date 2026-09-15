@@ -21,7 +21,7 @@ import { RemarksTab } from './tabs/RemarksTab';
 import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
 
-const TAB_LABELS = ['Entry', 'Charges', 'K.B.', 'Remarks', 'Printing'] as const;
+const TAB_LABELS = ['Entry', 'Charges', 'K.B.', 'Remarks'] as const;
 
 function guessAirlineFromMawb(mawbNo: string): string | undefined {
   const prefix = mawbNo.split('-')[0];
@@ -38,6 +38,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
   const [tab, setTab] = useState(0);
   const [job, setJob] = useState<Job | null>(null);
   const [editable, setEditable] = useState(false);
+  const [isPrintingView, setIsPrintingView] = useState(false);
   const [originalMawb, setOriginalMawb] = useState<string>('');
   const [originalParentJobNo, setOriginalParentJobNo] = useState<string>('');
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
@@ -47,6 +48,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
     setOriginalMawb(j.mawbNo);
     setOriginalParentJobNo(j.parentJobNo ?? '');
     setEditable(false);
+    setIsPrintingView(false);
     setTab(0);
   };
 
@@ -57,6 +59,12 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
     }
     loadJob(j);
     setEditable(true);
+  };
+
+  const printJobFromList = (j: Job) => {
+    loadJob(j);
+    setEditable(true);
+    setIsPrintingView(true);
   };
 
   const deleteJobFromList = (j: Job) => {
@@ -76,6 +84,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         setOriginalMawb('');
         setOriginalParentJobNo('');
         setEditable(true);
+        setIsPrintingView(false);
         setTab(0);
         setMessage(null);
         break;
@@ -93,6 +102,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
           return;
         }
         setEditable(true);
+        setIsPrintingView(false);
         break;
       }
       case 'delete': {
@@ -146,6 +156,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         setOriginalMawb('');
         setOriginalParentJobNo('');
         setEditable(true);
+        setIsPrintingView(false);
         setMessage({ severity: 'success', text: `Copied into new draft job ${draft.jobNo}.` });
         break;
       }
@@ -222,7 +233,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
-          onClick={() => { setJob(null); setEditable(false); setTab(0); setMessage(null); }}
+          onClick={() => { setJob(null); setEditable(false); setIsPrintingView(false); setTab(0); setMessage(null); }}
         >
           Back to List
         </Button>
@@ -234,13 +245,15 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={job ? ['new', 'save', 'final', 'void', 'copy'] : ['new']}
-        disabledActions={disabledActions}
-        onAction={handleAction}
-      />
+      {!isPrintingView && (!job || tab === 0) && (
+        <TransactionToolbar
+          actions={job ? ['new', 'save', 'final', 'void', 'copy'] : ['new']}
+          disabledActions={disabledActions}
+          onAction={handleAction}
+        />
+      )}
 
-      {job && (
+      {job && !isPrintingView && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <Chip label={`Job No: ${job.jobNo}`} color="primary" />
           {kind === 'HAWB' && <Chip label={`HAWB No: ${job.hawbNo || '—'}`} variant="outlined" />}
@@ -250,10 +263,16 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         </Stack>
       )}
 
-      {job && (
+      {job && isPrintingView && (
+        <Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', '& .MuiTab-root': { fontWeight: 700 } }}>
+          <Tab label="Printing" />
+        </Tabs>
+      )}
+
+      {job && !isPrintingView && (
         <Tabs
           value={tab}
-          onChange={(_, v) => setTab(v)}
+          onChange={(_, v) => { setTab(v); setIsPrintingView(false); }}
           sx={{
             mb: 2,
             borderBottom: 1,
@@ -269,7 +288,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
       )}
 
       {!job ? (
-        <DetailSearchTab kind={kind} onOpenJob={loadJob} onEditJob={editJobFromList} onDeleteJob={deleteJobFromList} />
+        <DetailSearchTab kind={kind} onOpenJob={loadJob} onEditJob={editJobFromList} onDeleteJob={deleteJobFromList} onPrintJob={printJobFromList} />
       ) : (
         <Box
           sx={{
@@ -278,11 +297,12 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
             '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: '#172554', opacity: 1, fontWeight: 600 },
           }}
         >
-          {tab === 0 && <EntryTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 1 && <ChargesTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 2 && <KbTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 3 && <RemarksTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 4 && <PrintingTab job={job} editable={editable} onChange={setJob} />}
+          {isPrintingView ? <PrintingTab job={job} editable={editable} onChange={setJob} /> : <>
+            {tab === 0 && <EntryTab job={job} editable={editable} onChange={setJob} />}
+            {tab === 1 && <ChargesTab job={job} editable={editable} onChange={setJob} />}
+            {tab === 2 && <KbTab job={job} editable={editable} onChange={setJob} />}
+            {tab === 3 && <RemarksTab job={job} editable={editable} onChange={setJob} />}
+          </>}
 
         </Box>
       )}

@@ -60,10 +60,16 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
   return (
     <Box>
       <Grid container spacing={2} sx={{ mb: 1 }}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={3}>
           <TextField label="Branch" fullWidth value={job.branch} disabled />
         </Grid>
-        <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Grid item xs={12} md={3}>
+          <TextField label="Job No." fullWidth value={job.jobNo} disabled />
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <TextField label="AWB No." fullWidth value={job.mawbNo} disabled />
+        </Grid>
+        <Grid item xs={12} md={3} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Button variant="outlined" startIcon={<PictureAsPdfIcon />}>
             PDF
           </Button>
@@ -89,24 +95,23 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
           <SectionHeader>Air Waybill Print Options</SectionHeader>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <TextField
-                select
-                label="Print Air Waybill In"
-                fullWidth
-                value={p.printCurrency}
-                disabled={!editable}
-                onChange={(e) => setP({ printCurrency: e.target.value as 'LOCAL' | 'FOREIGN' })}
-              >
-                <MenuItem value="LOCAL">Local Currency</MenuItem>
-                <MenuItem value="FOREIGN">Foreign Currency</MenuItem>
-              </TextField>
+              <FormControl disabled={!editable}>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>Print Air Waybill In</Typography>
+                <RadioGroup row value={p.printCurrency} onChange={(e) => setP({ printCurrency: e.target.value as 'LOCAL' | 'FOREIGN' })}>
+                  <FormControlLabel value="LOCAL" control={<Radio size="small" />} label="Local Currency" />
+                  <FormControlLabel value="FOREIGN" control={<Radio size="small" />} label="Foreign Currency" />
+                </RadioGroup>
+              </FormControl>
             </Grid>
             {YES_NO_TOGGLES.map(({ key, label }) => (
               <Grid item xs={6} key={key}>
-                <FormControlLabel
-                  control={<Checkbox size="small" checked={p[key] === 'Y'} disabled={!editable} onChange={() => toggle(key)} />}
-                  label={<Typography variant="body2">{label}</Typography>}
-                />
+                <FormControl disabled={!editable}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{label}</Typography>
+                  <RadioGroup row value={p[key]} onChange={(e) => setP({ [key]: e.target.value as 'Y' | 'N' } as Partial<Job['printing']>)}>
+                    <FormControlLabel value="Y" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="N" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
               </Grid>
             ))}
             <Grid item xs={12}>
@@ -165,7 +170,14 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
 
         <Grid item xs={12} md={3}>
           <SectionHeader>Copy Selection</SectionHeader>
-          <Paper variant="outlined" sx={{ p: 1 }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.25,
+              '& .MuiFormControlLabel-root': { display: 'flex', alignItems: 'center', m: 0, minHeight: 32 },
+              '& .MuiFormControlLabel-label': { lineHeight: 1.25 },
+            }}
+          >
             <FormControlLabel
               control={
                 <Checkbox
