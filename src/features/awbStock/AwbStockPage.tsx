@@ -77,6 +77,7 @@ export function AwbStockPage() {
   const [rangeReceiptDate, setRangeReceiptDate] = useState(today());
   const [rangeOwner, setRangeOwner] = useState(owners[0]?.code ?? '');
   const [rangeResult, setRangeResult] = useState<AwbRangeCheckResult | null>(null);
+  const [rangeError, setRangeError] = useState<string | null>(null);
   const [message, setMessage] = useState<{ severity: 'success' | 'error'; text: string } | null>(null);
   const [recordDialog, setRecordDialog] = useState<{ mode: 'view' | 'edit'; record: AwbStock } | null>(null);
 
@@ -142,17 +143,18 @@ export function AwbStockPage() {
 
   const handleCheckAwb = () => {
     if (!rangeAirline || !rangeStart || !rangeEnd) {
-      setMessage({ severity: 'error', text: 'Airline Code, Starting and Ending AWB No. are required.' });
+      setRangeError('Airline Code, Starting and Ending AWB No. are required.');
       return;
     }
     if (!/^\d{7}$/.test(rangeStart) || !/^\d{7}$/.test(rangeEnd)) {
-      setMessage({ severity: 'error', text: 'Enter a seven-digit AWB serial number. The final check digit is calculated automatically.' });
+      setRangeError('Enter a seven-digit AWB serial number. The final check digit is calculated automatically.');
       return;
     }
     if (Number(rangeEnd) < Number(rangeStart)) {
-      setMessage({ severity: 'error', text: 'Ending AWB No. must be greater than or equal to Starting AWB No.' });
+      setRangeError('Ending AWB No. must be greater than or equal to Starting AWB No.');
       return;
     }
+    setRangeError(null);
     setRangeResult(checkAwbRange({ airlineCode: rangeAirline, startAwbNo: rangeStart, endAwbNo: rangeEnd }));
   };
 
@@ -233,6 +235,7 @@ export function AwbStockPage() {
             startIcon={<AddIcon fontSize="small" />}
             onClick={() => {
               setRangeResult(null);
+              setRangeError(null);
               setRangeStart('');
               setRangeEnd('');
               setRangeReceiptDate(today());
@@ -589,9 +592,17 @@ export function AwbStockPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={rangeDialogOpen} onClose={() => setRangeDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={rangeDialogOpen}
+        onClose={() => setRangeDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2.5, overflow: 'hidden' } }}
+      >
         <DialogTitle>Air Waybill Stock (Received From Airline) — Bulk Range Entry</DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ bgcolor: themeColors.pageBackground, pt: '22px !important' }}>
+          <Box sx={{ p: 2, bgcolor: '#fff', border: `1px solid ${themeColors.border}`, borderRadius: 1.5 }}>
+          {rangeError && <Alert severity="error" onClose={() => setRangeError(null)} sx={{ mb: 2 }}>{rangeError}</Alert>}
           <FormRow>
             <FormField xs={12} sm={12} md={12}>
               <TextField select label="Give Airline Code" fullWidth value={rangeAirline} onChange={(e) => setRangeAirline(e.target.value)}>
@@ -668,7 +679,7 @@ export function AwbStockPage() {
               </TextField>
             </FormField>
           </FormRow>
-          <Button variant="outlined" onClick={handleCheckAwb}>
+          <Button variant="contained" onClick={handleCheckAwb} sx={{ px: 3, fontWeight: 700 }}>
             Check AWB
           </Button>
 
@@ -676,22 +687,22 @@ export function AwbStockPage() {
             <Box sx={{ mt: 2 }}>
               <Grid container spacing={2}>
                 <Grid item xs={4}>
-                  <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                    <Typography variant="caption">Total Given</Typography>
+                  <Paper variant="outlined" sx={{ p: 1.25, textAlign: 'center', borderTop: `3px solid ${themeColors.primary}` }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Total Given</Typography>
                     <Typography variant="h6">{rangeResult.given}</Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={4}>
-                  <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                    <Typography variant="caption">Duplicate</Typography>
+                  <Paper variant="outlined" sx={{ p: 1.25, textAlign: 'center', borderTop: '3px solid #ed6c02' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Duplicate</Typography>
                     <Typography variant="h6" color="warning.main">
                       {rangeResult.duplicate}
                     </Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={4}>
-                  <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-                    <Typography variant="caption">To Be Written</Typography>
+                  <Paper variant="outlined" sx={{ p: 1.25, textAlign: 'center', borderTop: '3px solid #2e7d32' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Ready to Save</Typography>
                     <Typography variant="h6" color="success.main">
                       {rangeResult.toBeWritten}
                     </Typography>
@@ -700,8 +711,9 @@ export function AwbStockPage() {
               </Grid>
             </Box>
           )}
+          </Box>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, py: 1.5, borderTop: `1px solid ${themeColors.border}` }}>
           <Button onClick={() => setRangeDialogOpen(false)}>Close</Button>
           <Button variant="contained" disabled={!rangeResult || rangeResult.toBeWritten === 0} onClick={handleWriteRange}>
             Save
