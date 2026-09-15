@@ -23,6 +23,10 @@ import SearchIcon from '@mui/icons-material/Search';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import { PageShell } from '../../layout/PageShell';
 import { ToolbarAction } from '../../components/TransactionToolbar';
 import { FormRow, FormField } from '../../components/FormGrid';
@@ -55,6 +59,8 @@ export function AwbStockPage() {
   const [ownerCode, setOwnerCode] = useState(owners[0]?.code ?? '');
   const [awbUsed, setAwbUsed] = useState<'Y' | 'N'>('N');
   const [awbDate, setAwbDate] = useState('');
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [isViewingRecord, setIsViewingRecord] = useState(false);
 
   // filter state
   const [filterAirline, setFilterAirline] = useState('');
@@ -72,12 +78,15 @@ export function AwbStockPage() {
   const [rangeOwner, setRangeOwner] = useState(owners[0]?.code ?? '');
   const [rangeResult, setRangeResult] = useState<AwbRangeCheckResult | null>(null);
   const [message, setMessage] = useState<{ severity: 'success' | 'error'; text: string } | null>(null);
+  const [recordDialog, setRecordDialog] = useState<{ mode: 'view' | 'edit'; record: AwbStock } | null>(null);
 
   const rangeStartCheckDigit = useMemo(() => calculateAwbCheckDigit(rangeStart), [rangeStart]);
   const rangeEndCheckDigit = useMemo(() => calculateAwbCheckDigit(rangeEnd), [rangeEnd]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- rows triggers recompute after mutations even though its value isn't read
   const summary = useMemo(() => (filterAirline ? getStockSummary(filterAirline) : null), [filterAirline, rows]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- rows triggers recompute after stock mutations
+  const selectedAirlineSummary = useMemo(() => getStockSummary(airlineCode), [airlineCode, rows]);
 
   const handleAction = (action: ToolbarAction) => {
     if (action === 'new') {
@@ -90,6 +99,7 @@ export function AwbStockPage() {
     }
     if (action === 'cancel') {
       setMode('idle');
+      setEditingRecordId(null);
       return;
     }
     if (action === 'search') {
@@ -102,8 +112,18 @@ export function AwbStockPage() {
       setMessage({ severity: 'error', text: 'Air Waybill No., Airline and Owner Code are required.' });
       return;
     }
-    createSingleAwb({ awbNo, airlineCode, receiptDate, ownerCode, awbUsed, awbDate });
-    setMessage({ severity: 'success', text: `AWB ${awbNo} registered.` });
+    if (editingRecordId) {
+      const existing = awbStockRepo.get(editingRecordId);
+      if (existing) {
+        awbStockRepo.save({ ...existing, awbNo, airlineCode, receiptDate, ownerCode, awbUsed, awbDate, updatedAt: new Date().toISOString() });
+        setMessage({ severity: 'success', text: `AWB ${awbNo} updated.` });
+      }
+    } else {
+      createSingleAwb({ awbNo, airlineCode, receiptDate, ownerCode, awbUsed, awbDate });
+      setMessage({ severity: 'success', text: `AWB ${awbNo} registered.` });
+    }
+    setEditingRecordId(null);
+    setIsViewingRecord(false);
     setMode('idle');
     handleShowDetail();
   };
@@ -154,6 +174,39 @@ export function AwbStockPage() {
 
   const handleDeleteRow = (id: string) => {
     awbStockRepo.remove(id);
+    handleShowDetail();
+  };
+
+  const handleEditRow = (record: AwbStock) => {
+    setIsViewingRecord(false);
+    setEditingRecordId(record.id);
+    setAwbNo(record.awbNo);
+    setAirlineCode(record.airlineCode);
+    setReceiptDate(record.receiptDate);
+    setOwnerCode(record.ownerCode);
+    setAwbUsed(record.awbUsed);
+    setAwbDate(record.awbDate);
+    setMode('single-new');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleViewRow = (record: AwbStock) => {
+    setEditingRecordId(null);
+    setAwbNo(record.awbNo);
+    setAirlineCode(record.airlineCode);
+    setReceiptDate(record.receiptDate);
+    setOwnerCode(record.ownerCode);
+    setAwbUsed(record.awbUsed);
+    setAwbDate(record.awbDate);
+    setIsViewingRecord(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveRecord = () => {
+    if (!recordDialog) return;
+    awbStockRepo.save({ ...recordDialog.record, updatedAt: new Date().toISOString() });
+    setRecordDialog(null);
+    setMessage({ severity: 'success', text: 'AWB stock record updated.' });
     handleShowDetail();
   };
 
@@ -219,18 +272,21 @@ export function AwbStockPage() {
           </Button>
         </Box>
         <Box sx={{ p: 2.5 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={9}>
           <FormRow>
             <FormField>
               <TextField
                 label="Air Waybill No."
                 fullWidth
+                disabled={isViewingRecord}
                 value={awbNo}
                 onChange={(e) => setAwbNo(e.target.value)}
                 placeholder="e.g. 214-12345678"
               />
             </FormField>
             <FormField>
-              <TextField select label="Airline Code" fullWidth value={airlineCode} onChange={(e) => setAirlineCode(e.target.value)}>
+              <TextField select label="Airline Code" fullWidth disabled={isViewingRecord} value={airlineCode} onChange={(e) => setAirlineCode(e.target.value)}>
                 {airlines.map((a) => (
                   <MenuItem key={a.code} value={a.code}>
                     {a.code} — {a.name}
@@ -244,6 +300,7 @@ export function AwbStockPage() {
                 type="date"
                 fullWidth
                 InputLabelProps={{ shrink: true }}
+                disabled={isViewingRecord}
                 value={receiptDate}
                 onChange={(e) => setReceiptDate(e.target.value)}
               />
@@ -251,7 +308,7 @@ export function AwbStockPage() {
           </FormRow>
           <FormRow>
             <FormField>
-              <TextField select label="Owner Code" fullWidth value={ownerCode} onChange={(e) => setOwnerCode(e.target.value)}>
+              <TextField select label="Owner Code" fullWidth disabled={isViewingRecord} value={ownerCode} onChange={(e) => setOwnerCode(e.target.value)}>
                 {owners.map((o) => (
                   <MenuItem key={o.code} value={o.code}>
                     {o.code} — {o.name}
@@ -260,7 +317,7 @@ export function AwbStockPage() {
               </TextField>
             </FormField>
             <FormField>
-              <TextField select label="AWB Used Y/N" fullWidth value={awbUsed} onChange={(e) => setAwbUsed(e.target.value as 'Y' | 'N')}>
+              <TextField select label="AWB Used Y/N" fullWidth disabled={isViewingRecord} value={awbUsed} onChange={(e) => setAwbUsed(e.target.value as 'Y' | 'N')}>
                 <MenuItem value="N">N</MenuItem>
                 <MenuItem value="Y">Y</MenuItem>
               </TextField>
@@ -273,18 +330,35 @@ export function AwbStockPage() {
                 InputLabelProps={{ shrink: true }}
                 value={awbDate}
                 onChange={(e) => setAwbDate(e.target.value)}
-                disabled={awbUsed === 'N'}
+                disabled={isViewingRecord || awbUsed === 'N'}
               />
             </FormField>
           </FormRow>
           <Stack direction="row" spacing={1}>
-            <Button variant="contained" onClick={handleSaveSingle}>
-              Save
-            </Button>
-            <Button variant="text" onClick={() => setMode('idle')}>
+            {!isViewingRecord && <Button variant="contained" onClick={handleSaveSingle}>Save</Button>}
+            <Button variant="text" onClick={() => { setMode('idle'); setEditingRecordId(null); setIsViewingRecord(false); }}>
               Cancel
             </Button>
           </Stack>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Paper variant="outlined" sx={{ height: '100%', overflow: 'hidden' }}>
+                <Box sx={{ px: 1.5, py: 1, bgcolor: `${themeColors.primary}14`, borderBottom: `1px solid ${themeColors.border}` }}>
+                  <Typography align="center" variant="subtitle2" sx={{ fontWeight: 700 }}>Airline Stock</Typography>
+                </Box>
+                {[
+                  ['Total', selectedAirlineSummary.total],
+                  ['Used', selectedAirlineSummary.used],
+                  ['Un-Used', selectedAirlineSummary.unused],
+                ].map(([label, value]) => (
+                  <Box key={label} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1.5, py: 1, borderBottom: `1px solid ${themeColors.border}` }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{label}</Typography>
+                    <Typography sx={{ minWidth: 36, px: 1, py: 0.25, textAlign: 'center', border: `1px solid ${themeColors.border}`, borderRadius: 0.5, fontWeight: 700 }}>{value}</Typography>
+                  </Box>
+                ))}
+              </Paper>
+            </Grid>
+          </Grid>
         </Box>
       </Paper>
 
@@ -402,9 +476,21 @@ export function AwbStockPage() {
                 rows.map((row) => (
                   <TableRow key={row.id} hover>
                     <TableCell>
-                      <Button size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
-                        Delete
-                      </Button>
+                      <Tooltip title="View">
+                        <IconButton size="small" color="primary" onClick={() => handleViewRow(row)}>
+                          <VisibilityOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit">
+                        <IconButton size="small" color="primary" onClick={() => handleEditRow(row)}>
+                          <EditOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                     <TableCell>{row.awbNo}</TableCell>
                     <TableCell>{row.airlineCode}</TableCell>
@@ -421,6 +507,87 @@ export function AwbStockPage() {
           </Table>
         </TableContainer>
       </Paper>
+
+      <Dialog open={Boolean(recordDialog)} onClose={() => setRecordDialog(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>{recordDialog?.mode === 'edit' ? 'Edit Air Waybill Stock' : 'Air Waybill Stock Details'}</DialogTitle>
+        {recordDialog && (
+          <DialogContent>
+            <FormRow>
+              <FormField xs={12} sm={12} md={12}>
+                <TextField label="Air Waybill No." fullWidth value={recordDialog.record.awbNo} InputProps={{ readOnly: true }} />
+              </FormField>
+            </FormRow>
+            <FormRow>
+              <FormField xs={6} sm={6} md={6}>
+                <TextField
+                  select
+                  label="Airline Code"
+                  fullWidth
+                  disabled={recordDialog.mode === 'view'}
+                  value={recordDialog.record.airlineCode}
+                  onChange={(e) => setRecordDialog({ ...recordDialog, record: { ...recordDialog.record, airlineCode: e.target.value } })}
+                >
+                  {airlines.map((a) => <MenuItem key={a.code} value={a.code}>{a.code} — {a.name}</MenuItem>)}
+                </TextField>
+              </FormField>
+              <FormField xs={6} sm={6} md={6}>
+                <TextField
+                  select
+                  label="Owner Code"
+                  fullWidth
+                  disabled={recordDialog.mode === 'view'}
+                  value={recordDialog.record.ownerCode}
+                  onChange={(e) => setRecordDialog({ ...recordDialog, record: { ...recordDialog.record, ownerCode: e.target.value } })}
+                >
+                  {owners.map((o) => <MenuItem key={o.code} value={o.code}>{o.code} — {o.name}</MenuItem>)}
+                </TextField>
+              </FormField>
+            </FormRow>
+            <FormRow>
+              <FormField xs={6} sm={6} md={6}>
+                <TextField
+                  label="Receipt Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ readOnly: recordDialog.mode === 'view' }}
+                  value={recordDialog.record.receiptDate}
+                  onChange={(e) => setRecordDialog({ ...recordDialog, record: { ...recordDialog.record, receiptDate: e.target.value } })}
+                />
+              </FormField>
+              <FormField xs={6} sm={6} md={6}>
+                <TextField
+                  select
+                  label="AWB Used Y/N"
+                  fullWidth
+                  disabled={recordDialog.mode === 'view'}
+                  value={recordDialog.record.awbUsed}
+                  onChange={(e) => setRecordDialog({ ...recordDialog, record: { ...recordDialog.record, awbUsed: e.target.value as 'Y' | 'N' } })}
+                >
+                  <MenuItem value="N">N</MenuItem><MenuItem value="Y">Y</MenuItem>
+                </TextField>
+              </FormField>
+            </FormRow>
+            <FormRow>
+              <FormField xs={6} sm={6} md={6}>
+                <TextField
+                  label="AWB Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ readOnly: recordDialog.mode === 'view' }}
+                  value={recordDialog.record.awbDate}
+                  onChange={(e) => setRecordDialog({ ...recordDialog, record: { ...recordDialog.record, awbDate: e.target.value } })}
+                />
+              </FormField>
+            </FormRow>
+          </DialogContent>
+        )}
+        <DialogActions>
+          <Button onClick={() => setRecordDialog(null)}>Close</Button>
+          {recordDialog?.mode === 'edit' && <Button variant="contained" onClick={handleSaveRecord}>Save</Button>}
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={rangeDialogOpen} onClose={() => setRangeDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Air Waybill Stock (Received From Airline) — Bulk Range Entry</DialogTitle>
@@ -537,7 +704,7 @@ export function AwbStockPage() {
         <DialogActions>
           <Button onClick={() => setRangeDialogOpen(false)}>Close</Button>
           <Button variant="contained" disabled={!rangeResult || rangeResult.toBeWritten === 0} onClick={handleWriteRange}>
-            Write {rangeResult?.toBeWritten ?? 0} New Record(s)
+            Save
           </Button>
         </DialogActions>
       </Dialog>
