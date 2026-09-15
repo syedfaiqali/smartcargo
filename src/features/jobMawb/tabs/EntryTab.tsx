@@ -101,7 +101,13 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   };
 
   return (
-    <Box>
+    <Box
+      sx={{
+        '& .MuiInputBase-input, & .MuiSelect-select': { fontWeight: 600, color: '#172554' },
+        '& .MuiInputLabel-root': { fontWeight: 600, color: '#475569' },
+        '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: '#172554', opacity: 1, fontWeight: 600 },
+      }}
+    >
       <Grid container spacing={2}>
         {/* LEFT COLUMN — 2.3 Job Identification / Party / Consignee / Routing / Agents / Shipment */}
         <Grid item xs={12} md={6}>
@@ -762,6 +768,27 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </TableBody>
             </LinkedGrid>
           )}
+
+          <LinkedGrid title="C/N Details" empty={job.creditNoteDetails.length === 0}>
+            <TableHead>
+              <TableRow>
+                <TableCell>HAWB No.</TableCell>
+                <TableCell>RUN No.</TableCell>
+                <TableCell>C/N No.</TableCell>
+                <TableCell>Manual C/N</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {job.creditNoteDetails.map((creditNote, index) => (
+                <TableRow key={index}>
+                  <TableCell>{creditNote.hawbNo}</TableCell>
+                  <TableCell>{creditNote.runNo}</TableCell>
+                  <TableCell>{creditNote.cnNo}</TableCell>
+                  <TableCell>{creditNote.manualCn ? 'Y' : 'N'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </LinkedGrid>
 
           <LinkedGrid title="USED/CLEARED in Vouchers" empty={job.usedClearedVouchers.length === 0}>
             <TableHead>

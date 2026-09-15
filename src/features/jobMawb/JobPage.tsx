@@ -5,6 +5,8 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { Job, JobKind } from '../../domain/job';
@@ -19,7 +21,7 @@ import { RemarksTab } from './tabs/RemarksTab';
 import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
 
-const TAB_LABELS = ['Entry', 'Charges', 'K.B.', 'Remarks', 'Detail/Search', 'Printing'] as const;
+const TAB_LABELS = ['Entry', 'Charges', 'K.B.', 'Remarks', 'Printing'] as const;
 
 function guessAirlineFromMawb(mawbNo: string): string | undefined {
   const prefix = mawbNo.split('-')[0];
@@ -48,6 +50,22 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
     setTab(0);
   };
 
+  const editJobFromList = (j: Job) => {
+    if (j.status.final) {
+      setMessage({ severity: 'warning', text: 'This job is FINAL and cannot be edited.' });
+      return;
+    }
+    loadJob(j);
+    setEditable(true);
+  };
+
+  const deleteJobFromList = (j: Job) => {
+    jobRepo.remove(j.id);
+    if (kind === 'MAWB' && j.mawbNo) releaseAwb(j.mawbNo, guessAirlineFromMawb(j.mawbNo) ?? '');
+    if (kind === 'HAWB' && j.parentJobNo) syncHouseAwbsOnMaster(j.parentJobNo);
+    setMessage({ severity: 'success', text: `Job ${j.jobNo} deleted.` });
+  };
+
   const handleAction = (action: ToolbarAction) => {
     switch (action) {
       case 'new': {
@@ -62,6 +80,9 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         setMessage(null);
         break;
       }
+      case 'save':
+        handleSave();
+        break;
       case 'edit': {
         if (!job) {
           setMessage({ severity: 'warning', text: 'Load a job first (SEARCH or Detail/Search tab).' });
@@ -128,9 +149,6 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         setMessage({ severity: 'success', text: `Copied into new draft job ${draft.jobNo}.` });
         break;
       }
-      case 'search':
-        setTab(4);
-        break;
       default:
         break;
     }
@@ -194,9 +212,22 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
   if (!job) disabledActions.push('edit', 'delete', 'final', 'void', 'copy');
   if (job?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (job?.status.void) disabledActions.push('final', 'edit');
+  if (!editable) disabledActions.push('save');
 
   return (
-    <PageShell breadcrumbs={breadcrumbs} title={title}>
+    <PageShell
+      breadcrumbs={breadcrumbs}
+      title={title}
+      actions={job ? (
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => { setJob(null); setEditable(false); setTab(0); setMessage(null); }}
+        >
+          Back to List
+        </Button>
+      ) : undefined}
+    >
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}
@@ -204,7 +235,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
       )}
 
       <TransactionToolbar
-        actions={['search', 'new', 'edit', 'delete', 'final', 'void', 'copy']}
+        actions={job ? ['new', 'save', 'final', 'void', 'copy'] : ['new']}
         disabledActions={disabledActions}
         onAction={handleAction}
       />
@@ -219,30 +250,41 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         </Stack>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        {TAB_LABELS.map((label) => (
-          <Tab key={label} label={label} />
-        ))}
-      </Tabs>
+      {job && (
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          sx={{
+            mb: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTab-root': { fontWeight: 700, color: '#334155' },
+            '& .Mui-selected': { color: '#123b72' },
+          }}
+        >
+          {TAB_LABELS.map((label) => (
+            <Tab key={label} label={label} />
+          ))}
+        </Tabs>
+      )}
 
-      {tab === 4 ? (
-        <DetailSearchTab kind={kind} onOpenJob={loadJob} />
-      ) : !job ? (
-        <Alert severity="info">Click NEW to create a job, or use the Detail/Search tab to find an existing one.</Alert>
+      {!job ? (
+        <DetailSearchTab kind={kind} onOpenJob={loadJob} onEditJob={editJobFromList} onDeleteJob={deleteJobFromList} />
       ) : (
-        <>
+        <Box
+          sx={{
+            '& .MuiInputBase-input, & .MuiSelect-select': { fontWeight: 600, color: '#172554' },
+            '& .MuiInputLabel-root': { fontWeight: 600, color: '#475569' },
+            '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: '#172554', opacity: 1, fontWeight: 600 },
+          }}
+        >
           {tab === 0 && <EntryTab job={job} editable={editable} onChange={setJob} />}
           {tab === 1 && <ChargesTab job={job} editable={editable} onChange={setJob} />}
           {tab === 2 && <KbTab job={job} editable={editable} onChange={setJob} />}
           {tab === 3 && <RemarksTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 5 && <PrintingTab job={job} editable={editable} onChange={setJob} />}
+          {tab === 4 && <PrintingTab job={job} editable={editable} onChange={setJob} />}
 
-          {editable && tab !== 4 && (
-            <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-              <Chip label="SAVE" color="primary" onClick={handleSave} sx={{ cursor: 'pointer', px: 2, py: 2.5, fontWeight: 700 }} />
-            </Box>
-          )}
-        </>
+        </Box>
       )}
     </PageShell>
   );

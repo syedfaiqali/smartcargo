@@ -14,6 +14,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import CancelIcon from '@mui/icons-material/Cancel';
+import SaveIcon from '@mui/icons-material/Save';
 import { themeColors } from '../theme/themeColors';
 
 export type ToolbarAction =
@@ -23,6 +24,7 @@ export type ToolbarAction =
   | 'prev'
   | 'next'
   | 'new'
+  | 'save'
   | 'edit'
   | 'delete'
   | 'final'
@@ -45,6 +47,7 @@ const ALL_BUTTONS: ToolbarButtonDef[] = [
   { action: 'prev', label: 'Prev', icon: <ArrowBackIcon fontSize="small" /> },
   { action: 'next', label: 'Next', icon: <ArrowForwardIcon fontSize="small" /> },
   { action: 'new', label: 'New', icon: <NoteAddIcon fontSize="small" /> },
+  { action: 'save', label: 'Save', icon: <SaveIcon fontSize="small" /> },
   { action: 'edit', label: 'Edit', icon: <EditIcon fontSize="small" /> },
   { action: 'delete', label: 'Delete', icon: <DeleteIcon fontSize="small" />, color: 'error' },
   { action: 'final', label: 'Final', icon: <LockIcon fontSize="small" /> },
@@ -76,6 +79,14 @@ const DEFAULT_ACTIONS: ToolbarAction[] = [
   'copy',
 ];
 
+const ACTION_COLORS: Partial<Record<ToolbarAction, { color: string; borderColor: string; hover: string }>> = {
+  new: { color: '#1d4ed8', borderColor: '#93c5fd', hover: '#eff6ff' },
+  save: { color: '#15803d', borderColor: '#86efac', hover: '#f0fdf4' },
+  final: { color: '#b45309', borderColor: '#fcd34d', hover: '#fffbeb' },
+  void: { color: '#b91c1c', borderColor: '#fca5a5', hover: '#fef2f2' },
+  copy: { color: '#6d28d9', borderColor: '#c4b5fd', hover: '#f5f3ff' },
+};
+
 export function TransactionToolbar({ actions = DEFAULT_ACTIONS, disabledActions = [], onAction }: TransactionToolbarProps) {
   const buttons = ALL_BUTTONS.filter((b) => actions.includes(b.action));
   return (
@@ -92,9 +103,12 @@ export function TransactionToolbar({ actions = DEFAULT_ACTIONS, disabledActions 
             b.color === 'error'
               ? undefined
               : {
-                  color: themeColors.textPrimary,
-                  borderColor: themeColors.border,
-                  '&:hover': { borderColor: themeColors.borderHover, bgcolor: themeColors.pageBackground },
+                  color: ACTION_COLORS[b.action]?.color ?? themeColors.textPrimary,
+                  borderColor: ACTION_COLORS[b.action]?.borderColor ?? themeColors.border,
+                  '&:hover': {
+                    borderColor: ACTION_COLORS[b.action]?.borderColor ?? themeColors.borderHover,
+                    bgcolor: ACTION_COLORS[b.action]?.hover ?? themeColors.pageBackground,
+                  },
                 }
           }
         >
