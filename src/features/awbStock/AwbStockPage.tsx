@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
@@ -27,6 +27,8 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import LinearProgress from '@mui/material/LinearProgress';
+import TablePagination from '@mui/material/TablePagination';
 import { PageShell } from '../../layout/PageShell';
 import { ToolbarAction } from '../../components/TransactionToolbar';
 import { FormRow, FormField } from '../../components/FormGrid';
@@ -61,6 +63,8 @@ export function AwbStockPage() {
   const [awbDate, setAwbDate] = useState('');
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [isViewingRecord, setIsViewingRecord] = useState(false);
+  const [awbLookup, setAwbLookup] = useState('');
+  const [isResultsVisible, setIsResultsVisible] = useState(false);
 
   // filter state
   const [filterAirline, setFilterAirline] = useState('');
@@ -69,6 +73,8 @@ export function AwbStockPage() {
   const [filterEnd, setFilterEnd] = useState('');
   const [filterUsed, setFilterUsed] = useState<'BOTH' | 'Y' | 'N'>('BOTH');
   const [rows, setRows] = useState<AwbStock[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // range popup state
   const [rangeAirline, setRangeAirline] = useState(airlines[0]?.code ?? '');
@@ -88,6 +94,24 @@ export function AwbStockPage() {
   const summary = useMemo(() => (filterAirline ? getStockSummary(filterAirline) : null), [filterAirline, rows]);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- rows triggers recompute after stock mutations
   const selectedAirlineSummary = useMemo(() => getStockSummary(airlineCode), [airlineCode, rows]);
+  const selectedAirlineUsage = selectedAirlineSummary.total
+    ? Math.round((selectedAirlineSummary.used / selectedAirlineSummary.total) * 100)
+    : 0;
+  const paginatedRows = useMemo(
+    () => rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [page, rows, rowsPerPage]
+  );
+
+  useEffect(() => {
+    setRows(searchAwbStock({
+      airlineCode: filterAirline || undefined,
+      ownerCode: filterOwner || undefined,
+      startReceiptDate: filterStart || undefined,
+      endReceiptDate: filterEnd || undefined,
+      awbUsed: filterUsed,
+    }));
+    setPage(0);
+  }, [filterAirline, filterEnd, filterOwner, filterStart, filterUsed]);
 
   const handleAction = (action: ToolbarAction) => {
     if (action === 'new') {
@@ -139,6 +163,53 @@ export function AwbStockPage() {
         awbUsed: filterUsed,
       })
     );
+    setIsResultsVisible(true);
+  };
+
+  const handleClearFilters = () => {
+    setFilterAirline('');
+    setFilterOwner('');
+    setFilterStart('');
+    setFilterEnd('');
+    setFilterUsed('BOTH');
+    setRows(searchAwbStock({ awbUsed: 'BOTH' }));
+  };
+
+  const handleAwbLookup = () => {
+    const searchValue = awbLookup.trim().toLowerCase();
+    if (!searchValue) {
+      setMessage({ severity: 'error', text: 'Enter an Air Waybill No. to search.' });
+      return;
+    }
+    const match = awbStockRepo.find((record) => record.awbNo.toLowerCase() === searchValue)[0];
+    if (match) {
+      setMessage(null);
+      setAwbNo(match.awbNo);
+      setAirlineCode(match.airlineCode);
+      setReceiptDate(match.receiptDate);
+      setOwnerCode(match.ownerCode);
+      setAwbUsed(match.awbUsed);
+      setAwbDate(match.awbDate);
+      setEditingRecordId(null);
+      setIsViewingRecord(true);
+      setIsResultsVisible(true);
+    } else {
+      setMessage({ severity: 'error', text: `No AWB stock record found for ${awbLookup.trim()}.` });
+    }
+  };
+
+  const handleClearAwbLookup = () => {
+    setAwbLookup('');
+    setAwbNo('');
+    setAirlineCode(airlines[0]?.code ?? '');
+    setReceiptDate(today());
+    setOwnerCode(owners[0]?.code ?? '');
+    setAwbUsed('N');
+    setAwbDate('');
+    setEditingRecordId(null);
+    setIsViewingRecord(false);
+    setIsResultsVisible(false);
+    setMessage(null);
   };
 
   const handleCheckAwb = () => {
@@ -219,17 +290,6 @@ export function AwbStockPage() {
       subtitle="Register, filter, and review received airline stock."
       actions={
         <>
-          <Button variant="outlined" startIcon={<SearchIcon fontSize="small" />} onClick={handleShowDetail}>
-            Search
-          </Button>
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteOutlineIcon fontSize="small" />}
-            onClick={() => handleAction('delete')}
-          >
-            Delete
-          </Button>
           <Button
             variant="contained"
             startIcon={<AddIcon fontSize="small" />}
@@ -253,7 +313,22 @@ export function AwbStockPage() {
         </Alert>
       )}
 
-      <Paper variant="outlined" sx={{ mb: 2, overflow: 'hidden' }}>
+      <Paper variant="outlined" sx={{ mb: 2, p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <TextField
+          size="small"
+          label="Search by Air Waybill No."
+          placeholder="e.g. 214-50001002"
+          value={awbLookup}
+          onChange={(e) => setAwbLookup(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleAwbLookup(); }}
+          sx={{ width: { xs: '100%', sm: 360 } }}
+        />
+        <Button variant="contained" startIcon={<SearchIcon />} onClick={handleAwbLookup}>Search</Button>
+        <Button variant="text" onClick={handleClearAwbLookup}>Clear</Button>
+      </Paper>
+
+      {isResultsVisible && (
+      <Paper variant="outlined" sx={{ mb: 2, overflow: 'hidden', borderTop: `3px solid ${themeColors.primary}` }}>
         <Box
           sx={{
             display: 'flex',
@@ -264,7 +339,10 @@ export function AwbStockPage() {
             borderBottom: `1px solid ${themeColors.border}`,
           }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: 14.5 }}>Register Single AWB</Typography>
+          <Box>
+            <Typography sx={{ fontWeight: 700, fontSize: 14.5 }}>Register Single AWB</Typography>
+            <Typography variant="caption" sx={{ color: themeColors.textSecondary }}>Add one received AWB, or use Bulk AWB Range for a delivery batch.</Typography>
+          </Box>
           <Button
             size="small"
             variant="text"
@@ -345,7 +423,7 @@ export function AwbStockPage() {
           </Stack>
             </Grid>
             <Grid item xs={12} md={3}>
-              <Paper variant="outlined" sx={{ height: '100%', overflow: 'hidden' }}>
+              <Paper variant="outlined" sx={{ height: '100%', overflow: 'hidden', bgcolor: '#fff' }}>
                 <Box sx={{ px: 1.5, py: 1, bgcolor: `${themeColors.primary}14`, borderBottom: `1px solid ${themeColors.border}` }}>
                   <Typography align="center" variant="subtitle2" sx={{ fontWeight: 700 }}>Airline Stock</Typography>
                 </Box>
@@ -359,11 +437,22 @@ export function AwbStockPage() {
                     <Typography sx={{ minWidth: 36, px: 1, py: 0.25, textAlign: 'center', border: `1px solid ${themeColors.border}`, borderRadius: 0.5, fontWeight: 700 }}>{value}</Typography>
                   </Box>
                 ))}
+                <Box sx={{ px: 1.5, py: 1.25, bgcolor: `${themeColors.primary}08` }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Stock utilisation</Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{selectedAirlineUsage}% used</Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={selectedAirlineUsage} sx={{ height: 6, borderRadius: 3 }} />
+                  <Typography variant="caption" sx={{ display: 'block', mt: 0.75, color: themeColors.textSecondary }}>
+                    {selectedAirlineSummary.unused} AWB{selectedAirlineSummary.unused === 1 ? '' : 's'} ready for assignment
+                  </Typography>
+                </Box>
               </Paper>
             </Grid>
           </Grid>
         </Box>
       </Paper>
+      )}
 
       {summary && (
         <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
@@ -373,10 +462,10 @@ export function AwbStockPage() {
         </Stack>
       )}
 
-      <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+      <Paper variant="outlined" sx={{ overflow: 'hidden', borderTop: `3px solid ${themeColors.primary}` }}>
         <Box
           sx={{
-            display: 'flex',
+            display: 'none',
             alignItems: 'center',
             justifyContent: 'space-between',
             px: 2.5,
@@ -384,17 +473,20 @@ export function AwbStockPage() {
             borderBottom: `1px solid ${themeColors.border}`,
           }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: 14.5 }}>Detail / Filter</Typography>
+          <Box>
+            <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Search AWB Stock</Typography>
+            <Typography variant="caption" sx={{ color: themeColors.textSecondary }}>Find a record by airline, owner, receipt period, or usage status.</Typography>
+          </Box>
           <Chip
             size="small"
             label={`${rows.length} record${rows.length === 1 ? '' : 's'}`}
             sx={{ bgcolor: themeColors.pageBackground, fontSize: 11, fontWeight: 600, height: 22 }}
           />
         </Box>
-        <Box sx={{ p: 2.5 }}>
+        <Box sx={{ display: 'none' }}>
           <FormRow>
             <FormField>
-              <TextField select label="Select AirLine Code" fullWidth value={filterAirline} onChange={(e) => setFilterAirline(e.target.value)}>
+              <TextField select label="Airline" fullWidth value={filterAirline} onChange={(e) => setFilterAirline(e.target.value)} sx={{ bgcolor: '#fff' }}>
                 <MenuItem value="">All Airlines</MenuItem>
                 {airlines.map((a) => (
                   <MenuItem key={a.code} value={a.code}>
@@ -404,7 +496,7 @@ export function AwbStockPage() {
               </TextField>
             </FormField>
             <FormField>
-              <TextField select label="Select Owner Code" fullWidth value={filterOwner} onChange={(e) => setFilterOwner(e.target.value)}>
+              <TextField select label="Owner" fullWidth value={filterOwner} onChange={(e) => setFilterOwner(e.target.value)} sx={{ bgcolor: '#fff' }}>
                 <MenuItem value="">All Owners</MenuItem>
                 {owners.map((o) => (
                   <MenuItem key={o.code} value={o.code}>
@@ -414,7 +506,7 @@ export function AwbStockPage() {
               </TextField>
             </FormField>
             <FormField>
-              <TextField select label="AWB Used Y/N" fullWidth value={filterUsed} onChange={(e) => setFilterUsed(e.target.value as 'BOTH' | 'Y' | 'N')}>
+              <TextField select label="Usage status" fullWidth value={filterUsed} onChange={(e) => setFilterUsed(e.target.value as 'BOTH' | 'Y' | 'N')} sx={{ bgcolor: '#fff' }}>
                 <MenuItem value="BOTH">Both</MenuItem>
                 <MenuItem value="Y">Y</MenuItem>
                 <MenuItem value="N">N</MenuItem>
@@ -422,36 +514,70 @@ export function AwbStockPage() {
             </FormField>
           </FormRow>
           <FormRow>
-            <FormField>
+            <FormField xs={6} sm={6} md={6}>
               <TextField
-                label="Give Starting Recieved Date"
+                label="Receipt date — from"
                 type="date"
                 fullWidth
                 InputLabelProps={{ shrink: true }}
                 value={filterStart}
                 onChange={(e) => setFilterStart(e.target.value)}
+                sx={{ bgcolor: '#fff' }}
               />
             </FormField>
-            <FormField>
+            <FormField xs={6} sm={6} md={6}>
               <TextField
-                label="Give Ending Recieved Date"
+                label="Receipt date — to"
                 type="date"
                 fullWidth
                 InputLabelProps={{ shrink: true }}
                 value={filterEnd}
                 onChange={(e) => setFilterEnd(e.target.value)}
+                sx={{ bgcolor: '#fff' }}
               />
             </FormField>
-            <FormField>
-              <Button variant="contained" fullWidth sx={{ height: '40px' }} onClick={handleShowDetail}>
-                Show Detail
-              </Button>
+            <FormField xs={12} sm={12} md={12}>
+              <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+                <Button variant="text" onClick={handleClearFilters}>Clear filters</Button>
+                <Button variant="contained" startIcon={<SearchIcon />} sx={{ minWidth: 150 }} onClick={handleShowDetail}>
+                  Search stock
+                </Button>
+              </Stack>
             </FormField>
           </FormRow>
         </Box>
 
-        <TableContainer sx={{ borderTop: `1px solid ${themeColors.border}` }}>
-          <Table size="small">
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 2fr 1.5fr 1.5fr 2.5fr 1.5fr' }, gap: 1, p: 1.25, bgcolor: themeColors.pageBackground, borderBottom: `1px solid ${themeColors.border}` }}>
+          <Box />
+          <Box />
+          <TextField select size="small" value={filterAirline} onChange={(e) => setFilterAirline(e.target.value)} SelectProps={{ displayEmpty: true }}>
+            <MenuItem value="">All airlines</MenuItem>
+            {airlines.map((a) => <MenuItem key={a.code} value={a.code}>{a.code} — {a.name}</MenuItem>)}
+          </TextField>
+          <TextField select size="small" value={filterOwner} onChange={(e) => setFilterOwner(e.target.value)} SelectProps={{ displayEmpty: true }}>
+            <MenuItem value="">All owners</MenuItem>
+            {owners.map((o) => <MenuItem key={o.code} value={o.code}>{o.code} — {o.name}</MenuItem>)}
+          </TextField>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+            <TextField size="small" type="date" value={filterStart} onChange={(e) => setFilterStart(e.target.value)} InputProps={{ inputProps: { 'aria-label': 'Receipt date from' } }} />
+            <TextField size="small" type="date" value={filterEnd} onChange={(e) => setFilterEnd(e.target.value)} InputProps={{ inputProps: { 'aria-label': 'Receipt date to' } }} />
+          </Box>
+          <TextField select size="small" value={filterUsed} onChange={(e) => setFilterUsed(e.target.value as 'BOTH' | 'Y' | 'N')}>
+            <MenuItem value="BOTH">All statuses</MenuItem><MenuItem value="Y">Used</MenuItem><MenuItem value="N">Un-used</MenuItem>
+          </TextField>
+        </Box>
+
+        <TableContainer>
+          <Table size="small" sx={{ tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '12.5%' }} />
+              <col style={{ width: '12.5%' }} />
+              <col style={{ width: '15%' }} />
+            </colgroup>
             <TableHead>
               <TableRow>
                 <TableCell>Action</TableCell>
@@ -476,7 +602,7 @@ export function AwbStockPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((row) => (
+                paginatedRows.map((row) => (
                   <TableRow key={row.id} hover>
                     <TableCell>
                       <Tooltip title="View">
@@ -509,6 +635,16 @@ export function AwbStockPage() {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={rows.length}
+          page={page}
+          onPageChange={(_, nextPage) => setPage(nextPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          labelRowsPerPage="Rows per page"
+        />
       </Paper>
 
       <Dialog open={Boolean(recordDialog)} onClose={() => setRecordDialog(null)} maxWidth="sm" fullWidth>
