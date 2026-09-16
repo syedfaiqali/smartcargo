@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { ForeignAgentInvoice, ForeignAgentInvoiceVariant } from '../../domain/foreignAgentInvoice';
@@ -13,10 +14,8 @@ import { foreignAgentInvoiceRepo, nextDocumentNo, voidAgentInvoice } from '../..
 import { recomputeAgentInvoiceTotals } from './agentInvoiceCalculations';
 import { VARIANT_CONFIG } from './variantConfig';
 import { EntryTab } from './tabs/EntryTab';
-import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
-
-const TAB_LABELS = ['Entry', 'Detail/Search', 'Printing'] as const;
+import { ForeignAgentInvoiceGrid } from './ForeignAgentInvoiceGrid';
 
 interface ForeignAgentInvoicePageProps {
   variant: ForeignAgentInvoiceVariant;
@@ -26,6 +25,8 @@ interface ForeignAgentInvoicePageProps {
 export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentInvoicePageProps) {
   const config = VARIANT_CONFIG[variant];
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [isPrintingView, setIsPrintingView] = useState(false);
   const [invoice, setInvoice] = useState<ForeignAgentInvoice | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
@@ -34,7 +35,13 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
     setInvoice(inv);
     setEditable(false);
     setTab(0);
+    setShowList(false);
+    setIsPrintingView(false);
   };
+
+  const editInvoiceFromList = (inv: ForeignAgentInvoice) => { if (inv.status.final) { setMessage({ severity: 'warning', text: 'This record is FINAL and cannot be edited.' }); return; } setInvoice(inv); setEditable(true); setTab(0); setShowList(false); setIsPrintingView(false); };
+  const deleteInvoiceFromList = (inv: ForeignAgentInvoice) => { foreignAgentInvoiceRepo.remove(inv.id); setMessage({ severity: 'success', text: `${config.entryDocLabel} ${inv.documentNo} deleted.` }); };
+  const printInvoiceFromList = (inv: ForeignAgentInvoice) => { setInvoice(inv); setEditable(false); setTab(0); setShowList(false); setIsPrintingView(true); };
 
   const handleAction = (action: ToolbarAction) => {
     switch (action) {
@@ -44,9 +51,14 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
         setInvoice(draft);
         setEditable(true);
         setTab(0);
+        setShowList(false);
+        setIsPrintingView(false);
         setMessage(null);
         break;
       }
+      case 'save':
+        handleSave();
+        break;
       case 'edit': {
         if (!invoice) {
           setMessage({ severity: 'warning', text: 'Load a record first (SEARCH or Detail/Search tab).' });
@@ -88,7 +100,10 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
         break;
       }
       case 'search':
-        setTab(1);
+        setShowList(true);
+        setInvoice(null);
+        setEditable(false);
+        setIsPrintingView(false);
         break;
       default:
         break;
@@ -110,16 +125,18 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
   if (!invoice) disabledActions.push('edit', 'delete', 'final', 'void');
   if (invoice?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (invoice?.status.void) disabledActions.push('final', 'edit');
+  if (!editable || isPrintingView) disabledActions.push('save');
 
   return (
-    <PageShell breadcrumbs={[...breadcrumbs]} title={config.title}>
+    <PageShell breadcrumbs={[...breadcrumbs]} title={config.title} actions={!showList ? <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setInvoice(null); setEditable(false); setIsPrintingView(false); setMessage(null); }}>Back to List</Button> : undefined}>
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}
         </Alert>
       )}
 
-      <TransactionToolbar actions={['search', 'new', 'edit', 'delete', 'final', 'void']} disabledActions={disabledActions} onAction={handleAction} />
+      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction} /><ForeignAgentInvoiceGrid invoices={foreignAgentInvoiceRepo.find((item) => item.variant === variant)} onOpen={loadInvoice} onEdit={editInvoiceFromList} onDelete={deleteInvoiceFromList} onPrint={printInvoiceFromList} /></> : <>
+      {!isPrintingView && <TransactionToolbar actions={['save', 'final', 'void']} disabledActions={disabledActions} onAction={handleAction} />}
 
       {invoice && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -130,28 +147,18 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
         </Stack>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        {TAB_LABELS.map((label) => (
-          <Tab key={label} label={label} />
-        ))}
+      <Tabs value={tab} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab label={isPrintingView ? 'Printing' : 'Entry'} />
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailSearchTab variant={variant} config={config} onOpenInvoice={loadInvoice} />
-      ) : !invoice ? (
-        <Alert severity="info">Click NEW to create a record, or use the Detail/Search tab to find an existing one.</Alert>
+      {!invoice ? (
+        <Alert severity="info">Click New to create a record.</Alert>
       ) : (
         <>
-          {tab === 0 && <EntryTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />}
-          {tab === 2 && <PrintingTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />}
-
-          {editable && tab === 0 && (
-            <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-              <Chip label="SAVE" color="primary" onClick={handleSave} sx={{ cursor: 'pointer', px: 2, py: 2.5, fontWeight: 700 }} />
-            </Box>
-          )}
+          {isPrintingView ? <PrintingTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} /> : <EntryTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />}
         </>
       )}
+      </>}
     </PageShell>
   );
 }
