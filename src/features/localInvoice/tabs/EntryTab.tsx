@@ -117,7 +117,20 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
   const removeAirwayBillLine = (id: string) => apply({ airwayBillLines: invoice.airwayBillLines.filter((l) => l.id !== id) });
 
   return (
-    <Box>
+    <Box
+      sx={{
+        '& .MuiInputBase-input, & .MuiSelect-select': { color: '#172554', fontWeight: 700 },
+        '& .MuiInputLabel-root': { color: '#475569', fontWeight: 700 },
+        '& .MuiInputBase-input.Mui-disabled, & .MuiSelect-select.Mui-disabled': {
+          WebkitTextFillColor: '#172554',
+          color: '#172554',
+          opacity: 1,
+          fontWeight: 700,
+        },
+        '& .MuiInputLabel-root.Mui-disabled': { color: '#475569', opacity: 1, fontWeight: 700 },
+        '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+      }}
+    >
       <Grid container spacing={2}>
         {/* LEFT COLUMN — 4.2 Job Identification & Party */}
         <Grid item xs={12} md={5}>

@@ -246,8 +246,8 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
       )}
 
       {!isPrintingView && (!job || tab === 0) && (
-        <TransactionToolbar
-          actions={job ? ['new', 'save', 'final', 'void', 'copy'] : ['new']}
+          <TransactionToolbar
+          actions={job ? ['save', 'final', 'void', 'copy'] : ['new']}
           disabledActions={disabledActions}
           onAction={handleAction}
         />

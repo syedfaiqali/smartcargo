@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { LocalInvoice } from '../../domain/localInvoice';
@@ -12,13 +13,13 @@ import { createEmptyLocalInvoice } from '../../domain/localInvoiceFactory';
 import { localInvoiceRepo, nextInvoiceNo, voidLocalInvoice } from '../../data/localInvoiceService';
 import { recomputeInvoiceTotals } from './invoiceCalculations';
 import { EntryTab } from './tabs/EntryTab';
-import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
-
-const TAB_LABELS = ['Entry', 'Detail/Search', 'Printing'] as const;
+import { LocalInvoiceGrid } from './LocalInvoiceGrid';
 
 export function LocalInvoicePage() {
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [isPrintingView, setIsPrintingView] = useState(false);
   const [invoice, setInvoice] = useState<LocalInvoice | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
@@ -27,6 +28,33 @@ export function LocalInvoicePage() {
     setInvoice(inv);
     setEditable(false);
     setTab(0);
+    setShowList(false);
+    setIsPrintingView(false);
+  };
+
+  const editInvoiceFromList = (inv: LocalInvoice) => {
+    if (inv.status.final) {
+      setMessage({ severity: 'warning', text: 'This invoice is FINAL and cannot be edited.' });
+      return;
+    }
+    setInvoice(inv);
+    setEditable(true);
+    setTab(0);
+    setShowList(false);
+    setIsPrintingView(false);
+  };
+
+  const printInvoiceFromList = (inv: LocalInvoice) => {
+    setInvoice(inv);
+    setEditable(false);
+    setTab(0);
+    setShowList(false);
+    setIsPrintingView(true);
+  };
+
+  const deleteInvoiceFromList = (inv: LocalInvoice) => {
+    localInvoiceRepo.remove(inv.id);
+    setMessage({ severity: 'success', text: `Invoice ${inv.invoiceNo} deleted.` });
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -37,9 +65,14 @@ export function LocalInvoicePage() {
         setInvoice(draft);
         setEditable(true);
         setTab(0);
+        setShowList(false);
+        setIsPrintingView(false);
         setMessage(null);
         break;
       }
+      case 'save':
+        handleSave();
+        break;
       case 'edit': {
         if (!invoice) {
           setMessage({ severity: 'warning', text: 'Load an invoice first (SEARCH or Detail/Search tab).' });
@@ -81,7 +114,11 @@ export function LocalInvoicePage() {
         break;
       }
       case 'search':
-        setTab(1);
+        setShowList(true);
+        setInvoice(null);
+        setEditable(false);
+        setTab(0);
+        setIsPrintingView(false);
         break;
       default:
         break;
@@ -103,11 +140,17 @@ export function LocalInvoicePage() {
   if (!invoice) disabledActions.push('edit', 'delete', 'final', 'void');
   if (invoice?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (invoice?.status.void) disabledActions.push('final', 'edit');
+  if (!editable || isPrintingView) disabledActions.push('save');
 
   return (
     <PageShell
       breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Local Invoices Entry and Printing']}
       title="Local Invoices Entry and Printing (Air-Export)"
+      actions={!showList ? (
+        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setInvoice(null); setEditable(false); setTab(0); setIsPrintingView(false); setMessage(null); }}>
+          Back to List
+        </Button>
+      ) : undefined}
     >
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
@@ -115,11 +158,24 @@ export function LocalInvoicePage() {
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'new', 'edit', 'delete', 'final', 'void']}
-        disabledActions={disabledActions}
-        onAction={handleAction}
-      />
+      {showList ? (
+        <>
+          <TransactionToolbar actions={['new']} onAction={handleAction} />
+          <LocalInvoiceGrid
+            invoices={localInvoiceRepo.list()}
+            onOpenInvoice={loadInvoice}
+            onEditInvoice={editInvoiceFromList}
+            onPrintInvoice={printInvoiceFromList}
+            onDeleteInvoice={deleteInvoiceFromList}
+          />
+        </>
+      ) : (
+        <>
+          <TransactionToolbar
+            actions={['save', 'final', 'void']}
+            disabledActions={disabledActions}
+            onAction={handleAction}
+          />
 
       {invoice && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -130,26 +186,20 @@ export function LocalInvoicePage() {
         </Stack>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        {TAB_LABELS.map((label) => (
+      <Tabs value={tab} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        {(isPrintingView ? ['Printing'] : ['Entry']).map((label) => (
           <Tab key={label} label={label} />
         ))}
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailSearchTab onOpenInvoice={loadInvoice} />
-      ) : !invoice ? (
-        <Alert severity="info">Click NEW to create an invoice, or use the Detail/Search tab to find an existing one.</Alert>
+      {!invoice ? (
+        <Alert severity="info">Click NEW to create an invoice, or use Search to return to the invoice list.</Alert>
       ) : (
         <>
-          {tab === 0 && <EntryTab invoice={invoice} editable={editable} onChange={setInvoice} />}
-          {tab === 2 && <PrintingTab invoice={invoice} editable={editable} onChange={setInvoice} />}
+          {isPrintingView ? <PrintingTab invoice={invoice} editable={editable} onChange={setInvoice} /> : <EntryTab invoice={invoice} editable={editable} onChange={setInvoice} />}
 
-          {editable && tab === 0 && (
-            <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-              <Chip label="SAVE" color="primary" onClick={handleSave} sx={{ cursor: 'pointer', px: 2, py: 2.5, fontWeight: 700 }} />
-            </Box>
-          )}
+        </>
+      )}
         </>
       )}
     </PageShell>
