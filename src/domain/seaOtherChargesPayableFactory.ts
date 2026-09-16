@@ -1,0 +1,62 @@
+import { v4 as uuid } from 'uuid';
+import { SeaOtherChargesPayable } from './seaOtherChargesPayable';
+
+const nowIso = () => new Date().toISOString();
+
+export function createEmptySeaOtherChargesPayable(branch = 'KHI'): SeaOtherChargesPayable {
+  return {
+    id: uuid(),
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+    branch,
+    creditNoteNo: '',
+    year: new Date().getFullYear(),
+    date: new Date().toISOString().slice(0, 10),
+    payableType: '',
+    dueDate: '',
+    partyCode: '',
+    partyName: '',
+    partyAddress: '',
+    consolNo: '',
+    jobYear: new Date().getFullYear(),
+    jobNo: '',
+    mblNo: '',
+    lclFcl: 'LCL',
+    fobCif: 'FOB',
+    cbm: 0,
+    cbmRate: 0,
+    billNo: '',
+    billDate: '',
+    remarks: '',
+    postInLocalCurrency: 'N',
+    currency1: 'USD',
+    exRate1: 0,
+    currency2: '',
+    exRate2: 0,
+    currency3: '',
+    exRate3: 0,
+    containers: [],
+    costLines: [],
+    chargeLines: [
+      {
+        id: uuid(),
+        code: 'FREIGHT',
+        description: 'Freight',
+        cbmWtBasis: 'CBM',
+        curr: 'USD',
+        qty: 0,
+        rate: 0,
+        fAmount: 0,
+        pkrAmount: 0,
+      },
+    ],
+    lessChargeLines: [],
+    subTotal: 0,
+    lessTotal: 0,
+    grandTotal: 0,
+    jobHistory: [],
+    usedClearedVouchers: [],
+    attachmentNote: '',
+    status: { final: false },
+  };
+}

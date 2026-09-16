@@ -43,6 +43,12 @@ import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage
 import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
 import { GroupCodesPage } from './features/financeSetup/GroupCodesPage';
 import { ControlCodesPage } from './features/financeSetup/ControlCodesPage';
+import { ComingSoonPage } from './features/common/ComingSoonPage';
+import { SeaOtherChargesPayablePage } from './features/seaOtherChargesPayable/SeaOtherChargesPayablePage';
+import { SeaRefundPage } from './features/seaRefundFromShippingLines/SeaRefundPage';
+import { SeaLocalInvoicePage } from './features/seaLocalInvoice/SeaLocalInvoicePage';
+import { SeaLoadingProgramPage } from './features/seaLoadingProgram/SeaLoadingProgramPage';
+import { SeaForeignAgentInvoicePage } from './features/seaForeignAgentInvoice/SeaForeignAgentInvoicePage';
 
 function App() {
   return (
@@ -150,6 +156,219 @@ function App() {
             <Route path="/freight/air-export/letter-of-issuance" element={<LetterOfIssuancePage />} />
 
             <Route path="/freight/sea-export/jobs" element={<SeaExportJobPage />} />
+            <Route path="/freight/sea-export/other-charges-payable" element={<SeaOtherChargesPayablePage />} />
+            <Route path="/freight/sea-export/refund-from-shipping-lines" element={<SeaRefundPage />} />
+            <Route path="/freight/sea-export/local-invoices" element={<SeaLocalInvoicePage />} />
+            <Route path="/freight/sea-export/loading-program" element={<SeaLoadingProgramPage />} />
+            <Route
+              path="/freight/sea-export/invoices-to-foreign-agents"
+              element={
+                <SeaForeignAgentInvoicePage
+                  variant="INVOICE_TO"
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Invoices To Foreign Agents (Sea-Export)']}
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-export/credit-notes-to-foreign-agents"
+              element={
+                <SeaForeignAgentInvoicePage
+                  variant="CREDIT_NOTE_TO"
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Credit Notes To Foreign Agents (Sea-Export)']}
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-export/invoices-received-from-foreign-agents"
+              element={
+                <SeaForeignAgentInvoicePage
+                  variant="INVOICE_RECEIVED"
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Invoices/Dr. Notes Received From Foreign Agents (Sea-Export)']}
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-export/credit-notes-received-from-foreign-agents"
+              element={
+                <SeaForeignAgentInvoicePage
+                  variant="CREDIT_NOTE_RECEIVED"
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Credit Notes Received From Foreign Agents (Sea-Export)']}
+                />
+              }
+            />
+
+            <Route
+              path="/freight/air-import/manifest-inbond-shipments"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Manifest Inbond Shipments (Air-Import)']}
+                  title="Manifest Inbond Shipments (Air-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/air-import/inbond-shipments"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Inbond Shipments Entry and Documents Printing (Air-Import)']}
+                  title="Inbond Shipments Entry and Documents Printing (Air-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/air-import/local-invoices"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Local Invoices Entry and Printing (Air-Import)']}
+                  title="Local Invoices Entry and Printing (Air-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/air-import/other-charges-payable"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Other Charges Payable (Air-Import)']}
+                  title="Other Charges Payable (Air-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/air-import/invoices-to-foreign-agents"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Invoices To Foreign Agents (Air-Import)']}
+                  title="Invoices To Foreign Agents (Air-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/air-import/credit-notes-to-foreign-agents"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Credit Notes To Foreign Agents (Air-Import)']}
+                  title="Credit Notes To Foreign Agents (Air-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/air-import/invoices-received-from-foreign-agents"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Invoices/Dr. Notes Received From Foreign Agents (Air-Import)']}
+                  title="Invoices/Dr. Notes Received From Foreign Agents (Air-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/air-import/credit-notes-received-from-foreign-agents"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Credit Notes Received From Foreign Agents (Air-Import)']}
+                  title="Credit Notes Received From Foreign Agents (Air-Import)"
+                />
+              }
+            />
+
+            <Route
+              path="/freight/sea-import/manifest-inbond-shipments"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Manifest Inbond Shipments (Sea-Import)']}
+                  title="Manifest Inbond Shipments (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/inbond-shipments"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Inbond Shipment Entry and Documents Printing (Sea-Import)']}
+                  title="Inbond Shipment Entry and Documents Printing (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/other-charges-payable"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Other Charges Payables (Sea-Import)']}
+                  title="Other Charges Payables (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/refund-from-shipping-lines"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Refund From Shipping Lines Entry and Printing (Sea-Import)']}
+                  title="Refund From Shipping Lines Entry and Printing (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/local-invoices"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Local Invoices Entry and Printing (Sea-Import)']}
+                  title="Local Invoices Entry and Printing (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/invoices-to-foreign-agents"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Invoices To Foreign Agents (Sea-Import)']}
+                  title="Invoices To Foreign Agents (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/credit-notes-to-foreign-agents"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Credit Notes To Foreign Agents (Sea-Import)']}
+                  title="Credit Notes To Foreign Agents (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/invoices-received-from-foreign-agents"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Invoices/Dr. Notes Received From Foreign Agents (Sea-Import)']}
+                  title="Invoices/Dr. Notes Received From Foreign Agents (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/credit-notes-received-from-foreign-agents"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Credit Notes Received From Foreign Agents (Sea-Import)']}
+                  title="Credit Notes Received From Foreign Agents (Sea-Import)"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/quotations"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Quotations']}
+                  title="Quotations"
+                />
+              }
+            />
+            <Route
+              path="/freight/sea-import/document-receipt"
+              element={
+                <ComingSoonPage
+                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Document Receipt']}
+                  title="Document Receipt"
+                />
+              }
+            />
           </Routes>
         </AppShell>
       </BrowserRouter>

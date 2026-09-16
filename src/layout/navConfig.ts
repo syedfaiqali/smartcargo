@@ -35,6 +35,84 @@ export const seaExportMenu: NavGroup = {
   label: 'Transactions Menu (Sea Export)',
   items: [
     { label: 'Jobs Entry and Documents Printing (Sea-Export)', path: '/freight/sea-export/jobs' },
+    { label: 'Other Charges Payables (Sea-Export)', path: '/freight/sea-export/other-charges-payable' },
+    {
+      label: 'Refund from Shipping Lines Entry and Printing (Sea-Export)',
+      path: '/freight/sea-export/refund-from-shipping-lines',
+    },
+    { label: 'Local Invoices Entry and Printing (Sea-Export)', path: '/freight/sea-export/local-invoices' },
+    { label: 'Loading Program Entry and Printing', path: '/freight/sea-export/loading-program' },
+    { label: 'Invoices To Foreign Agents (Sea-Export)', path: '/freight/sea-export/invoices-to-foreign-agents' },
+    {
+      label: 'Credit Notes To Foreign Agents (Sea-Export)',
+      path: '/freight/sea-export/credit-notes-to-foreign-agents',
+    },
+    {
+      label: 'Invoices/Dr. Notes Received From Foreign Agents (Sea-Export)',
+      path: '/freight/sea-export/invoices-received-from-foreign-agents',
+    },
+    {
+      label: 'Credit Notes Received From Foreign Agents (Sea-Export)',
+      path: '/freight/sea-export/credit-notes-received-from-foreign-agents',
+    },
+  ],
+};
+
+export const airImportMenu: NavGroup = {
+  label: 'Transactions Menu (Air Import)',
+  items: [
+    { label: 'Manifest Inbond Shipments (Air-Import)', path: '/freight/air-import/manifest-inbond-shipments' },
+    {
+      label: 'Inbond Shipments Entry and Documents Printing (Air-Import)',
+      path: '/freight/air-import/inbond-shipments',
+    },
+    { label: 'Local Invoices Entry and Printing (Air-Import)', path: '/freight/air-import/local-invoices' },
+    { label: 'Other Charges Payable (Air-Import)', path: '/freight/air-import/other-charges-payable' },
+    { label: 'Invoices To Foreign Agents (Air-Import)', path: '/freight/air-import/invoices-to-foreign-agents' },
+    {
+      label: 'Credit Notes To Foreign Agents (Air-Import)',
+      path: '/freight/air-import/credit-notes-to-foreign-agents',
+    },
+    {
+      label: 'Invoices/Dr. Notes Received From Foreign Agents (Air-Import)',
+      path: '/freight/air-import/invoices-received-from-foreign-agents',
+    },
+    {
+      label: 'Credit Notes Received From Foreign Agents (Air-Import)',
+      path: '/freight/air-import/credit-notes-received-from-foreign-agents',
+    },
+  ],
+};
+
+export const seaImportMenu: NavGroup = {
+  label: 'Transactions Menu (Sea Import)',
+  items: [
+    { label: 'Manifest Inbond Shipments (Sea-Import)', path: '/freight/sea-import/manifest-inbond-shipments' },
+    {
+      label: 'Inbond Shipment Entry and Documents Printing (Sea-Import)',
+      path: '/freight/sea-import/inbond-shipments',
+    },
+    { label: 'Other Charges Payables (Sea-Import)', path: '/freight/sea-import/other-charges-payable' },
+    {
+      label: 'Refund From Shipping Lines Entry and Printing (Sea-Import)',
+      path: '/freight/sea-import/refund-from-shipping-lines',
+    },
+    { label: 'Local Invoices Entry and Printing (Sea-Import)', path: '/freight/sea-import/local-invoices' },
+    { label: 'Invoices To Foreign Agents (Sea-Import)', path: '/freight/sea-import/invoices-to-foreign-agents' },
+    {
+      label: 'Credit Notes To Foreign Agents (Sea-Import)',
+      path: '/freight/sea-import/credit-notes-to-foreign-agents',
+    },
+    {
+      label: 'Invoices/Dr. Notes Received From Foreign Agents (Sea-Import)',
+      path: '/freight/sea-import/invoices-received-from-foreign-agents',
+    },
+    {
+      label: 'Credit Notes Received From Foreign Agents (Sea-Import)',
+      path: '/freight/sea-import/credit-notes-received-from-foreign-agents',
+    },
+    { label: 'Quotations', path: '/freight/sea-import/quotations' },
+    { label: 'Document Receipt', path: '/freight/sea-import/document-receipt' },
   ],
 };
 
@@ -68,7 +146,13 @@ export const initialSetupMenu: NavGroup = {
   ],
 };
 
-export const freightMenu: NavGroup[] = [initialSetupMenu, airExportMenu, seaExportMenu];
+export const freightMenu: NavGroup[] = [
+  airExportMenu,
+  seaExportMenu,
+  airImportMenu,
+  seaImportMenu,
+  initialSetupMenu,
+];
 
 export const financeInitialSetupMenu: NavGroup = {
   label: 'Initial Setup',
@@ -97,7 +181,7 @@ export const financeReportsMenu: NavGroup = {
   ],
 };
 
-export const financeMenu: NavGroup[] = [financeInitialSetupMenu, vouchersMenu, financeReportsMenu];
+export const financeMenu: NavGroup[] = [vouchersMenu, financeReportsMenu, financeInitialSetupMenu];
 
 export const topNavItems = [
   'Freight',
@@ -127,7 +211,7 @@ export const sidebarModules: SidebarModule[] = [
     key: 'freight',
     label: 'Freight Forwarding',
     icon: 'freight',
-    submenu: [initialSetupMenu, airExportMenu, seaExportMenu],
+    submenu: freightMenu,
   },
   { key: 'courier', label: 'Courier', icon: 'courier', disabled: true },
   { key: 'sales', label: 'Sales', icon: 'sales', disabled: true },
