@@ -86,7 +86,20 @@ export function PayableEntryForm({ payable, editable, onChange }: PayableEntryFo
   const removeChargeLine = (id: string) => apply({ chargeLines: payable.chargeLines.filter((l) => l.id !== id) });
 
   return (
-    <Box>
+    <Box
+      sx={{
+        '& .MuiInputBase-input, & .MuiSelect-select': { color: '#172554', fontWeight: 700 },
+        '& .MuiInputLabel-root': { color: '#475569', fontWeight: 700 },
+        '& .MuiInputBase-input.Mui-disabled, & .MuiSelect-select.Mui-disabled': {
+          WebkitTextFillColor: '#172554',
+          color: '#172554',
+          opacity: 1,
+          fontWeight: 700,
+        },
+        '& .MuiInputLabel-root.Mui-disabled': { color: '#475569', opacity: 1, fontWeight: 700 },
+        '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+      }}
+    >
       <Grid container spacing={2}>
         {/* LEFT COLUMN — 5.2 Header Fields */}
         <Grid item xs={12} md={5}>

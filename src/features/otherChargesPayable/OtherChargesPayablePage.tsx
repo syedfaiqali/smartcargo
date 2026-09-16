@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { OtherChargesPayable } from '../../domain/otherChargesPayable';
@@ -10,18 +13,44 @@ import { createEmptyOtherChargesPayable } from '../../domain/otherChargesPayable
 import { payableRepo, nextCreditNoteNo } from '../../data/otherChargesPayableService';
 import { recomputePayableTotals } from './payableCalculations';
 import { PayableEntryForm } from './PayableEntryForm';
-import { PayableSearchPanel } from './PayableSearchPanel';
+import { OtherChargesPayableGrid } from './OtherChargesPayableGrid';
+import { PayablePrintingTab } from './PayablePrintingTab';
 
 export function OtherChargesPayablePage() {
   const [payable, setPayable] = useState<OtherChargesPayable | null>(null);
   const [editable, setEditable] = useState(false);
-  const [searching, setSearching] = useState(false);
+  const [showList, setShowList] = useState(true);
+  const [isPrintingView, setIsPrintingView] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
   const loadPayable = (p: OtherChargesPayable) => {
     setPayable(p);
     setEditable(false);
-    setSearching(false);
+    setShowList(false);
+    setIsPrintingView(false);
+  };
+
+  const editPayableFromList = (p: OtherChargesPayable) => {
+    if (p.status.final) {
+      setMessage({ severity: 'warning', text: 'This payable is FINAL and cannot be edited.' });
+      return;
+    }
+    setPayable(p);
+    setEditable(true);
+    setShowList(false);
+    setIsPrintingView(false);
+  };
+
+  const deletePayableFromList = (p: OtherChargesPayable) => {
+    payableRepo.remove(p.id);
+    setMessage({ severity: 'success', text: `Payable ${p.creditNoteNo} deleted.` });
+  };
+
+  const printPayableFromList = (p: OtherChargesPayable) => {
+    setPayable(p);
+    setEditable(false);
+    setShowList(false);
+    setIsPrintingView(true);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -31,10 +60,14 @@ export function OtherChargesPayablePage() {
         draft.creditNoteNo = nextCreditNoteNo(draft.branch);
         setPayable(draft);
         setEditable(true);
-        setSearching(false);
+        setShowList(false);
+        setIsPrintingView(false);
         setMessage(null);
         break;
       }
+      case 'save':
+        handleSave();
+        break;
       case 'edit': {
         if (!payable) {
           setMessage({ severity: 'warning', text: 'Load a payable first (SEARCH).' });
@@ -67,7 +100,10 @@ export function OtherChargesPayablePage() {
         break;
       }
       case 'search':
-        setSearching(true);
+        setShowList(true);
+        setPayable(null);
+        setEditable(false);
+        setIsPrintingView(false);
         break;
       default:
         break;
@@ -88,18 +124,30 @@ export function OtherChargesPayablePage() {
   const disabledActions: ToolbarAction[] = [];
   if (!payable) disabledActions.push('edit', 'delete', 'final');
   if (payable?.status.final) disabledActions.push('edit', 'delete', 'final');
+  if (!editable) disabledActions.push('save');
 
   return (
-    <PageShell breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Other Charges Payable']} title="Other Charges Payable (Air-Export)">
+    <PageShell
+      breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Other Charges Payable']}
+      title="Other Charges Payable (Air-Export)"
+      actions={!showList ? <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setPayable(null); setEditable(false); setIsPrintingView(false); setMessage(null); }}>Back to List</Button> : undefined}
+    >
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}
         </Alert>
       )}
 
-      <TransactionToolbar actions={['search', 'new', 'edit', 'delete', 'final']} disabledActions={disabledActions} onAction={handleAction} />
+      {showList ? (
+        <>
+          <TransactionToolbar actions={['new']} onAction={handleAction} />
+          <OtherChargesPayableGrid payables={payableRepo.list()} onOpen={loadPayable} onEdit={editPayableFromList} onDelete={deletePayableFromList} onPrint={printPayableFromList} />
+        </>
+      ) : (
+        <>
+          {!isPrintingView && <TransactionToolbar actions={['save', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
 
-      {payable && !searching && (
+      {payable && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <Chip label={`Credit Note No: ${payable.creditNoteNo}`} color="primary" />
           {payable.status.final && <Chip label="FINAL" color="success" />}
@@ -107,18 +155,15 @@ export function OtherChargesPayablePage() {
         </Stack>
       )}
 
-      {searching ? (
-        <PayableSearchPanel onOpenPayable={loadPayable} />
-      ) : !payable ? (
-        <Alert severity="info">Click NEW to create a payable, or SEARCH to find an existing one.</Alert>
+      <Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab label={isPrintingView ? 'Printing' : 'Entry'} />
+      </Tabs>
+
+      {!payable ? (
+        <Alert severity="info">Click New to create a payable.</Alert>
       ) : (
-        <>
-          <PayableEntryForm payable={payable} editable={editable} onChange={setPayable} />
-          {editable && (
-            <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-              <Chip label="SAVE" color="primary" onClick={handleSave} sx={{ cursor: 'pointer', px: 2, py: 2.5, fontWeight: 700 }} />
-            </Box>
-          )}
+        isPrintingView ? <PayablePrintingTab payable={payable} /> : <PayableEntryForm payable={payable} editable={editable} onChange={setPayable} />
+      )}
         </>
       )}
     </PageShell>
