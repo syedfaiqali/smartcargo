@@ -1,8 +1,20 @@
 import { AirImportLocalInvoice } from '../domain/airImportLocalInvoice';
 import { Repository } from './repository';
 import { airImportJobRepo } from './airImportJobService';
+import { createEmptyAirImportLocalInvoice } from '../domain/airImportLocalInvoiceFactory';
 
 export const airImportInvoiceRepo = new Repository<AirImportLocalInvoice>('airImportLocalInvoice');
+
+/** Adds one visible sample only until a real Air-Import local invoice exists. */
+export function ensureAirImportInvoiceDemo(): void {
+  if (airImportInvoiceRepo.list().length) return;
+  const demo = createEmptyAirImportLocalInvoice('KHI');
+  demo.invoiceNo = 'KHI-AII-101'; demo.date = '2026-09-17'; demo.jobNo = 'KHI-AI-101'; demo.jobType = 'Freight';
+  demo.mawbNo = '176-98765432'; demo.hawbNo = 'HAWB-456789'; demo.hawbChargeWeight = 525;
+  demo.partyCode = 'P-1003'; demo.partyName = 'Gulf Cargo Partners'; demo.origin = 'DXB'; demo.destination = 'KHI';
+  demo.currencies[0] = { currencyCode: 'PKR', exRate: 1 }; demo.invoiceTotal = 1600; demo.invoiceTotalPkr = 222385;
+  airImportInvoiceRepo.save(demo);
+}
 
 let invoiceSequence = 100;
 
