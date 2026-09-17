@@ -11,6 +11,7 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import TablePagination from '@mui/material/TablePagination';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
 import { SeaExportJob } from '../../../domain/seaExportJob';
@@ -25,6 +26,12 @@ interface ContainerTabProps {
 
 export function ContainerTab({ job, editable, onChange }: ContainerTabProps) {
   const [draft, setDraft] = useState<SeaContainerRef | null>(null);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const containerValues = (container: SeaContainerRef) => [container.serialNo, container.containerNo, container.sizeType, container.containerTypes, container.sealNo, container.pcd, container.vehicleNo, container.vehicleDate].map(String);
+  const filteredContainers = job.containers.filter((container) => containerValues(container).every((value, index) => value.toLowerCase().includes((filters[String(index)] ?? '').toLowerCase())));
+  const paginatedContainers = filteredContainers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const startNew = () => setDraft({ ...createEmptyContainer(), serialNo: job.containers.length + 1 });
 
@@ -178,9 +185,15 @@ export function ContainerTab({ job, editable, onChange }: ContainerTabProps) {
               <TableCell>Vehicle No.</TableCell>
               <TableCell>Vehicle Date</TableCell>
             </TableRow>
+            <TableRow>
+              <TableCell />
+              {['Serial No.', 'Container No.', 'Size', 'Container Types', 'Seal No.', 'PCD', 'Vehicle No.', 'Vehicle Date'].map((placeholder, index) => (
+                <TableCell key={placeholder}><TextField size="small" type={placeholder.includes('Date') || placeholder === 'PCD' ? 'date' : 'text'} placeholder={placeholder} value={filters[String(index)] ?? ''} onChange={(event) => { setFilters({ ...filters, [String(index)]: event.target.value }); setPage(0); }} sx={{ minWidth: 95, '& .MuiInputBase-input': { py: 0.55, fontSize: 12 } }} /></TableCell>
+              ))}
+            </TableRow>
           </TableHead>
           <TableBody>
-            {job.containers.length === 0 ? (
+            {filteredContainers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} align="center">
                   <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
@@ -189,7 +202,7 @@ export function ContainerTab({ job, editable, onChange }: ContainerTabProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              job.containers.map((c) => (
+              paginatedContainers.map((c) => (
                 <TableRow key={c.id} hover>
                   <TableCell>
                     <IconButton size="small" disabled={!editable} onClick={() => removeContainer(c.id)}>
@@ -209,6 +222,7 @@ export function ContainerTab({ job, editable, onChange }: ContainerTabProps) {
             )}
           </TableBody>
         </Table>
+        <TablePagination component="div" count={filteredContainers.length} page={page} rowsPerPage={rowsPerPage} onPageChange={(_, nextPage) => setPage(nextPage)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[5, 10, 25, 50]} labelRowsPerPage="Rows per page" />
       </Paper>
     </Box>
   );

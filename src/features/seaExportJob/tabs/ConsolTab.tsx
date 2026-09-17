@@ -17,6 +17,7 @@ import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import TablePagination from '@mui/material/TablePagination';
 import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
 import { SeaExportJob } from '../../../domain/seaExportJob';
 import { findConsolCandidateJobs, seaExportJobRepo } from '../../../data/seaExportJobService';
@@ -41,6 +42,15 @@ export function ConsolTab({ job, editable, onChange }: ConsolTabProps) {
   const [marked, setMarked] = useState<'Y' | 'N' | 'BOTH'>('BOTH');
   const [candidates, setCandidates] = useState<SeaExportJob[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [gridFilter, setGridFilter] = useState('');
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [gridPage, setGridPage] = useState(0);
+  const [gridRowsPerPage, setGridRowsPerPage] = useState(10);
+  const filteredCandidates = candidates.filter((candidate) => {
+    const searchable = [candidate.consolNo, candidate.jobNo, candidate.date, candidate.branch, candidate.jobType, candidate.mblNo, candidate.hblNo, candidate.lclFcl, candidate.partyName, candidate.shippingLine, candidate.portOfLoad, candidate.destination].join(' ').toLowerCase();
+    return searchable.includes(gridFilter.toLowerCase()) && Object.values(columnFilters).every((value) => searchable.includes(value.toLowerCase()));
+  });
+  const paginatedCandidates = filteredCandidates.slice(gridPage * gridRowsPerPage, gridPage * gridRowsPerPage + gridRowsPerPage);
 
   const lastConsolNo = seaExportJobRepo.find((j) => j.branch === job.branch && !!j.consol.consolNo).slice(-1)[0]?.consol.consolNo ?? '';
 
@@ -68,6 +78,9 @@ export function ConsolTab({ job, editable, onChange }: ConsolTabProps) {
 
   return (
     <Box>
+      <Typography component="div" sx={{ display: 'inline-block', px: 1.5, py: 0.65, mb: 1.25, borderRadius: 1, bgcolor: '#075a9d', color: 'white', fontSize: 19, fontWeight: 700, boxShadow: 2 }}>
+        JOBS (SEA-EXPORT)
+      </Typography>
       <Grid container spacing={2}>
         <Grid item xs={12} md={3}>
           <SectionHeader>Filter Jobs</SectionHeader>
@@ -112,9 +125,10 @@ export function ConsolTab({ job, editable, onChange }: ConsolTabProps) {
               <FormControlLabel value="BOTH" control={<Radio size="small" />} label="Both" />
             </RadioGroup>
           </FormControl>
-          <Button variant="contained" fullWidth onClick={handleShowDetail}>
-            Show Detail
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" onClick={handleShowDetail}>Show Detail</Button>
+            <Button variant="contained" disabled={!editable || !consol.consolNo || selected.size === 0} onClick={handleUpdate}>Update</Button>
+          </Box>
         </Grid>
 
         <Grid item xs={12} md={4.5}>
@@ -282,34 +296,50 @@ export function ConsolTab({ job, editable, onChange }: ConsolTabProps) {
 
       <SectionHeader>Job Selection Grid</SectionHeader>
       <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-        <Table size="small">
+        <Table size="small" sx={{ minWidth: 1700, '& .MuiTableCell-root': { borderRight: '1px solid #d7dee8' }, '& .MuiTableHead-root .MuiTableCell-root': { fontWeight: 700, borderColor: '#315a9a', bgcolor: '#f8fafc' } }}>
           <TableHead>
             <TableRow>
               <TableCell padding="checkbox" />
+              <TableCell>Sr.No.</TableCell>
               <TableCell>Consol No.</TableCell>
-              <TableCell>Job No. / Date</TableCell>
+              <TableCell>Job No.</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Branch</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell>MBL/HBL No.</TableCell>
               <TableCell>LCL/FCL</TableCell>
-              <TableCell>Vessel / Voyage</TableCell>
-              <TableCell>Party</TableCell>
-              <TableCell>Loading / Discharge</TableCell>
+              <TableCell>Container Nos.</TableCell><TableCell>Vessel</TableCell><TableCell>Voyage</TableCell><TableCell>ETD</TableCell><TableCell>PCS</TableCell><TableCell>Grs. Weight</TableCell><TableCell>Party/Agent Party Name/SPO Name</TableCell><TableCell>Shipping Line</TableCell><TableCell>Loading Place</TableCell><TableCell>Discharge Place</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell padding="checkbox" />
+              {['Sr.', 'Consol', 'Job', 'Date', 'Branch', 'Type', 'MBL/HBL', 'LCL/FCL', 'Container', 'Vessel', 'Voyage', 'ETD', 'PCS', 'Weight', 'Party', 'Shipping', 'Loading', 'Discharge'].map((placeholder) => (
+                <TableCell key={placeholder}>
+                  <TextField size="small" select={['Branch', 'Type', 'LCL/FCL'].includes(placeholder)} placeholder={placeholder} value={columnFilters[placeholder] ?? ''} onChange={(event) => { setColumnFilters({ ...columnFilters, [placeholder]: event.target.value }); setGridPage(0); }} SelectProps={{ displayEmpty: true }} sx={{ minWidth: 75, '& .MuiInputBase-input, & .MuiSelect-select': { py: 0.55, fontSize: 12 } }}>
+                    {['Branch', 'Type', 'LCL/FCL'].includes(placeholder) && <MenuItem value="">All</MenuItem>}
+                    {placeholder === 'Branch' && ['KHI', 'LHE', 'ISB'].map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+                    {placeholder === 'Type' && ['EXPORT', 'IMPORT', 'Freight'].map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+                    {placeholder === 'LCL/FCL' && ['LCL', 'FCL'].map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+                  </TextField>
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {candidates.length === 0 ? (
+            {filteredCandidates.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={19} align="center">
                   <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                     No jobs — adjust filters and click Show Detail.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              candidates.map((c) => (
+              paginatedCandidates.map((c, index) => (
                 <TableRow key={c.id} hover selected={selected.has(c.id)}>
                   <TableCell padding="checkbox">
                     <Checkbox size="small" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} />
                   </TableCell>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>{c.consolNo}</TableCell>
                   <TableCell>
                     {c.jobNo} / {c.date}
@@ -330,6 +360,7 @@ export function ConsolTab({ job, editable, onChange }: ConsolTabProps) {
             )}
           </TableBody>
         </Table>
+        <TablePagination component="div" count={filteredCandidates.length} page={gridPage} rowsPerPage={gridRowsPerPage} onPageChange={(_, nextPage) => setGridPage(nextPage)} onRowsPerPageChange={(event) => { setGridRowsPerPage(Number(event.target.value)); setGridPage(0); }} rowsPerPageOptions={[5, 10, 25, 50]} labelRowsPerPage="Rows per page" />
       </Paper>
     </Box>
   );
