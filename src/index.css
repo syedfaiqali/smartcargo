@@ -11,3 +11,26 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Operational grids: make every header and filter column boundary explicit. */
+.MuiTableHead-root .MuiTableCell-root {
+  border-right: 1px solid #315a9a !important;
+  border-bottom: 1px solid #315a9a !important;
+}
+
+.MuiTableHead-root .MuiTableCell-root:last-child {
+  border-right: 0 !important;
+}
+
+.MuiTableBody-root .MuiTableCell-root {
+  border-right: 1px solid #cbd5e1 !important;
+  border-bottom: 1px solid #d7dee8 !important;
+}
+
+.MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) .MuiTableCell-root {
+  background-color: #eef2ff;
+}
+
+.MuiTableBody-root .MuiTableCell-root:last-child {
+  border-right: 0 !important;
+}
