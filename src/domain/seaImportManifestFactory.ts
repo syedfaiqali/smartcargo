@@ -1,0 +1,52 @@
+import { v4 as uuid } from 'uuid';
+import { SeaImportManifest } from './seaImportManifest';
+
+const nowIso = () => new Date().toISOString();
+
+export function createEmptySeaImportManifest(branch = 'KHI'): SeaImportManifest {
+  return {
+    id: uuid(),
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+    branch,
+    consoleJobNo: '',
+    jobDate: new Date().toISOString().slice(0, 10),
+    finalDate: '',
+    jobType: '',
+    nomination: 'N',
+    mblNo: '',
+    mblDate: '',
+    ppCc: 'PP',
+    pcs: 0,
+    uom: '',
+    cbm: 0,
+    grossWeight: 0,
+    netWeight: 0,
+    foreignAgent: '',
+    shippingLine: '',
+    sLineAgent: '',
+    destination: '',
+    portOfLoading: '',
+    portOfDischarge: '',
+    portOfShipment: '',
+    viaPort: '',
+    shed: '',
+    vessel: '',
+    voyage: '',
+    rotationNo: '',
+    eta: '',
+    etd: '',
+    beNo: '',
+    beDate: '',
+    igmNo: '',
+    igmDate: '',
+    lclFcl: 'LCL',
+    arrivedDate: '',
+    cyCfs: 'CFS/CFS',
+    virNumber: '',
+    berthNo: '',
+    stevedoring: '',
+    hblLines: [],
+    status: { final: false },
+  };
+}
