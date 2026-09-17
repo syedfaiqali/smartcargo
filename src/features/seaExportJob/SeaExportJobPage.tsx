@@ -5,6 +5,8 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { SeaExportJob } from '../../domain/seaExportJob';
@@ -18,11 +20,14 @@ import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
 import { ConsolTab } from './tabs/ConsolTab';
 import { InstructionLetterTab } from './tabs/InstructionLetterTab';
+import { SeaExportJobGrid } from './SeaExportJobGrid';
 
-const TAB_LABELS = ['Entry', 'B/L Screen', 'Container', 'Job Charges', 'Detail/Search', 'Printing', 'Consol', 'Instruction Letter'] as const;
+const TAB_LABELS = ['Entry', 'B/L Screen', 'Container', 'Job Charges', 'Consol', 'Instruction Letter'] as const;
 
 export function SeaExportJobPage() {
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [isPrintingView, setIsPrintingView] = useState(false);
   const [job, setJob] = useState<SeaExportJob | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
@@ -31,7 +36,13 @@ export function SeaExportJobPage() {
     setJob(j);
     setEditable(false);
     setTab(0);
+    setShowList(false);
+    setIsPrintingView(false);
   };
+
+  const editJobFromList = (j: SeaExportJob) => { if (j.status.final) { setMessage({ severity: 'warning', text: 'This job is FINAL and cannot be edited.' }); return; } setJob(j); setEditable(true); setTab(0); setShowList(false); };
+  const deleteJobFromList = (j: SeaExportJob) => { seaExportJobRepo.remove(j.id); setMessage({ severity: 'success', text: `Job ${j.jobNo} deleted.` }); };
+  const printJobFromList = (j: SeaExportJob) => { setJob(j); setEditable(false); setTab(0); setShowList(false); setIsPrintingView(true); };
 
   const handleAction = (action: ToolbarAction) => {
     switch (action) {
@@ -41,9 +52,14 @@ export function SeaExportJobPage() {
         setJob(draft);
         setEditable(true);
         setTab(0);
+        setShowList(false);
+        setIsPrintingView(false);
         setMessage(null);
         break;
       }
+      case 'save':
+        handleSave();
+        break;
       case 'edit': {
         if (!job) {
           setMessage({ severity: 'warning', text: 'Load a job first (SEARCH or Detail/Search tab).' });
@@ -111,7 +127,10 @@ export function SeaExportJobPage() {
         break;
       }
       case 'search':
-        setTab(4);
+        setShowList(true);
+        setJob(null);
+        setEditable(false);
+        setIsPrintingView(false);
         break;
       default:
         break;
@@ -133,21 +152,23 @@ export function SeaExportJobPage() {
   if (!job) disabledActions.push('edit', 'delete', 'final', 'void', 'copy', 'close');
   if (job?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (job?.status.void || job?.status.closed) disabledActions.push('final', 'edit', 'close');
+  if (!editable || isPrintingView) disabledActions.push('save');
 
   return (
-    <PageShell breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Jobs Entry and Documents Printing (Sea-Export)']} title="Jobs Entry and Documents Printing (Sea-Export)">
+    <PageShell breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Jobs Entry and Documents Printing (Sea-Export)']} title="Jobs Entry and Documents Printing (Sea-Export)" actions={!showList ? <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setJob(null); setEditable(false); setTab(0); setIsPrintingView(false); setMessage(null); }}>Back to List</Button> : undefined}>
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'new', 'edit', 'delete', 'final', 'close', 'void', 'copy']}
+      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction} /><SeaExportJobGrid jobs={seaExportJobRepo.list()} onOpen={loadJob} onEdit={editJobFromList} onDelete={deleteJobFromList} onPrint={printJobFromList} /></> : <>{!isPrintingView && <TransactionToolbar
+        actions={['save', 'final', 'void', 'copy']}
         disabledActions={disabledActions}
         onAction={handleAction}
-      />
+      />}
 
+      <Box sx={{ '& .MuiInputBase-input, & .MuiSelect-select': { color: '#172554', fontWeight: 700 }, '& .MuiInputLabel-root': { color: '#475569', fontWeight: 700 }, '& .MuiInputBase-input.Mui-disabled, & .MuiSelect-select.Mui-disabled': { WebkitTextFillColor: '#172554', color: '#172554', opacity: 1, fontWeight: 700 }, '& .MuiInputLabel-root.Mui-disabled': { color: '#475569', opacity: 1, fontWeight: 700 }, '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' } }}>
       {job && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <Chip label={`Job No: ${job.jobNo}`} color="primary" />
@@ -159,32 +180,26 @@ export function SeaExportJobPage() {
       )}
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        {TAB_LABELS.map((label) => (
+        {(isPrintingView ? ['Printing'] : TAB_LABELS).map((label) => (
           <Tab key={label} label={label} />
         ))}
       </Tabs>
 
-      {tab === 4 ? (
-        <DetailSearchTab onOpenJob={loadJob} />
-      ) : !job ? (
-        <Alert severity="info">Click NEW to create a job, or use the Detail/Search tab to find an existing one.</Alert>
+      {!job ? (
+        <Alert severity="info">Click NEW to create a job.</Alert>
       ) : (
         <>
-          {tab === 0 && <EntryTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 1 && <BlScreenTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 2 && <ContainerTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 3 && <JobChargesTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 5 && <PrintingTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 6 && <ConsolTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 7 && <InstructionLetterTab job={job} editable={editable} onChange={setJob} />}
+          {!isPrintingView && <>
+            {tab === 0 && <EntryTab job={job} editable={editable} onChange={setJob} />}
+            {tab === 1 && <BlScreenTab job={job} editable={editable} onChange={setJob} />}
+            {tab === 2 && <ContainerTab job={job} editable={editable} onChange={setJob} />}
+            {tab === 3 && <JobChargesTab job={job} editable={editable} onChange={setJob} />}
+          </>}
+          {isPrintingView ? <PrintingTab job={job} editable={editable} onChange={setJob} /> : <><>{tab === 4 && <ConsolTab job={job} editable={editable} onChange={setJob} />}</>{tab === 5 && <InstructionLetterTab job={job} editable={editable} onChange={setJob} />}</>}
 
-          {editable && tab !== 4 && (
-            <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
-              <Chip label="SAVE" color="primary" onClick={handleSave} sx={{ cursor: 'pointer', px: 2, py: 2.5, fontWeight: 700 }} />
-            </Box>
-          )}
         </>
       )}
+      </Box></>}
     </PageShell>
   );
 }

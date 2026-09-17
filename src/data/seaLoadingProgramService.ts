@@ -1,7 +1,15 @@
 import { SeaLoadingProgram } from '../domain/seaLoadingProgram';
 import { Repository } from './repository';
+import { createEmptySeaLoadingProgram } from '../domain/seaLoadingProgramFactory';
 
 export const seaLoadingProgramRepo = new Repository<SeaLoadingProgram>('seaLoadingProgram');
+
+export function ensureLoadingProgramDemo(): void {
+  if (seaLoadingProgramRepo.list().length) return;
+  const demo = createEmptySeaLoadingProgram('KHI');
+  demo.loadProgramNo = 'KHI-LP-101'; demo.date = '2026-09-17'; demo.partyCode = 'P-1003'; demo.partyName = 'Sindh Rice Exporters'; demo.shippingLine = 'MAERSK'; demo.clearAgent = 'Speedway Clearing Agency'; demo.commodity = 'RICE'; demo.destination = 'AEJEA'; demo.vessel = 'MSC ISABELLA'; demo.noOfPkgs = 120; demo.status = { final: false };
+  seaLoadingProgramRepo.save(demo);
+}
 
 let loadProgramSequence = 100;
 

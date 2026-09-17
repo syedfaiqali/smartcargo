@@ -10,17 +10,18 @@ import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { SeaLoadingProgram } from '../../domain/seaLoadingProgram';
 import { createEmptySeaLoadingProgram } from '../../domain/seaLoadingProgramFactory';
-import { seaLoadingProgramRepo, nextLoadProgramNo } from '../../data/seaLoadingProgramService';
+import { seaLoadingProgramRepo, nextLoadProgramNo, ensureLoadingProgramDemo } from '../../data/seaLoadingProgramService';
 import { LoadingProgramEntryForm } from './LoadingProgramEntryForm';
 import { LoadingProgramGrid } from './LoadingProgramGrid';
-import { DetailSearchTab } from './DetailSearchTab';
 import { LoadingProgramPrintingTab } from './LoadingProgramPrintingTab';
 
 export function SeaLoadingProgramPage() {
+  ensureLoadingProgramDemo();
   const [program, setProgram] = useState<SeaLoadingProgram | null>(null);
   const [editable, setEditable] = useState(false);
   const [showList, setShowList] = useState(true);
   const [tab, setTab] = useState(0);
+  const [isPrintingView, setIsPrintingView] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
   const loadProgram = (p: SeaLoadingProgram) => {
@@ -28,6 +29,7 @@ export function SeaLoadingProgramPage() {
     setEditable(false);
     setShowList(false);
     setTab(0);
+    setIsPrintingView(false);
   };
 
   const editProgramFromList = (p: SeaLoadingProgram) => {
@@ -39,6 +41,7 @@ export function SeaLoadingProgramPage() {
     setEditable(true);
     setShowList(false);
     setTab(0);
+    setIsPrintingView(false);
   };
 
   const deleteProgramFromList = (p: SeaLoadingProgram) => {
@@ -50,7 +53,8 @@ export function SeaLoadingProgramPage() {
     setProgram(p);
     setEditable(false);
     setShowList(false);
-    setTab(2);
+    setTab(0);
+    setIsPrintingView(true);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -62,6 +66,7 @@ export function SeaLoadingProgramPage() {
         setEditable(true);
         setShowList(false);
         setTab(0);
+        setIsPrintingView(false);
         setMessage(null);
         break;
       }
@@ -118,7 +123,7 @@ export function SeaLoadingProgramPage() {
     <PageShell
       breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Loading Program Entry and Printing']}
       title="Loading Program (Sea-Export)"
-      actions={!showList ? <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setProgram(null); setEditable(false); setTab(0); setMessage(null); }}>Back to List</Button> : undefined}
+      actions={!showList ? <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setProgram(null); setEditable(false); setTab(0); setIsPrintingView(false); setMessage(null); }}>Back to List</Button> : undefined}
     >
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
@@ -133,11 +138,11 @@ export function SeaLoadingProgramPage() {
         </>
       ) : (
         <>
-          <TransactionToolbar
-            actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete']}
+          {!isPrintingView && <TransactionToolbar
+            actions={['save']}
             disabledActions={disabledActions}
             onAction={handleAction}
-          />
+          />}
 
           {program && (
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -147,20 +152,15 @@ export function SeaLoadingProgramPage() {
             </Stack>
           )}
 
-          <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Tab label="Entry" />
-            <Tab label="Detail/Search" />
-            <Tab label="Printing" />
+          <Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Tab label={isPrintingView ? 'Printing' : 'Entry'} />
           </Tabs>
 
-          {tab === 1 ? (
-            <DetailSearchTab onOpenProgram={loadProgram} />
-          ) : !program ? (
+          {!program ? (
             <Alert severity="info">Click New to create a loading program.</Alert>
           ) : (
             <>
-              {tab === 0 && <LoadingProgramEntryForm program={program} editable={editable} onChange={setProgram} />}
-              {tab === 2 && <LoadingProgramPrintingTab program={program} />}
+              {isPrintingView ? <LoadingProgramPrintingTab program={program} /> : <LoadingProgramEntryForm program={program} editable={editable} onChange={setProgram} />}
             </>
           )}
         </>

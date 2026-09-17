@@ -4,20 +4,25 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { SeaLocalInvoice } from '../../domain/seaLocalInvoice';
 import { createEmptySeaLocalInvoice } from '../../domain/seaLocalInvoiceFactory';
-import { seaLocalInvoiceRepo, nextSeaInvoiceNo, voidSeaInvoice } from '../../data/seaLocalInvoiceService';
+import { seaLocalInvoiceRepo, nextSeaInvoiceNo, voidSeaInvoice, ensureSeaLocalInvoiceDemo } from '../../data/seaLocalInvoiceService';
 import { recomputeInvoiceTotals } from './invoiceCalculations';
 import { EntryTab } from './EntryTab';
-import { DetailTab } from './DetailTab';
 import { PrintingTab } from './PrintingTab';
+import { SeaLocalInvoiceGrid } from './SeaLocalInvoiceGrid';
 
-const TAB_LABELS = ['Entry', 'Detail', 'Printing'] as const;
+const TAB_LABELS = ['Entry'] as const;
 
 export function SeaLocalInvoicePage() {
+  ensureSeaLocalInvoiceDemo();
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [isPrintingView, setIsPrintingView] = useState(false);
   const [invoice, setInvoice] = useState<SeaLocalInvoice | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
@@ -26,6 +31,8 @@ export function SeaLocalInvoicePage() {
     setInvoice(inv);
     setEditable(false);
     setTab(0);
+    setShowList(false);
+    setIsPrintingView(false);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -36,6 +43,8 @@ export function SeaLocalInvoicePage() {
         setInvoice(draft);
         setEditable(true);
         setTab(0);
+        setShowList(false);
+        setIsPrintingView(false);
         setMessage(null);
         break;
       }
@@ -108,18 +117,18 @@ export function SeaLocalInvoicePage() {
   if (!editable || tab !== 0) disabledActions.push('save');
 
   return (
-    <PageShell breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Local Invoices Entry and Printing (Sea-Export)']} title="Local Invoice (Sea-Export)">
+    <PageShell breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Local Invoices Entry and Printing (Sea-Export)']} title="Local Invoice (Sea-Export)" actions={!showList ? <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setInvoice(null); setEditable(false); setTab(0); setMessage(null); }}>Back to List</Button> : undefined}>
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final', 'void']}
+      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction}/><SeaLocalInvoiceGrid invoices={seaLocalInvoiceRepo.list()} onOpen={loadInvoice} onEdit={(i)=>{setInvoice(i);setEditable(true);setShowList(false);setIsPrintingView(false)}} onDelete={(i)=>seaLocalInvoiceRepo.remove(i.id)} onPrint={(i)=>{setInvoice(i);setEditable(false);setTab(0);setShowList(false);setIsPrintingView(true)}}/></> : <>{!isPrintingView && <TransactionToolbar
+        actions={['save', 'final', 'void']}
         disabledActions={disabledActions}
         onAction={handleAction}
-      />
+      />}
 
       {invoice && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -129,23 +138,22 @@ export function SeaLocalInvoicePage() {
           {editable && <Chip label="EDITING" color="info" variant="outlined" />}
         </Stack>
       )}
+      </>}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        {TAB_LABELS.map((label) => (
+      {!showList && <><Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        {(isPrintingView ? ['Printing'] : TAB_LABELS).map((label) => (
           <Tab key={label} label={label} />
         ))}
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailTab onOpenInvoice={loadInvoice} />
-      ) : !invoice ? (
-        <Alert severity="info">Click NEW to create an invoice, or use the Detail tab to find an existing one.</Alert>
+      {!invoice ? (
+        <Alert severity="info">Click NEW to create an invoice.</Alert>
       ) : (
         <>
-          {tab === 0 && <EntryTab invoice={invoice} editable={editable} onChange={setInvoice} />}
-          {tab === 2 && <PrintingTab invoice={invoice} />}
+          {isPrintingView ? <PrintingTab invoice={invoice} /> : <EntryTab invoice={invoice} editable={editable} onChange={setInvoice} />}
         </>
       )}
+      </>}
     </PageShell>
   );
 }

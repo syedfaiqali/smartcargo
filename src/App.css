@@ -36,3 +36,13 @@
     transform: rotate(360deg);
   }
 }
+
+/* Keep grid headings and filter cells visually separated. */
+.MuiTableHead-root .MuiTableCell-root {
+  border-right: 1px solid #315a9a;
+  border-bottom: 1px solid #315a9a;
+}
+
+.MuiTableHead-root .MuiTableCell-root:last-child {
+  border-right: 0;
+}

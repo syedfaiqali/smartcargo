@@ -107,7 +107,20 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
   const autoCalcTotal = invoice.autoCalcLines.reduce((sum, l) => sum + l.cost, 0);
 
   return (
-    <Box>
+    <Box
+      sx={{
+        '& .MuiInputBase-input, & .MuiSelect-select': { color: '#172554', fontWeight: 700 },
+        '& .MuiInputLabel-root': { color: '#475569', fontWeight: 700 },
+        '& .MuiInputBase-input.Mui-disabled, & .MuiSelect-select.Mui-disabled': {
+          WebkitTextFillColor: '#172554',
+          color: '#172554',
+          opacity: 1,
+          fontWeight: 700,
+        },
+        '& .MuiInputLabel-root.Mui-disabled': { color: '#475569', opacity: 1, fontWeight: 700 },
+        '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+      }}
+    >
       <Grid container spacing={2}>
         {/* LEFT COLUMN — 6.2 Header & Shipment Ref, 6.3 Currency/Refs/Bank/Receipts */}
         <Grid item xs={12} md={4}>

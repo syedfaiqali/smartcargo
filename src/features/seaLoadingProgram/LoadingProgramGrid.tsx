@@ -59,24 +59,30 @@ export function LoadingProgramGrid({ programs, onOpen, onEdit, onDelete, onPrint
       <Table size="small" sx={{ minWidth: 1200, '& .MuiTableCell-root': { borderRight: '1px solid #d7dee8', py: 0.8, px: 1 }, '& .MuiTableCell-root:last-child': { borderRight: 0 }, '& .MuiTableHead-root .MuiTableCell-root': { bgcolor: '#f8fafc', borderColor: '#315a9a' }, '& .MuiTableBody-root .MuiTableRow-root:nth-of-type(odd)': { bgcolor: '#eef2ff' } }}>
         <TableHead>
           <TableRow>
-            <HeaderCell align="center">Action</HeaderCell>
-            <HeaderCell>Load Program No.</HeaderCell>
-            <HeaderCell>Date</HeaderCell>
-            <HeaderCell>Branch</HeaderCell>
-            <HeaderCell>Shipping Line</HeaderCell>
-            <HeaderCell>Destination</HeaderCell>
-            <HeaderCell>Vessel</HeaderCell>
-            <HeaderCell align="center">Final</HeaderCell>
+            <HeaderCell rowSpan={2} align="center">Action</HeaderCell>
+            <HeaderCell colSpan={3} align="center">DOCUMENT</HeaderCell>
+            <HeaderCell colSpan={2} align="center">PARTY</HeaderCell>
+            <HeaderCell rowSpan={2}>Shipping Line</HeaderCell>
+            <HeaderCell rowSpan={2}>Clearing Agent</HeaderCell>
+            <HeaderCell rowSpan={2}>Commodity</HeaderCell>
+            <HeaderCell rowSpan={2}>Destination</HeaderCell>
+            <HeaderCell rowSpan={2}>Vessel</HeaderCell>
+            <HeaderCell rowSpan={2}>No of Pkg</HeaderCell>
           </TableRow>
+          <TableRow><HeaderCell>No</HeaderCell><HeaderCell>Date</HeaderCell><HeaderCell>Branch</HeaderCell><HeaderCell>Code</HeaderCell><HeaderCell>Name</HeaderCell></TableRow>
           <TableRow>
             <TableCell />
             <TableCell><GridFilter value={filters.loadProgramNo ?? ''} onChange={(value) => setFilter('loadProgramNo', value)} placeholder="No." /></TableCell>
             <TableCell><GridFilter value={filters.date ?? ''} onChange={(value) => setFilter('date', value)} placeholder="Date" type="date" /></TableCell>
             <TableCell><GridFilter value={filters.branch ?? ''} onChange={(value) => setFilter('branch', value)} placeholder="Branch" options={branches} /></TableCell>
+            <TableCell><GridFilter value={filters.partyCode ?? ''} onChange={(value) => setFilter('partyCode', value)} placeholder="Code" /></TableCell>
+            <TableCell><GridFilter value={filters.partyName ?? ''} onChange={(value) => setFilter('partyName', value)} placeholder="Name" /></TableCell>
             <TableCell><GridFilter value={filters.shippingLine ?? ''} onChange={(value) => setFilter('shippingLine', value)} placeholder="Line" options={shippingLines} /></TableCell>
+            <TableCell><GridFilter value={filters.clearAgent ?? ''} onChange={(value) => setFilter('clearAgent', value)} placeholder="Agent" /></TableCell>
+            <TableCell><GridFilter value={filters.commodity ?? ''} onChange={(value) => setFilter('commodity', value)} placeholder="Commodity" /></TableCell>
             <TableCell><GridFilter value={filters.destination ?? ''} onChange={(value) => setFilter('destination', value)} placeholder="Destination" options={destinations} /></TableCell>
             <TableCell><GridFilter value={filters.vessel ?? ''} onChange={(value) => setFilter('vessel', value)} placeholder="Vessel" /></TableCell>
-            <TableCell><GridFilter value={filters.final ?? ''} onChange={(value) => setFilter('final', value)} placeholder="Final" options={['Y', 'N']} /></TableCell>
+            <TableCell><GridFilter value={filters.noOfPkgs ?? ''} onChange={(value) => setFilter('noOfPkgs', value)} placeholder="Pkgs" type="number" /></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -92,7 +98,11 @@ export function LoadingProgramGrid({ programs, onOpen, onEdit, onDelete, onPrint
               </TableCell>
               <TableCell>{program.loadProgramNo}</TableCell><TableCell>{program.date}</TableCell><TableCell>{program.branch}</TableCell>
               <TableCell>{program.shippingLine || '—'}</TableCell><TableCell>{program.destination || '—'}</TableCell><TableCell>{program.vessel || '—'}</TableCell>
-              <TableCell align="center">{program.status.final ? 'Y' : 'N'}</TableCell>
+              <TableCell>{program.partyCode}</TableCell>
+              <TableCell>{program.partyName}</TableCell>
+              <TableCell>{program.clearAgent}</TableCell>
+              <TableCell>{program.commodity}</TableCell>
+              <TableCell align="right">{program.noOfPkgs}</TableCell>
             </TableRow>
           ))}
         </TableBody>

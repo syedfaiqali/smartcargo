@@ -1,8 +1,19 @@
 import { SeaLocalInvoice } from '../domain/seaLocalInvoice';
 import { Repository } from './repository';
 import { seaExportJobRepo } from './seaExportJobService';
+import { createEmptySeaLocalInvoice } from '../domain/seaLocalInvoiceFactory';
 
 export const seaLocalInvoiceRepo = new Repository<SeaLocalInvoice>('seaLocalInvoice');
+
+export function ensureSeaLocalInvoiceDemo(): void {
+  if (seaLocalInvoiceRepo.list().length) return;
+  const demo = createEmptySeaLocalInvoice('KHI');
+  demo.invoiceNo = 'KHI-SLI-101'; demo.date = '2026-09-17'; demo.jobNo = 'KHI-SEA-101'; demo.type = 'EXPORT';
+  demo.partyCode = 'P-1003'; demo.partyName = 'Sindh Rice Exporters'; demo.consignee = 'Gulf Cargo Partners';
+  demo.portOfLoad = 'PKKHI'; demo.destination = 'AEJEA'; demo.lclFcl = 'FCL'; demo.pkgs = 120; demo.weightGrs = 18000;
+  demo.mblNo = 'MBL-8890021'; demo.invoiceTotalPkr = 405496; demo.status = { final: false, posted: false, void: false };
+  seaLocalInvoiceRepo.save(demo);
+}
 
 let invoiceSequence = 100;
 
