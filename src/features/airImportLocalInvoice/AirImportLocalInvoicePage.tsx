@@ -4,18 +4,23 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { AirImportLocalInvoice } from '../../domain/airImportLocalInvoice';
 import { createEmptyAirImportLocalInvoice } from '../../domain/airImportLocalInvoiceFactory';
-import { airImportInvoiceRepo, nextAirImportInvoiceNo, voidAirImportInvoice } from '../../data/airImportLocalInvoiceService';
+import { airImportInvoiceRepo, nextAirImportInvoiceNo, voidAirImportInvoice, ensureAirImportInvoiceDemo } from '../../data/airImportLocalInvoiceService';
 import { recomputeInvoiceTotals } from './invoiceCalculations';
 import { EntryTab } from './EntryTab';
-import { DetailSearchTab } from './DetailSearchTab';
 import { PrintingTab } from './PrintingTab';
+import { AirImportLocalInvoiceGrid } from './AirImportLocalInvoiceGrid';
 
 export function AirImportLocalInvoicePage() {
+  ensureAirImportInvoiceDemo();
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [printingOnly, setPrintingOnly] = useState(false);
   const [invoice, setInvoice] = useState<AirImportLocalInvoice | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
@@ -24,6 +29,8 @@ export function AirImportLocalInvoicePage() {
     setInvoice(inv);
     setEditable(false);
     setTab(0);
+    setPrintingOnly(false);
+    setShowList(false);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -34,6 +41,8 @@ export function AirImportLocalInvoicePage() {
         setInvoice(draft);
         setEditable(true);
         setTab(0);
+        setPrintingOnly(false);
+        setShowList(false);
         setMessage(null);
         break;
       }
@@ -80,9 +89,6 @@ export function AirImportLocalInvoicePage() {
         }
         break;
       }
-      case 'search':
-        setTab(1);
-        break;
       default:
         break;
     }
@@ -103,7 +109,7 @@ export function AirImportLocalInvoicePage() {
   if (!invoice) disabledActions.push('edit', 'delete', 'final', 'void');
   if (invoice?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (invoice?.status.void) disabledActions.push('final', 'edit');
-  if (!editable || tab !== 0) disabledActions.push('save');
+  if (!editable || tab !== 0 || printingOnly) disabledActions.push('save');
 
   return (
     <PageShell breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Local Invoices Entry and Printing (Air-Import)']} title="Local Invoice Entry (Air-Import)">
@@ -113,11 +119,9 @@ export function AirImportLocalInvoicePage() {
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final', 'void']}
-        disabledActions={disabledActions}
-        onAction={handleAction}
-      />
+      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction} /><AirImportLocalInvoiceGrid invoices={airImportInvoiceRepo.list()} onOpen={loadInvoice} onEdit={(item) => { setInvoice(item); setEditable(true); setTab(0); setPrintingOnly(false); setShowList(false); }} onDelete={(item) => { airImportInvoiceRepo.remove(item.id); setMessage({ severity: 'success', text: 'Invoice deleted.' }); }} onPrint={(item) => { setInvoice(item); setEditable(false); setTab(0); setPrintingOnly(true); setShowList(false); }} /></> : <>
+        <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}><Button startIcon={<ArrowBackIcon />} onClick={() => { setPrintingOnly(false); setShowList(true); }}>Back to List</Button></Stack>
+        {!printingOnly && <TransactionToolbar actions={['save', 'final', 'void']} disabledActions={disabledActions} onAction={handleAction} />}
 
       {invoice && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -128,22 +132,15 @@ export function AirImportLocalInvoicePage() {
         </Stack>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Entry" />
-        <Tab label="Detail/Search" />
-        <Tab label="Printing" />
+      <Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab label={printingOnly ? 'Printing' : 'Entry'} />
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailSearchTab onOpenInvoice={loadInvoice} />
-      ) : !invoice ? (
-        <Alert severity="info">Click NEW to create an invoice, or use the Detail/Search tab to find an existing one.</Alert>
+      {!invoice ? (
+        <Alert severity="info">Click New to create an invoice.</Alert>
       ) : (
-        <>
-          {tab === 0 && <EntryTab invoice={invoice} editable={editable} onChange={setInvoice} />}
-          {tab === 2 && <PrintingTab invoice={invoice} />}
-        </>
-      )}
+        printingOnly ? <PrintingTab invoice={invoice} /> : <EntryTab invoice={invoice} editable={editable} onChange={setInvoice} />
+      )}</>}
     </PageShell>
   );
 }

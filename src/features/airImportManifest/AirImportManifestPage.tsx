@@ -4,25 +4,32 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { AirImportManifest } from '../../domain/airImportManifest';
 import { createEmptyAirImportManifest } from '../../domain/airImportManifestFactory';
-import { airImportManifestRepo } from '../../data/airImportManifestService';
+import { airImportManifestRepo, ensureAirImportManifestDemo } from '../../data/airImportManifestService';
 import { ManifestEntryForm } from './ManifestEntryForm';
-import { DetailSearchTab } from './DetailSearchTab';
 import { PrintingTab } from './PrintingTab';
+import { AirImportManifestGrid } from './AirImportManifestGrid';
 
 export function AirImportManifestPage() {
+  ensureAirImportManifestDemo();
   const [manifest, setManifest] = useState<AirImportManifest | null>(null);
   const [editable, setEditable] = useState(false);
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [printingOnly, setPrintingOnly] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
   const loadManifest = (m: AirImportManifest) => {
     setManifest(m);
     setEditable(false);
     setTab(0);
+    setPrintingOnly(false);
+    setShowList(false);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -32,6 +39,8 @@ export function AirImportManifestPage() {
         setManifest(draft);
         setEditable(true);
         setTab(0);
+        setPrintingOnly(false);
+        setShowList(false);
         setMessage(null);
         break;
       }
@@ -46,9 +55,6 @@ export function AirImportManifestPage() {
         setEditable(true);
         break;
       }
-      case 'search':
-        setTab(1);
-        break;
       default:
         break;
     }
@@ -67,7 +73,7 @@ export function AirImportManifestPage() {
 
   const disabledActions: ToolbarAction[] = [];
   if (!manifest) disabledActions.push('edit');
-  if (!editable || tab !== 0) disabledActions.push('save');
+  if (!editable || tab !== 0 || printingOnly) disabledActions.push('save');
 
   return (
     <PageShell breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Manifest Inbond Shipments (Air-Import)']} title="Manifest Inbond Shipments (Import-Air)">
@@ -77,11 +83,23 @@ export function AirImportManifestPage() {
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'save', 'edit']}
-        disabledActions={disabledActions}
-        onAction={handleAction}
-      />
+      {showList ? (
+        <>
+          <TransactionToolbar actions={['new']} onAction={handleAction} />
+          <AirImportManifestGrid
+            manifests={airImportManifestRepo.list()}
+            onOpen={loadManifest}
+            onEdit={(item) => { setManifest(item); setEditable(true); setTab(0); setPrintingOnly(false); setShowList(false); }}
+            onDelete={(item) => { airImportManifestRepo.remove(item.id); setMessage({ severity: 'success', text: 'Manifest deleted.' }); }}
+            onPrint={(item) => { setManifest(item); setEditable(false); setTab(0); setPrintingOnly(true); setShowList(false); }}
+          />
+        </>
+      ) : (
+        <>
+          <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+            <Button startIcon={<ArrowBackIcon />} onClick={() => { setPrintingOnly(false); setShowList(true); }}>Back to List</Button>
+          </Stack>
+          {!printingOnly && <TransactionToolbar actions={['save']} disabledActions={disabledActions} onAction={handleAction} />}
 
       {manifest && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -91,20 +109,15 @@ export function AirImportManifestPage() {
         </Stack>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Entry" />
-        <Tab label="Detail/Search" />
-        <Tab label="Printing" />
+      <Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab label={printingOnly ? 'Printing' : 'Entry'} />
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailSearchTab onOpenManifest={loadManifest} />
-      ) : !manifest ? (
-        <Alert severity="info">Click NEW to create a manifest, or use the Detail/Search tab to find an existing one.</Alert>
+      {!manifest ? (
+        <Alert severity="info">Click New to create a manifest.</Alert>
       ) : (
-        <>
-          {tab === 0 && <ManifestEntryForm manifest={manifest} editable={editable} onChange={setManifest} />}
-          {tab === 2 && <PrintingTab manifest={manifest} />}
+        printingOnly ? <PrintingTab manifest={manifest} /> : <ManifestEntryForm manifest={manifest} editable={editable} onChange={setManifest} />
+      )}
         </>
       )}
     </PageShell>

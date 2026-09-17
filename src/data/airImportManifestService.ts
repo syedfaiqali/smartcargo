@@ -1,7 +1,24 @@
 import { AirImportManifest } from '../domain/airImportManifest';
 import { Repository } from './repository';
+import { createEmptyAirImportManifest } from '../domain/airImportManifestFactory';
 
 export const airImportManifestRepo = new Repository<AirImportManifest>('airImportManifest');
+
+/** Adds one visible sample only until a real Import-Air manifest is saved. */
+export function ensureAirImportManifestDemo(): void {
+  if (airImportManifestRepo.list().length) return;
+  const demo = createEmptyAirImportManifest('KHI');
+  demo.jobDate = '2026-09-17';
+  demo.mawbNo = '176-98765432';
+  demo.pcs = 42;
+  demo.cbm = 3.25;
+  demo.grossWeight = 480;
+  demo.chargeWeight = 525;
+  demo.origin = 'DXB';
+  demo.destination = 'KHI';
+  demo.hawbLines = [{ id: 'demo-hawb-1', jobNo: 'KHI-AIM-101', partyCode: 'P-1003', partyName: 'Gulf Cargo Partners', hawbNo: 'HAWB-456789', ppCc: 'PP', pcs: 42, uom: 'PCS', cbm: 3.25, grossWeight: 480, chargeWeight: 525, indexNo: '1', subIndexNo: '1' }];
+  airImportManifestRepo.save(demo);
+}
 
 export interface AirImportManifestFilter {
   branches?: string[];

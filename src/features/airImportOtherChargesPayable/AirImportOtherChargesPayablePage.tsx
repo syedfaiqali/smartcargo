@@ -10,13 +10,14 @@ import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { AirImportOtherChargesPayable } from '../../domain/airImportOtherChargesPayable';
 import { createEmptyAirImportOtherChargesPayable } from '../../domain/airImportOtherChargesPayableFactory';
-import { airImportPayableRepo, nextAirImportCreditNoteNo } from '../../data/airImportOtherChargesPayableService';
+import { airImportPayableRepo, nextAirImportCreditNoteNo, ensureAirImportPayableDemo } from '../../data/airImportOtherChargesPayableService';
 import { recomputePayableTotals } from './payableCalculations';
 import { AirImportPayableEntryForm } from './AirImportPayableEntryForm';
 import { AirImportPayableGrid } from './AirImportPayableGrid';
 import { AirImportPayablePrintingTab } from './AirImportPayablePrintingTab';
 
 export function AirImportOtherChargesPayablePage() {
+  ensureAirImportPayableDemo();
   const [payable, setPayable] = useState<AirImportOtherChargesPayable | null>(null);
   const [editable, setEditable] = useState(false);
   const [showList, setShowList] = useState(true);
@@ -145,7 +146,7 @@ export function AirImportOtherChargesPayablePage() {
         </>
       ) : (
         <>
-          {!isPrintingView && <TransactionToolbar actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
+          {!isPrintingView && <TransactionToolbar actions={['save', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
 
       {payable && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>

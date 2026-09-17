@@ -1,8 +1,20 @@
 import { AirImportOtherChargesPayable } from '../domain/airImportOtherChargesPayable';
 import { Repository } from './repository';
 import { airImportJobRepo } from './airImportJobService';
+import { createEmptyAirImportOtherChargesPayable } from '../domain/airImportOtherChargesPayableFactory';
 
 export const airImportPayableRepo = new Repository<AirImportOtherChargesPayable>('airImportOtherChargesPayable');
+
+/** Adds one sample payable only while the Air-Import payable grid is empty. */
+export function ensureAirImportPayableDemo(): void {
+  if (airImportPayableRepo.list().length) return;
+  const demo = createEmptyAirImportOtherChargesPayable('KHI');
+  demo.creditNoteNo = 'KHI-AICP-101'; demo.date = '2026-09-17'; demo.payableType = 'FREIGHT';
+  demo.partyCode = 'P-1003'; demo.partyName = 'Gulf Cargo Partners'; demo.mJobNo = 'KHI-AI-101'; demo.jobYear = 2026;
+  demo.billNo = 'BILL-7788'; demo.billDate = '2026-09-16'; demo.grandTotal = 1600; demo.totalCharges = 222385;
+  demo.chargeLines[0] = { ...demo.chargeLines[0], qty: 1, rate: 1600, fAmount: 1600, pkrAmount: 222385 };
+  airImportPayableRepo.save(demo);
+}
 
 let payableSequence = 100;
 

@@ -39,6 +39,8 @@ export interface SeaAgentExpenseLine {
 export interface SeaAutoCalcCostLine {
   id: string;
   jobNo: string;
+  /** Compatibility alias used by the operational master-job grid. */
+  mawbJobNo?: string;
   hblNo: string;
   pcs: number;
   grsWeight: number;
