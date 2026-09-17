@@ -4,25 +4,32 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { AirImportJob } from '../../domain/airImportJob';
 import { createEmptyAirImportJob } from '../../domain/airImportJobFactory';
-import { airImportJobRepo, nextAirImportJobNo, voidAirImportJob } from '../../data/airImportJobService';
+import { airImportJobRepo, nextAirImportJobNo, voidAirImportJob, ensureAirImportJobDemo } from '../../data/airImportJobService';
 import { JobEntryForm } from './JobEntryForm';
-import { DetailSearchTab } from './DetailSearchTab';
 import { PrintingTab } from './PrintingTab';
+import { AirImportJobGrid } from './AirImportJobGrid';
 
 export function AirImportJobPage() {
+  ensureAirImportJobDemo();
   const [job, setJob] = useState<AirImportJob | null>(null);
   const [editable, setEditable] = useState(false);
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [printingOnly, setPrintingOnly] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
   const loadJob = (j: AirImportJob) => {
     setJob(j);
     setEditable(false);
     setTab(0);
+    setPrintingOnly(false);
+    setShowList(false);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -33,6 +40,8 @@ export function AirImportJobPage() {
         setJob(draft);
         setEditable(true);
         setTab(0);
+        setPrintingOnly(false);
+        setShowList(false);
         setMessage(null);
         break;
       }
@@ -95,9 +104,6 @@ export function AirImportJobPage() {
         setMessage({ severity: 'success', text: `Copied into new draft job ${draft.jobNo}.` });
         break;
       }
-      case 'search':
-        setTab(1);
-        break;
       default:
         break;
     }
@@ -118,7 +124,7 @@ export function AirImportJobPage() {
   if (!job) disabledActions.push('edit', 'delete', 'final', 'void', 'copy');
   if (job?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (job?.status.void) disabledActions.push('final', 'edit');
-  if (!editable || tab !== 0) disabledActions.push('save');
+  if (!editable || tab !== 0 || printingOnly) disabledActions.push('save');
 
   return (
     <PageShell breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Inbond Shipments Entry and Documents Printing (Air-Import)']} title="Inbond Shipments (Air - Import)">
@@ -128,11 +134,21 @@ export function AirImportJobPage() {
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final', 'void', 'copy']}
-        disabledActions={disabledActions}
-        onAction={handleAction}
-      />
+      {showList ? (
+        <>
+          <TransactionToolbar actions={['new']} onAction={handleAction} />
+          <AirImportJobGrid
+            jobs={airImportJobRepo.list()}
+            onOpen={loadJob}
+            onEdit={(item) => { setJob(item); setEditable(true); setTab(0); setPrintingOnly(false); setShowList(false); }}
+            onDelete={(item) => { airImportJobRepo.remove(item.id); setMessage({ severity: 'success', text: 'Job deleted.' }); }}
+            onPrint={(item) => { setJob(item); setEditable(false); setTab(0); setPrintingOnly(true); setShowList(false); }}
+          />
+        </>
+      ) : (
+        <>
+          <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}><Button startIcon={<ArrowBackIcon />} onClick={() => { setPrintingOnly(false); setShowList(true); }}>Back to List</Button></Stack>
+          {!printingOnly && <TransactionToolbar actions={['save', 'final', 'void', 'copy']} disabledActions={disabledActions} onAction={handleAction} />}
 
       {job && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -143,20 +159,15 @@ export function AirImportJobPage() {
         </Stack>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Entry" />
-        <Tab label="Detail/Search" />
-        <Tab label="Printing" />
+      <Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab label={printingOnly ? 'Printing' : 'Entry'} />
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailSearchTab onOpenJob={loadJob} />
-      ) : !job ? (
-        <Alert severity="info">Click NEW to create a job, or use the Detail/Search tab to find an existing one.</Alert>
+      {!job ? (
+        <Alert severity="info">Click New to create a job.</Alert>
       ) : (
-        <>
-          {tab === 0 && <JobEntryForm job={job} editable={editable} onChange={setJob} />}
-          {tab === 2 && <PrintingTab job={job} />}
+        printingOnly ? <PrintingTab job={job} /> : <JobEntryForm job={job} editable={editable} onChange={setJob} />
+      )}
         </>
       )}
     </PageShell>

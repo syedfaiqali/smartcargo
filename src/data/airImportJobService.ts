@@ -1,7 +1,20 @@
 import { AirImportJob } from '../domain/airImportJob';
 import { Repository } from './repository';
+import { createEmptyAirImportJob } from '../domain/airImportJobFactory';
 
 export const airImportJobRepo = new Repository<AirImportJob>('airImportJobs');
+
+/** Adds one sample job only while the Air-Import Inbond list is empty. */
+export function ensureAirImportJobDemo(): void {
+  if (airImportJobRepo.list().length) return;
+  const demo = createEmptyAirImportJob('KHI');
+  demo.jobNo = 'KHI-AI-101'; demo.jobDate = '2026-09-17';
+  demo.mawbNo = '176-98765432'; demo.hawbNo = 'HAWB-456789';
+  demo.partyCode = 'P-1003'; demo.partyName = 'Gulf Cargo Partners'; demo.spoCode = 'SPO-01';
+  demo.hsCode = '8471.30'; demo.origin = 'DXB'; demo.destination = 'KHI';
+  demo.hawbPcs = 42; demo.hawbChargeWeight = 525; demo.mawbPcs = 42; demo.mawbChargeWeight = 525;
+  airImportJobRepo.save(demo);
+}
 
 let sequence = 100;
 
