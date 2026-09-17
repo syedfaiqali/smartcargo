@@ -4,16 +4,18 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { AirImportForeignAgentInvoice, AirImportForeignAgentInvoiceVariant } from '../../domain/airImportForeignAgentInvoice';
 import { createEmptyAirImportForeignAgentInvoice } from '../../domain/airImportForeignAgentInvoiceFactory';
-import { airImportAgentInvoiceRepo, nextAirImportAgentDocumentNo, voidAirImportAgentInvoice } from '../../data/airImportForeignAgentInvoiceService';
+import { airImportAgentInvoiceRepo, nextAirImportAgentDocumentNo, voidAirImportAgentInvoice, ensureAirImportAgentInvoiceDemo } from '../../data/airImportForeignAgentInvoiceService';
 import { recomputeAgentInvoiceTotals } from './agentInvoiceCalculations';
 import { AIR_IMPORT_VARIANT_CONFIG } from './variantConfig';
 import { MainScreenTab } from './MainScreenTab';
-import { DetailSearchTab } from './DetailSearchTab';
 import { PrintingTab } from './PrintingTab';
+import { AirImportAgentInvoiceGrid } from './AirImportAgentInvoiceGrid';
 
 interface AirImportForeignAgentInvoicePageProps {
   variant: AirImportForeignAgentInvoiceVariant;
@@ -21,8 +23,11 @@ interface AirImportForeignAgentInvoicePageProps {
 }
 
 export function AirImportForeignAgentInvoicePage({ variant, breadcrumbs }: AirImportForeignAgentInvoicePageProps) {
+  ensureAirImportAgentInvoiceDemo(variant);
   const config = AIR_IMPORT_VARIANT_CONFIG[variant];
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [printingOnly, setPrintingOnly] = useState(false);
   const [invoice, setInvoice] = useState<AirImportForeignAgentInvoice | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
@@ -31,6 +36,8 @@ export function AirImportForeignAgentInvoicePage({ variant, breadcrumbs }: AirIm
     setInvoice(inv);
     setEditable(false);
     setTab(0);
+    setPrintingOnly(false);
+    setShowList(false);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -41,6 +48,8 @@ export function AirImportForeignAgentInvoicePage({ variant, breadcrumbs }: AirIm
         setInvoice(draft);
         setEditable(true);
         setTab(0);
+        setPrintingOnly(false);
+        setShowList(false);
         setMessage(null);
         break;
       }
@@ -87,9 +96,6 @@ export function AirImportForeignAgentInvoicePage({ variant, breadcrumbs }: AirIm
         }
         break;
       }
-      case 'search':
-        setTab(1);
-        break;
       default:
         break;
     }
@@ -110,7 +116,7 @@ export function AirImportForeignAgentInvoicePage({ variant, breadcrumbs }: AirIm
   if (!invoice) disabledActions.push('edit', 'delete', 'final', 'void');
   if (invoice?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (invoice?.status.void) disabledActions.push('final', 'edit');
-  if (!editable || tab !== 0) disabledActions.push('save');
+  if (!editable || tab !== 0 || printingOnly) disabledActions.push('save');
 
   return (
     <PageShell breadcrumbs={breadcrumbs} title={config.title}>
@@ -120,11 +126,9 @@ export function AirImportForeignAgentInvoicePage({ variant, breadcrumbs }: AirIm
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final', 'void']}
-        disabledActions={disabledActions}
-        onAction={handleAction}
-      />
+      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction} /><AirImportAgentInvoiceGrid invoices={airImportAgentInvoiceRepo.find((item) => item.variant === variant)} onOpen={loadInvoice} onEdit={(item) => { setInvoice(item); setEditable(true); setTab(0); setPrintingOnly(false); setShowList(false); }} onDelete={(item) => { airImportAgentInvoiceRepo.remove(item.id); setMessage({ severity: 'success', text: 'Record deleted.' }); }} onPrint={(item) => { setInvoice(item); setEditable(false); setTab(0); setPrintingOnly(true); setShowList(false); }} /></> : <>
+        <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}><Button startIcon={<ArrowBackIcon />} onClick={() => { setPrintingOnly(false); setShowList(true); }}>Back to List</Button></Stack>
+        {!printingOnly && <TransactionToolbar actions={['save', 'final', 'void']} disabledActions={disabledActions} onAction={handleAction} />}
 
       {invoice && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -135,22 +139,15 @@ export function AirImportForeignAgentInvoicePage({ variant, breadcrumbs }: AirIm
         </Stack>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Main Screen" />
-        <Tab label="Detail/Search" />
-        <Tab label="Printing" />
+      <Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab label={printingOnly ? 'Printing' : 'Main Screen'} />
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailSearchTab variant={variant} config={config} onOpenInvoice={loadInvoice} />
-      ) : !invoice ? (
-        <Alert severity="info">Click New to create a record, or use the Detail/Search tab to find an existing one.</Alert>
+      {!invoice ? (
+        <Alert severity="info">Click New to create a record.</Alert>
       ) : (
-        <>
-          {tab === 0 && <MainScreenTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />}
-          {tab === 2 && <PrintingTab invoice={invoice} config={config} />}
-        </>
-      )}
+        printingOnly ? <PrintingTab invoice={invoice} config={config} /> : <MainScreenTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />
+      )}</>}
     </PageShell>
   );
 }

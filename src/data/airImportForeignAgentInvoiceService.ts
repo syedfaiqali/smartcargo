@@ -2,8 +2,19 @@ import { AirImportForeignAgentInvoice, AirImportForeignAgentInvoiceVariant } fro
 import { Repository } from './repository';
 import { airImportJobRepo } from './airImportJobService';
 import { AIR_IMPORT_VARIANT_CONFIG } from '../features/airImportForeignAgentInvoice/variantConfig';
+import { createEmptyAirImportForeignAgentInvoice } from '../domain/airImportForeignAgentInvoiceFactory';
 
 export const airImportAgentInvoiceRepo = new Repository<AirImportForeignAgentInvoice>('airImportForeignAgentInvoices');
+
+/** Adds one sample document for an empty Air-Import Foreign Agent invoice type. */
+export function ensureAirImportAgentInvoiceDemo(variant: AirImportForeignAgentInvoiceVariant): void {
+  if (airImportAgentInvoiceRepo.find((item) => item.variant === variant).length) return;
+  const demo = createEmptyAirImportForeignAgentInvoice(variant, 'KHI');
+  demo.documentNo = `KHI-${AIR_IMPORT_VARIANT_CONFIG[variant].numberingPrefix}-101`; demo.documentDate = '2026-09-17';
+  demo.jobNo = 'KHI-AI-101'; demo.mawbNo = '176-98765432'; demo.fAgentCode = 'FA-201'; demo.fAgentName = 'Gulf Cargo Partners';
+  demo.origin = 'DXB'; demo.destination = 'KHI'; demo.currencyCode = 'USD'; demo.exchangeRate = 278; demo.totalAmount = 1600;
+  airImportAgentInvoiceRepo.save(demo);
+}
 
 let sequence = 100;
 
