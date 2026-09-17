@@ -2,8 +2,27 @@ import { SeaForeignAgentInvoice, SeaForeignAgentInvoiceVariant } from '../domain
 import { Repository } from './repository';
 import { seaExportJobRepo } from './seaExportJobService';
 import { SEA_VARIANT_CONFIG } from '../features/seaForeignAgentInvoice/variantConfig';
+import { createEmptySeaForeignAgentInvoice } from '../domain/seaForeignAgentInvoiceFactory';
 
 export const seaForeignAgentInvoiceRepo = new Repository<SeaForeignAgentInvoice>('seaForeignAgentInvoices');
+
+/** Adds one visual sample only when this document type has no saved records yet. */
+export function ensureSeaAgentInvoiceDemo(variant: SeaForeignAgentInvoiceVariant): void {
+  if (seaForeignAgentInvoiceRepo.find((item) => item.variant === variant).length) return;
+  const demo = createEmptySeaForeignAgentInvoice(variant, 'KHI');
+  demo.documentNo = `KHI-${SEA_VARIANT_CONFIG[variant].numberingPrefix}-101`;
+  demo.documentDate = '2026-09-17';
+  demo.jobNo = 'KHI-SEA-101';
+  demo.mblNo = 'MBL-8890021';
+  demo.fAgentCode = 'FA-201';
+  demo.fAgentName = 'Gulf Cargo Partners LLC';
+  demo.origin = 'PKKHI';
+  demo.destination = 'AEJEA';
+  demo.currencyCode = 'USD';
+  demo.totalSelling = 1600;
+  demo.totalInvoiceAmount = 1650000;
+  seaForeignAgentInvoiceRepo.save(demo);
+}
 
 let sequence = 100;
 
