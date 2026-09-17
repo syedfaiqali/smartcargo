@@ -49,6 +49,11 @@ import { SeaRefundPage } from './features/seaRefundFromShippingLines/SeaRefundPa
 import { SeaLocalInvoicePage } from './features/seaLocalInvoice/SeaLocalInvoicePage';
 import { SeaLoadingProgramPage } from './features/seaLoadingProgram/SeaLoadingProgramPage';
 import { SeaForeignAgentInvoicePage } from './features/seaForeignAgentInvoice/SeaForeignAgentInvoicePage';
+import { AirImportManifestPage } from './features/airImportManifest/AirImportManifestPage';
+import { AirImportJobPage } from './features/airImportJob/AirImportJobPage';
+import { AirImportLocalInvoicePage } from './features/airImportLocalInvoice/AirImportLocalInvoicePage';
+import { AirImportOtherChargesPayablePage } from './features/airImportOtherChargesPayable/AirImportOtherChargesPayablePage';
+import { AirImportForeignAgentInvoicePage } from './features/airImportForeignAgentInvoice/AirImportForeignAgentInvoicePage';
 
 function App() {
   return (
@@ -199,73 +204,53 @@ function App() {
 
             <Route
               path="/freight/air-import/manifest-inbond-shipments"
-              element={
-                <ComingSoonPage
-                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Manifest Inbond Shipments (Air-Import)']}
-                  title="Manifest Inbond Shipments (Air-Import)"
-                />
-              }
+              element={<AirImportManifestPage />}
             />
             <Route
               path="/freight/air-import/inbond-shipments"
-              element={
-                <ComingSoonPage
-                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Inbond Shipments Entry and Documents Printing (Air-Import)']}
-                  title="Inbond Shipments Entry and Documents Printing (Air-Import)"
-                />
-              }
+              element={<AirImportJobPage />}
             />
             <Route
               path="/freight/air-import/local-invoices"
-              element={
-                <ComingSoonPage
-                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Local Invoices Entry and Printing (Air-Import)']}
-                  title="Local Invoices Entry and Printing (Air-Import)"
-                />
-              }
+              element={<AirImportLocalInvoicePage />}
             />
             <Route
               path="/freight/air-import/other-charges-payable"
-              element={
-                <ComingSoonPage
-                  breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Other Charges Payable (Air-Import)']}
-                  title="Other Charges Payable (Air-Import)"
-                />
-              }
+              element={<AirImportOtherChargesPayablePage />}
             />
             <Route
               path="/freight/air-import/invoices-to-foreign-agents"
               element={
-                <ComingSoonPage
+                <AirImportForeignAgentInvoicePage
+                  variant="INVOICE_TO"
                   breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Invoices To Foreign Agents (Air-Import)']}
-                  title="Invoices To Foreign Agents (Air-Import)"
                 />
               }
             />
             <Route
               path="/freight/air-import/credit-notes-to-foreign-agents"
               element={
-                <ComingSoonPage
+                <AirImportForeignAgentInvoicePage
+                  variant="CREDIT_NOTE_TO"
                   breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Credit Notes To Foreign Agents (Air-Import)']}
-                  title="Credit Notes To Foreign Agents (Air-Import)"
                 />
               }
             />
             <Route
               path="/freight/air-import/invoices-received-from-foreign-agents"
               element={
-                <ComingSoonPage
+                <AirImportForeignAgentInvoicePage
+                  variant="INVOICE_RECEIVED"
                   breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Invoices/Dr. Notes Received From Foreign Agents (Air-Import)']}
-                  title="Invoices/Dr. Notes Received From Foreign Agents (Air-Import)"
                 />
               }
             />
             <Route
               path="/freight/air-import/credit-notes-received-from-foreign-agents"
               element={
-                <ComingSoonPage
+                <AirImportForeignAgentInvoicePage
+                  variant="CREDIT_NOTE_RECEIVED"
                   breadcrumbs={['Freight', 'Transactions Menu (Air Import)', 'Credit Notes Received From Foreign Agents (Air-Import)']}
-                  title="Credit Notes Received From Foreign Agents (Air-Import)"
                 />
               }
             />
