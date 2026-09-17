@@ -37,7 +37,7 @@ export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [expanded, setExpanded] = useState<string | null>('freight');
-  const [openGroupByModule, setOpenGroupByModule] = useState<Record<string, string>>({ freight: 'Initial Setup' });
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ 'freight:Initial Setup': true });
 
   const isFreightActive = location.pathname.startsWith('/freight');
 
@@ -129,18 +129,13 @@ export function Sidebar() {
                 <Collapse in={isOpen} timeout="auto" unmountOnExit>
                   <List dense disablePadding>
                     {mod.submenu.map((group) => {
+                      const groupKey = `${mod.key}:${group.label}`;
                       const containsActiveScreen = group.items.some((item) => item.path === location.pathname);
-                      const openGroup = openGroupByModule[mod.key];
-                      const isGroupOpen = openGroup === undefined ? containsActiveScreen : openGroup === group.label;
+                      const isGroupOpen = expandedGroups[groupKey] ?? containsActiveScreen;
                       return (
                         <Box key={group.label} sx={{ mb: 0.25 }}>
                           <ListItemButton
-                            onClick={() =>
-                              setOpenGroupByModule((current) => ({
-                                ...current,
-                                [mod.key]: isGroupOpen ? '' : group.label,
-                              }))
-                            }
+                            onClick={() => setExpandedGroups((current) => ({ ...current, [groupKey]: !isGroupOpen }))}
                             sx={{ ...navItemSx, ml: 1, py: 0.7, color: themeColors.sidebarText }}
                           >
                             <ListItemText
