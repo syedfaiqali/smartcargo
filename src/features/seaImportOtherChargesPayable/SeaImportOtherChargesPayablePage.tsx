@@ -10,13 +10,14 @@ import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { SeaImportOtherChargesPayable } from '../../domain/seaImportOtherChargesPayable';
 import { createEmptySeaImportOtherChargesPayable } from '../../domain/seaImportOtherChargesPayableFactory';
-import { seaImportPayableRepo, nextSeaImportCreditNoteNo } from '../../data/seaImportOtherChargesPayableService';
+import { seaImportPayableRepo, nextSeaImportCreditNoteNo, ensureSeaImportPayableDemo } from '../../data/seaImportOtherChargesPayableService';
 import { recomputePayableTotals } from './payableCalculations';
 import { SeaImportPayableEntryForm } from './SeaImportPayableEntryForm';
 import { SeaImportPayableGrid } from './SeaImportPayableGrid';
 import { SeaImportPayablePrintingTab } from './SeaImportPayablePrintingTab';
 
 export function SeaImportOtherChargesPayablePage() {
+  ensureSeaImportPayableDemo();
   const [payable, setPayable] = useState<SeaImportOtherChargesPayable | null>(null);
   const [editable, setEditable] = useState(false);
   const [showList, setShowList] = useState(true);
@@ -145,7 +146,13 @@ export function SeaImportOtherChargesPayablePage() {
         </>
       ) : (
         <>
-          {!isPrintingView && <TransactionToolbar actions={['new', 'edit', 'delete', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
+          {!isPrintingView && (
+            <TransactionToolbar
+              actions={editable ? ['delete', 'final', 'save'] : ['new', 'edit', 'delete', 'final']}
+              disabledActions={disabledActions}
+              onAction={handleAction}
+            />
+          )}
 
       {payable && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>

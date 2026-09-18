@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -9,6 +10,9 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import TablePagination from '@mui/material/TablePagination';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -31,8 +35,41 @@ function HeaderCell({ children, sortable = true, ...props }: React.ComponentProp
   );
 }
 
+function GridFilter({ value, onChange, placeholder, type = 'text', options }: { value: string; onChange: (value: string) => void; placeholder: string; type?: 'text' | 'date' | 'number'; options?: string[] }) {
+  if (options) {
+    return (
+      <TextField select size="small" value={value} onChange={(event) => onChange(event.target.value)} SelectProps={{ displayEmpty: true }} sx={{ minWidth: 84, '& .MuiSelect-select': { fontSize: 12, py: 0.55 } }}>
+        <MenuItem value=""><em>All</em></MenuItem>
+        {options.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+      </TextField>
+    );
+  }
+  return <TextField size="small" type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} sx={{ minWidth: 78, '& .MuiInputBase-input': { fontSize: 12, py: 0.55 } }} />;
+}
+
 export function SeaImportRefundGrid({ refunds, onOpen, onEdit, onDelete, onPrint }: SeaImportRefundGridProps) {
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const rows = [...refunds].sort((a, b) => b.date.localeCompare(a.date) || b.documentNo.localeCompare(a.documentNo));
+  const uniqueValues = (values: string[]) => Array.from(new Set(values.filter(Boolean))).sort();
+  const branches = uniqueValues(rows.map((r) => r.branch));
+  const jobNos = uniqueValues(rows.map((r) => r.jobNo));
+  const mblNos = uniqueValues(rows.map((r) => r.mblNo));
+  const hblNos = uniqueValues(rows.map((r) => r.hblNo));
+  const sLineAgents = uniqueValues(rows.map((r) => r.sLineAgent));
+  const currencies = uniqueValues(rows.map((r) => r.currency));
+
+  const setFilter = (key: string, value: string) => { setFilters((current) => ({ ...current, [key]: value })); setPage(0); };
+  const matches = (value: string | number, key: string) => String(value).toLowerCase().includes((filters[key] ?? '').toLowerCase());
+  const filteredRows = rows.filter((r) =>
+    matches(r.documentNo, 'documentNo') && matches(r.date, 'date') && matches(r.branch, 'branch') &&
+    matches(r.jobNo, 'jobNo') && matches(r.mblNo, 'mblNo') && matches(r.hblNo, 'hblNo') &&
+    matches(r.sLineAgent, 'sLineAgent') && matches(r.currency, 'currency') &&
+    matches(r.status.final ? 'Y' : 'N', 'final') && matches('N', 'posted')
+  );
+  const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <TableContainer component={Paper} variant="outlined">
@@ -67,9 +104,24 @@ export function SeaImportRefundGrid({ refunds, onOpen, onEdit, onDelete, onPrint
             <HeaderCell>Final</HeaderCell>
             <HeaderCell>Posted</HeaderCell>
           </TableRow>
+          <TableRow>
+            <TableCell />
+            <TableCell><GridFilter value={filters.documentNo ?? ''} onChange={(v) => setFilter('documentNo', v)} placeholder="No." /></TableCell>
+            <TableCell><GridFilter value={filters.date ?? ''} onChange={(v) => setFilter('date', v)} placeholder="Date" type="date" /></TableCell>
+            <TableCell><GridFilter value={filters.branch ?? ''} onChange={(v) => setFilter('branch', v)} placeholder="Branch" options={branches} /></TableCell>
+            <TableCell><GridFilter value={filters.jobNo ?? ''} onChange={(v) => setFilter('jobNo', v)} placeholder="Job No." options={jobNos} /></TableCell>
+            <TableCell><GridFilter value={filters.mblNo ?? ''} onChange={(v) => setFilter('mblNo', v)} placeholder="Mbl No." options={mblNos} /></TableCell>
+            <TableCell><GridFilter value={filters.hblNo ?? ''} onChange={(v) => setFilter('hblNo', v)} placeholder="Hbl No." options={hblNos} /></TableCell>
+            <TableCell><GridFilter value={filters.sLineAgent ?? ''} onChange={(v) => setFilter('sLineAgent', v)} placeholder="Agent" options={sLineAgents} /></TableCell>
+            <TableCell><GridFilter value={filters.currency ?? ''} onChange={(v) => setFilter('currency', v)} placeholder="Curr." options={currencies} /></TableCell>
+            <TableCell />
+            <TableCell />
+            <TableCell><GridFilter value={filters.final ?? ''} onChange={(v) => setFilter('final', v)} placeholder="Final" options={['Y', 'N']} /></TableCell>
+            <TableCell><GridFilter value={filters.posted ?? ''} onChange={(v) => setFilter('posted', v)} placeholder="Posted" options={['Y', 'N']} /></TableCell>
+          </TableRow>
         </TableHead>
         <TableBody>
-          {rows.length === 0 ? (
+          {filteredRows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={13} align="center" sx={{ py: 3 }}>
                 <Typography variant="body2" color="text.secondary">
@@ -78,7 +130,7 @@ export function SeaImportRefundGrid({ refunds, onOpen, onEdit, onDelete, onPrint
               </TableCell>
             </TableRow>
           ) : (
-            rows.map((refund) => (
+            paginatedRows.map((refund) => (
               <TableRow key={refund.id} hover>
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                   <Tooltip title="Open"><IconButton size="small" color="primary" onClick={() => onOpen(refund)}><VisibilityOutlinedIcon fontSize="small" /></IconButton></Tooltip>
@@ -103,6 +155,16 @@ export function SeaImportRefundGrid({ refunds, onOpen, onEdit, onDelete, onPrint
           )}
         </TableBody>
       </Table>
+      <TablePagination
+        component="div"
+        count={filteredRows.length}
+        page={page}
+        onPageChange={(_, nextPage) => setPage(nextPage)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        labelRowsPerPage="Rows per page"
+      />
     </TableContainer>
   );
 }
