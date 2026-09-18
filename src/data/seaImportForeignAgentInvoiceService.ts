@@ -2,8 +2,10 @@ import { SeaImportForeignAgentInvoice, SeaImportForeignAgentInvoiceVariant } fro
 import { Repository } from './repository';
 import { seaImportJobRepo } from './seaImportJobService';
 import { SEA_IMPORT_VARIANT_CONFIG } from '../features/seaImportForeignAgentInvoice/variantConfig';
+import { createEmptySeaImportForeignAgentInvoice } from '../domain/seaImportForeignAgentInvoiceFactory';
 
 export const seaImportAgentInvoiceRepo = new Repository<SeaImportForeignAgentInvoice>('seaImportForeignAgentInvoices');
+export function ensureSeaImportAgentInvoiceDemo(variant:SeaImportForeignAgentInvoiceVariant):void{if(seaImportAgentInvoiceRepo.find(i=>i.variant===variant).length)return;const d=createEmptySeaImportForeignAgentInvoice(variant,'KHI');d.documentNo=`KHI-${SEA_IMPORT_VARIANT_CONFIG[variant].numberingPrefix}-101`;d.documentDate='2026-09-18';d.jobNo='KHI-SI-101';d.blNo='MBL-8890021';d.fAgentCode='FA-201';d.fAgentName='Gulf Cargo Partners';d.origin='DXB';d.destination='KHI';d.currencyCode='USD';d.exchangeRate=278;d.totalAmount=1600;seaImportAgentInvoiceRepo.save(d)}
 
 let sequence = 100;
 

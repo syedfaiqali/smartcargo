@@ -4,16 +4,18 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { SeaImportForeignAgentInvoice, SeaImportForeignAgentInvoiceVariant } from '../../domain/seaImportForeignAgentInvoice';
 import { createEmptySeaImportForeignAgentInvoice } from '../../domain/seaImportForeignAgentInvoiceFactory';
-import { seaImportAgentInvoiceRepo, nextSeaImportAgentDocumentNo, voidSeaImportAgentInvoice } from '../../data/seaImportForeignAgentInvoiceService';
+import { seaImportAgentInvoiceRepo, nextSeaImportAgentDocumentNo, voidSeaImportAgentInvoice, ensureSeaImportAgentInvoiceDemo } from '../../data/seaImportForeignAgentInvoiceService';
 import { recomputeAgentInvoiceTotals } from './agentInvoiceCalculations';
 import { SEA_IMPORT_VARIANT_CONFIG } from './variantConfig';
 import { MainScreenTab } from './MainScreenTab';
-import { DetailSearchTab } from './DetailSearchTab';
 import { PrintingTab } from './PrintingTab';
+import { SeaImportAgentGrid } from './SeaImportAgentGrid';
 
 interface SeaImportForeignAgentInvoicePageProps {
   variant: SeaImportForeignAgentInvoiceVariant;
@@ -21,8 +23,11 @@ interface SeaImportForeignAgentInvoicePageProps {
 }
 
 export function SeaImportForeignAgentInvoicePage({ variant, breadcrumbs }: SeaImportForeignAgentInvoicePageProps) {
+  ensureSeaImportAgentInvoiceDemo(variant);
   const config = SEA_IMPORT_VARIANT_CONFIG[variant];
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [printingOnly, setPrintingOnly] = useState(false);
   const [invoice, setInvoice] = useState<SeaImportForeignAgentInvoice | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
@@ -31,6 +36,8 @@ export function SeaImportForeignAgentInvoicePage({ variant, breadcrumbs }: SeaIm
     setInvoice(inv);
     setEditable(false);
     setTab(0);
+    setShowList(false);
+    setPrintingOnly(false);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -41,6 +48,8 @@ export function SeaImportForeignAgentInvoicePage({ variant, breadcrumbs }: SeaIm
         setInvoice(draft);
         setEditable(true);
         setTab(0);
+        setShowList(false);
+        setPrintingOnly(false);
         setMessage(null);
         break;
       }
@@ -87,9 +96,6 @@ export function SeaImportForeignAgentInvoicePage({ variant, breadcrumbs }: SeaIm
         }
         break;
       }
-      case 'search':
-        setTab(1);
-        break;
       default:
         break;
     }
@@ -110,7 +116,7 @@ export function SeaImportForeignAgentInvoicePage({ variant, breadcrumbs }: SeaIm
   if (!invoice) disabledActions.push('edit', 'delete', 'final', 'void');
   if (invoice?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (invoice?.status.void) disabledActions.push('final', 'edit');
-  if (!editable || tab !== 0) disabledActions.push('save');
+  if (!editable || tab !== 0 || printingOnly) disabledActions.push('save');
 
   return (
     <PageShell breadcrumbs={breadcrumbs} title={config.title}>
@@ -120,11 +126,11 @@ export function SeaImportForeignAgentInvoicePage({ variant, breadcrumbs }: SeaIm
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final', 'void']}
+      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction}/><SeaImportAgentGrid items={seaImportAgentInvoiceRepo.find(i=>i.variant===variant)} onOpen={loadInvoice} onEdit={i=>{setInvoice(i);setEditable(true);setTab(0);setPrintingOnly(false);setShowList(false)}} onDelete={i=>{seaImportAgentInvoiceRepo.remove(i.id);setMessage({severity:'success',text:'Record deleted.'})}} onPrint={i=>{setInvoice(i);setEditable(false);setTab(0);setPrintingOnly(true);setShowList(false)}}/></> : <><Stack direction="row" justifyContent="flex-end" sx={{mb:1}}><Button startIcon={<ArrowBackIcon/>} onClick={()=>{setPrintingOnly(false);setShowList(true)}}>Back to List</Button></Stack>{!printingOnly && <TransactionToolbar
+        actions={['save', 'final', 'void']}
         disabledActions={disabledActions}
         onAction={handleAction}
-      />
+      />}
 
       {invoice && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -133,24 +139,17 @@ export function SeaImportForeignAgentInvoicePage({ variant, breadcrumbs }: SeaIm
           {invoice.status.void && <Chip label="VOID" color="warning" />}
           {editable && <Chip label="EDITING" color="info" variant="outlined" />}
         </Stack>
-      )}
+      )}</>}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Main Screen" />
-        <Tab label="Detail/Search" />
-        <Tab label="Printing" />
+      {!showList && <><Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab label={printingOnly ? 'Printing' : 'Main Screen'} />
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailSearchTab variant={variant} config={config} onOpenInvoice={loadInvoice} />
-      ) : !invoice ? (
-        <Alert severity="info">Click New to create a record, or use the Detail/Search tab to find an existing one.</Alert>
+      {!invoice ? (
+        <Alert severity="info">Click New to create a record.</Alert>
       ) : (
-        <>
-          {tab === 0 && <MainScreenTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />}
-          {tab === 2 && <PrintingTab invoice={invoice} config={config} />}
-        </>
-      )}
+        printingOnly ? <PrintingTab invoice={invoice} config={config} /> : <MainScreenTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />
+      )}</>}
     </PageShell>
   );
 }
