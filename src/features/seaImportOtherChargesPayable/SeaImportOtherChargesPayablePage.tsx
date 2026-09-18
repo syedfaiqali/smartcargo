@@ -145,7 +145,7 @@ export function SeaImportOtherChargesPayablePage() {
         </>
       ) : (
         <>
-          {!isPrintingView && <TransactionToolbar actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
+          {!isPrintingView && <TransactionToolbar actions={['new', 'edit', 'delete', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
 
       {payable && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>

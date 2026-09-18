@@ -145,7 +145,7 @@ export function SeaImportRefundPage() {
         </>
       ) : (
         <>
-          {!isPrintingView && <TransactionToolbar actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
+          {!isPrintingView && <TransactionToolbar actions={['new', 'edit', 'delete', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
 
       {refund && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
