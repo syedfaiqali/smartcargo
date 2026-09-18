@@ -4,26 +4,33 @@ import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { SeaImportJob } from '../../domain/seaImportJob';
 import { createEmptySeaImportJob } from '../../domain/seaImportJobFactory';
-import { seaImportJobRepo, nextSeaImportJobNo, voidSeaImportJob } from '../../data/seaImportJobService';
+import { seaImportJobRepo, nextSeaImportJobNo, voidSeaImportJob, ensureSeaImportJobDemo } from '../../data/seaImportJobService';
 import { JobEntryForm } from './JobEntryForm';
 import { ContainerTab } from './ContainerTab';
-import { DetailSearchTab } from './DetailSearchTab';
 import { PrintingTab } from './PrintingTab';
+import { SeaImportJobGrid } from './SeaImportJobGrid';
 
 export function SeaImportJobPage() {
+  ensureSeaImportJobDemo();
   const [job, setJob] = useState<SeaImportJob | null>(null);
   const [editable, setEditable] = useState(false);
   const [tab, setTab] = useState(0);
+  const [showList, setShowList] = useState(true);
+  const [printingOnly, setPrintingOnly] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
   const loadJob = (j: SeaImportJob) => {
     setJob(j);
     setEditable(false);
     setTab(0);
+    setPrintingOnly(false);
+    setShowList(false);
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -34,6 +41,8 @@ export function SeaImportJobPage() {
         setJob(draft);
         setEditable(true);
         setTab(0);
+        setPrintingOnly(false);
+        setShowList(false);
         setMessage(null);
         break;
       }
@@ -97,9 +106,6 @@ export function SeaImportJobPage() {
         setMessage({ severity: 'success', text: `Copied into new draft job ${draft.jobNo}.` });
         break;
       }
-      case 'search':
-        setTab(1);
-        break;
       default:
         break;
     }
@@ -120,7 +126,7 @@ export function SeaImportJobPage() {
   if (!job) disabledActions.push('edit', 'delete', 'final', 'void', 'copy');
   if (job?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (job?.status.void) disabledActions.push('final', 'edit');
-  if (!editable || tab !== 0) disabledActions.push('save');
+  if (!editable || tab !== 0 || printingOnly) disabledActions.push('save');
 
   return (
     <PageShell breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Inbond Shipment Entry and Documents Printing (Sea-Import)']} title="Inbond Shipments (Import-Sea)">
@@ -130,11 +136,8 @@ export function SeaImportJobPage() {
         </Alert>
       )}
 
-      <TransactionToolbar
-        actions={['search', 'top', 'bottom', 'prev', 'next', 'new', 'edit', 'delete', 'final', 'void', 'copy']}
-        disabledActions={disabledActions}
-        onAction={handleAction}
-      />
+      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction}/><SeaImportJobGrid jobs={seaImportJobRepo.list()} onOpen={loadJob} onEdit={(item)=>{setJob(item);setEditable(true);setTab(0);setPrintingOnly(false);setShowList(false)}} onDelete={(item)=>{seaImportJobRepo.remove(item.id);setMessage({severity:'success',text:'Job deleted.'})}} onPrint={(item)=>{setJob(item);setEditable(false);setTab(0);setPrintingOnly(true);setShowList(false)}}/></> : <>
+      <Stack direction="row" justifyContent="flex-end" sx={{mb:1}}><Button startIcon={<ArrowBackIcon/>} onClick={()=>{setPrintingOnly(false);setShowList(true)}}>Back to List</Button></Stack>{!printingOnly && <TransactionToolbar actions={['save','final','void','copy']} disabledActions={disabledActions} onAction={handleAction}/>} 
 
       {job && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -143,26 +146,19 @@ export function SeaImportJobPage() {
           {job.status.void && <Chip label="VOID" color="warning" />}
           {editable && <Chip label="EDITING" color="info" variant="outlined" />}
         </Stack>
-      )}
+      )}</>}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Entry" />
-        <Tab label="Detail/Search" />
-        <Tab label="Container" />
-        <Tab label="Printing" />
+      {!showList && <>
+      <Tabs value={printingOnly ? 0 : tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        {printingOnly ? <Tab value={0} label="Printing" /> : <><Tab value={0} label="Entry" onClick={() => setTab(0)} /><Tab value={1} label="Container" onClick={() => setTab(1)} /></>}
       </Tabs>
 
-      {tab === 1 ? (
-        <DetailSearchTab onOpenJob={loadJob} />
-      ) : !job ? (
-        <Alert severity="info">Click NEW to create a job, or use the Detail/Search tab to find an existing one.</Alert>
+      {!job ? (
+        <Alert severity="info">Click New to create a job.</Alert>
       ) : (
-        <>
-          {tab === 0 && <JobEntryForm job={job} editable={editable} onChange={setJob} />}
-          {tab === 2 && <ContainerTab job={job} editable={editable} onChange={setJob} />}
-          {tab === 3 && <PrintingTab job={job} />}
-        </>
+        printingOnly ? <PrintingTab job={job} /> : <>{tab === 0 && <JobEntryForm job={job} editable={editable} onChange={setJob} />}{tab === 1 && <ContainerTab job={job} editable={editable} onChange={setJob} />}</>
       )}
+      </>}
     </PageShell>
   );
 }

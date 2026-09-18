@@ -1,7 +1,20 @@
 import { SeaImportJob } from '../domain/seaImportJob';
 import { Repository } from './repository';
+import { createEmptySeaImportJob } from '../domain/seaImportJobFactory';
 
 export const seaImportJobRepo = new Repository<SeaImportJob>('seaImportJobs');
+
+/** Adds one sample only while the Sea-Import Inbond job list is empty. */
+export function ensureSeaImportJobDemo(): void {
+  if (seaImportJobRepo.list().length) return;
+  const demo = createEmptySeaImportJob('KHI');
+  demo.jobNo = 'KHI-SI-101'; demo.jobDate = '2026-09-18'; demo.mblNo = 'MBL-8890021'; demo.hblNo = 'HBL-456789';
+  demo.partyCode = 'P-1003'; demo.partyName = 'Gulf Cargo Partners'; demo.spoCode = 'SPO-01';
+  demo.hblPcs = 120; demo.hblNetWeight = 17500; demo.mblPcs = 120; demo.mblNetWeight = 17500;
+  demo.beNo = 'BE-7788'; demo.beDate = '2026-09-17'; demo.destination = 'KHI'; demo.origin = 'DXB';
+  demo.containers = [{ id: 'demo-container-1', containerNo: 'TCLU1234567', size: "40HC", sealNo: 'SL-1234', isoCode: '', pkgs: 120, weight: 17500, netWeight: 17000, croFreeDate: '', detentionDays: 0, detentionAmount: 0, emptyLocation: '' }];
+  seaImportJobRepo.save(demo);
+}
 
 let sequence = 100;
 

@@ -34,3 +34,13 @@ code {
 .MuiTableBody-root .MuiTableCell-root:last-child {
   border-right: 0 !important;
 }
+
+/* Keep operational-grid action icons together instead of wrapping vertically. */
+.MuiTableHead-root .MuiTableCell-root:first-child,
+.MuiTableBody-root .MuiTableCell-root:first-child {
+  min-width: 135px;
+}
+
+.MuiTableBody-root .MuiTableCell-root:first-child {
+  white-space: nowrap;
+}
