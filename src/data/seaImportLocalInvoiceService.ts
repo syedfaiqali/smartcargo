@@ -1,8 +1,10 @@
 import { SeaImportLocalInvoice } from '../domain/seaImportLocalInvoice';
 import { Repository } from './repository';
 import { seaImportJobRepo } from './seaImportJobService';
+import { createEmptySeaImportLocalInvoice } from '../domain/seaImportLocalInvoiceFactory';
 
 export const seaImportInvoiceRepo = new Repository<SeaImportLocalInvoice>('seaImportLocalInvoice');
+export function ensureSeaImportInvoiceDemo(): void { if (seaImportInvoiceRepo.list().length) return; const d=createEmptySeaImportLocalInvoice('KHI'); d.invoiceNo='KHI-SLII-101';d.date='2026-09-18';d.jobNo='KHI-SI-101';d.jobType='Freight';d.mblNo='MBL-8890021';d.hblNo='HBL-456789';d.hblNetWeight=17500;d.partyCode='P-1003';d.partyName='Gulf Cargo Partners';d.origin='DXB';d.destination='KHI';d.currencies[0]={currencyCode:'USD',exRate:278};d.invoiceTotal=1600;d.invoiceTotalPkr=444800;seaImportInvoiceRepo.save(d); }
 
 let invoiceSequence = 100;
 
