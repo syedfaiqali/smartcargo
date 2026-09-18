@@ -10,13 +10,14 @@ import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { SeaImportRefundFromShippingLines } from '../../domain/seaImportRefundFromShippingLines';
 import { createEmptySeaImportRefund } from '../../domain/seaImportRefundFromShippingLinesFactory';
-import { seaImportRefundRepo, nextSeaImportRefundDocNo } from '../../data/seaImportRefundFromShippingLinesService';
+import { seaImportRefundRepo, nextSeaImportRefundDocNo, ensureSeaImportRefundDemo } from '../../data/seaImportRefundFromShippingLinesService';
 import { recomputeRefundTotals } from './refundCalculations';
 import { SeaImportRefundEntryForm } from './SeaImportRefundEntryForm';
 import { SeaImportRefundGrid } from './SeaImportRefundGrid';
 import { SeaImportRefundPrintingTab } from './SeaImportRefundPrintingTab';
 
 export function SeaImportRefundPage() {
+  ensureSeaImportRefundDemo();
   const [refund, setRefund] = useState<SeaImportRefundFromShippingLines | null>(null);
   const [editable, setEditable] = useState(false);
   const [showList, setShowList] = useState(true);
@@ -145,7 +146,13 @@ export function SeaImportRefundPage() {
         </>
       ) : (
         <>
-          {!isPrintingView && <TransactionToolbar actions={['new', 'edit', 'delete', 'final']} disabledActions={disabledActions} onAction={handleAction} />}
+          {!isPrintingView && (
+            <TransactionToolbar
+              actions={editable ? ['delete', 'final', 'save'] : ['new', 'edit', 'delete', 'final']}
+              disabledActions={disabledActions}
+              onAction={handleAction}
+            />
+          )}
 
       {refund && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>

@@ -43,7 +43,6 @@ import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage
 import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
 import { GroupCodesPage } from './features/financeSetup/GroupCodesPage';
 import { ControlCodesPage } from './features/financeSetup/ControlCodesPage';
-import { ComingSoonPage } from './features/common/ComingSoonPage';
 import { SeaOtherChargesPayablePage } from './features/seaOtherChargesPayable/SeaOtherChargesPayablePage';
 import { SeaRefundPage } from './features/seaRefundFromShippingLines/SeaRefundPage';
 import { SeaLocalInvoicePage } from './features/seaLocalInvoice/SeaLocalInvoicePage';
@@ -60,6 +59,8 @@ import { SeaImportOtherChargesPayablePage } from './features/seaImportOtherCharg
 import { SeaImportRefundPage } from './features/seaImportRefundFromShippingLines/SeaImportRefundPage';
 import { SeaImportLocalInvoicePage } from './features/seaImportLocalInvoice/SeaImportLocalInvoicePage';
 import { SeaImportForeignAgentInvoicePage } from './features/seaImportForeignAgentInvoice/SeaImportForeignAgentInvoicePage';
+import { SeaImportQuotationPage } from './features/seaImportQuotation/SeaImportQuotationPage';
+import { DocumentReceiptPage } from './features/documentReceipt/DocumentReceiptPage';
 
 function App() {
   return (
@@ -319,21 +320,11 @@ function App() {
             />
             <Route
               path="/freight/sea-import/quotations"
-              element={
-                <ComingSoonPage
-                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Quotations']}
-                  title="Quotations"
-                />
-              }
+              element={<SeaImportQuotationPage />}
             />
             <Route
               path="/freight/sea-import/document-receipt"
-              element={
-                <ComingSoonPage
-                  breadcrumbs={['Freight', 'Transactions Menu (Sea Import)', 'Document Receipt']}
-                  title="Document Receipt"
-                />
-              }
+              element={<DocumentReceiptPage />}
             />
           </Routes>
         </AppShell>
