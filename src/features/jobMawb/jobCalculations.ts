@@ -2,10 +2,15 @@ import { ChargeLine, ChargesTab, Job, JobTotals } from '../../domain/job';
 
 /** Recomputes Entry-tab Totals (2.6) from the Charges grid (2.5) and Charges-tab Due Carrier/Agent totals (2.9). */
 export function recomputeJobTotals(job: Job): JobTotals {
-  const freight = sum(job.chargeLines, (l) => l.total);
-  const freightPkr = sum(job.chargeLines, (l) => l.totalPkr);
-  const dueCarrier = job.charges.totalDueCarrier;
-  const dueCarrierPkr = job.charges.totalDueCarrierPkr;
+  // Legacy 2.5 rows marked D/C or INT are carrier charges, while the
+  // remaining charge-grid rows contribute to Freight.
+  const dueCarrierRcpCodes = new Set(['D/C', 'INT']);
+  const freightLines = job.chargeLines.filter((line) => !dueCarrierRcpCodes.has(line.rcp));
+  const dueCarrierGridLines = job.chargeLines.filter((line) => dueCarrierRcpCodes.has(line.rcp));
+  const freight = sum(freightLines, (l) => l.total);
+  const freightPkr = sum(freightLines, (l) => l.totalPkr);
+  const dueCarrier = job.charges.totalDueCarrier + sum(dueCarrierGridLines, (l) => l.total);
+  const dueCarrierPkr = job.charges.totalDueCarrierPkr + sum(dueCarrierGridLines, (l) => l.totalPkr);
   const dueAgent = job.charges.totalDueAgent;
   const dueAgentPkr = job.charges.totalDueAgentPkr;
   const totalAwbAmount = freight + dueCarrier + dueAgent;
@@ -13,8 +18,11 @@ export function recomputeJobTotals(job: Job): JobTotals {
   const totalKbAmount = job.totals.totalKbAmount;
   const commission = job.totals.commission;
   const whtAmount = job.totals.whtAmount;
-  const payableToAirline = totalAwbAmount - commission - whtAmount - totalKbAmount;
-  const payableToAirlinePkr = totalAwbAmountPkr - commission - whtAmount - totalKbAmount;
+  // The legacy Entry screen does not derive "Payable To Airline" from the
+  // freight totals. It remains at its saved value until the payable workflow
+  // supplies it (a new job therefore displays zero here).
+  const payableToAirline = job.totals.payableToAirline;
+  const payableToAirlinePkr = job.totals.payableToAirlinePkr;
 
   return {
     freight,
@@ -41,10 +49,15 @@ export function recomputeChargesTotals(charges: ChargesTab): ChargesTab {
   return { ...charges, totalDueCarrier, totalDueCarrierPkr, totalDueAgent, totalDueAgentPkr };
 }
 
-export function recomputeChargeLineTotal(line: ChargeLine, exRate: number): ChargeLine {
-  const total = line.rate * (line.chargeWt || 0);
-  const totalPkr = total * (exRate || 0);
-  return { ...line, total, totalPkr };
+export function recomputeChargeLineTotal(line: ChargeLine, exRate: number, useDimensionWeight = false): ChargeLine {
+  // The Dimension Calculator temporarily uses its rounded result. Regular
+  // Entry-grid recalculation (including field blur) returns to Charge Wt.,
+  // which matches the legacy screen's two-stage behavior.
+  const chargeWt = useDimensionWeight && line.dimensionWt > 0 ? Math.round(line.dimensionWt) : (line.chargeWt || 0);
+  const ratePkr = line.rate * (exRate || 0);
+  const total = line.rate * chargeWt;
+  const totalPkr = ratePkr * chargeWt;
+  return { ...line, ratePkr, total, totalPkr };
 }
 
 function sum<T>(items: T[], selector: (item: T) => number): number {

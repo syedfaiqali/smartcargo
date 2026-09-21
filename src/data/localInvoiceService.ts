@@ -4,6 +4,46 @@ import { jobRepo } from './jobService';
 
 export const localInvoiceRepo = new Repository<LocalInvoice>('localInvoices');
 
+/** Returns the invoice rows displayed under a Job's Local/International Invoices panel. */
+export function getLocalInvoiceLinksForJob(jobNo: string) {
+  return localInvoiceRepo
+    .list()
+    .filter((item) => item.master.jobNo === jobNo || item.house.jobNo === jobNo)
+    .map((item) => ({
+      invoiceId: item.id,
+      no: item.invoiceNo,
+      date: item.invoiceDate,
+      year: item.jobYear,
+      type: 'AE-LOC-INV',
+      name: item.partyName,
+      curr: item.currency1,
+      fAmount: item.totalFreight,
+      pkrAmount: item.invoiceTotal,
+      final: item.status.final,
+    }));
+}
+
+/**
+ * Rebuilds the Local/International Invoices grid on jobs related to a Local
+ * Invoice. Rebuilding from saved invoices prevents stale rows after invoice
+ * edits, job reassignment, voiding, or deletion.
+ */
+export function syncLocalInvoiceLinks(invoice: LocalInvoice, previous?: LocalInvoice): void {
+  const jobNos = new Set([
+    invoice.master.jobNo,
+    invoice.house.jobNo,
+    previous?.master.jobNo ?? '',
+    previous?.house.jobNo ?? '',
+  ].filter(Boolean));
+
+  jobNos.forEach((jobNo) => {
+    const job = jobRepo.find((item) => item.jobNo === jobNo)[0];
+    if (!job) return;
+
+    jobRepo.save({ ...job, linkedInvoices: getLocalInvoiceLinksForJob(jobNo) });
+  });
+}
+
 let invoiceSequence = 100;
 
 export function nextInvoiceNo(branch: string): string {

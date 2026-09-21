@@ -85,6 +85,7 @@ export interface LocalInvoice extends AuditFields {
   partyName: string;
   partyAddress: string;
   agentParty: string;
+  moveChargesFromLastPartyInvoice: YesNo;
 
   airportOfDeparture: string;
   destination: string;

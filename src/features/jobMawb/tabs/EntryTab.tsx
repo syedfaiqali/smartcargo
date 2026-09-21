@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
@@ -9,16 +10,24 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Tooltip from '@mui/material/Tooltip';
+import Link from '@mui/material/Link';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import { v4 as uuid } from 'uuid';
 import { Job } from '../../../domain/job';
 import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
 import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo } from '../../../data/masterDataService';
 import { jobRepo } from '../../../data/jobService';
+import { getLocalInvoiceLinksForJob } from '../../../data/localInvoiceService';
 import { recomputeChargeLineTotal, recomputeJobTotals } from '../jobCalculations';
+import { useNavigate } from 'react-router-dom';
 
 interface EntryTabProps {
   job: Job;
@@ -27,6 +36,9 @@ interface EntryTabProps {
 }
 
 export function EntryTab({ job, editable, onChange }: EntryTabProps) {
+  const navigate = useNavigate();
+  const [dimensionCalculatorOpen, setDimensionCalculatorOpen] = useState(false);
+  const [dimensionTargetLineId, setDimensionTargetLineId] = useState<string | null>(null);
   const owners = ownerRepo.list();
   const parties = partyRepo.list();
   const foreignAgents = foreignAgentRepo.list();
@@ -36,6 +48,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const deliveryAgents = agentRepo.find((a) => a.kind === 'DELIVERY');
   const spoCodes = spoRepo.list();
   const masterJobs = job.kind === 'HAWB' ? jobRepo.find((j) => j.kind === 'MAWB') : [];
+  const linkedInvoices = getLocalInvoiceLinksForJob(job.jobNo);
 
   const set = <K extends keyof Job>(key: K, value: Job[K]) => onChange({ ...job, [key]: value });
 
@@ -62,36 +75,42 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
     });
   };
 
-  const addChargeLine = () => {
-    onChange({
-      ...job,
-      chargeLines: [
-        ...job.chargeLines,
-        {
-          id: uuid(),
-          rcp: '',
-          pcs: 0,
-          grossWt: 0,
-          cl: '',
-          comdty: '',
-          chargeWt: 0,
-          dimensionWt: 0,
-          rate: 0,
-          ratePkr: 0,
-          total: 0,
-          totalPkr: 0,
-        },
-      ],
-    });
-  };
-
-  const updateChargeLine = (id: string, patch: Partial<Job['chargeLines'][number]>) => {
+  const updateChargeLine = (id: string, patch: Partial<Job['chargeLines'][number]>, useDimensionWeight = false) => {
     const lines = job.chargeLines.map((l) => {
       if (l.id !== id) return l;
       const updated = { ...l, ...patch };
-      return recomputeChargeLineTotal(updated, job.exRate);
+      return recomputeChargeLineTotal(updated, job.exRate, useDimensionWeight);
     });
     const updatedJob = { ...job, chargeLines: lines };
+    onChange({ ...updatedJob, totals: recomputeJobTotals(updatedJob) });
+  };
+
+  const updateExchangeRate = (exRate: number) => {
+    const updatedJob = {
+      ...job,
+      exRate,
+      chargeLines: job.chargeLines.map((line) => recomputeChargeLineTotal(line, exRate)),
+    };
+    onChange({ ...updatedJob, totals: recomputeJobTotals(updatedJob) });
+  };
+
+  const applyDimensionWeight = (dimensionWt: number) => {
+    const targetId = dimensionTargetLineId ?? job.chargeLines[0]?.id;
+    const target = job.chargeLines.find((line) => line.id === targetId);
+    if (!target || target.dimensionWt === dimensionWt) return;
+    updateChargeLine(target.id, { dimensionWt }, true);
+  };
+
+  const updateCurrency = (currency: string) => {
+    const selectedCurrency = currencies.find((item) => item.code === currency);
+    const exRate = selectedCurrency?.defaultExchangeRate ?? job.exRate;
+    const updatedJob = {
+      ...job,
+      currency,
+      exRate,
+      printableExRate: exRate,
+      chargeLines: job.chargeLines.map((line) => recomputeChargeLineTotal(line, exRate)),
+    };
     onChange({ ...updatedJob, totals: recomputeJobTotals(updatedJob) });
   };
 
@@ -240,7 +259,21 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </TextField>
             </FormField>
             <FormField md={4}>
-              <TextField label="Agent Party" fullWidth value={job.party.agentParty} disabled={!editable} onChange={(e) => onChange({ ...job, party: { ...job.party, agentParty: e.target.value } })} />
+              <TextField
+                select
+                label="Agent Party"
+                fullWidth
+                value={job.party.agentParty}
+                disabled={!editable}
+                onChange={(e) => onChange({ ...job, party: { ...job.party, agentParty: e.target.value } })}
+              >
+                <MenuItem value="">— Select Agent Party —</MenuItem>
+                {parties.map((party) => (
+                  <MenuItem key={party.code} value={party.code}>
+                    {party.code} — {party.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </FormField>
           </FormRow>
           <FormRow>
@@ -268,7 +301,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </TextField>
             </FormField>
             <FormField md={8}>
-              <TextField select label="Code (Foreign Agent)" fullWidth value={job.consignee.code} disabled={!editable} onChange={(e) => setConsigneeCode(e.target.value)}>
+              <TextField select label="Code (Foreign Agent)" fullWidth value={job.consignee.code} disabled={!editable || job.consignee.consolidation !== 'Y'} onChange={(e) => setConsigneeCode(e.target.value)}>
                 {foreignAgents.map((a) => (
                   <MenuItem key={a.code} value={a.code}>
                     {a.code} — {a.name}
@@ -539,15 +572,15 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
         <Grid item xs={12} md={6}>
           <FormRow>
             <FormField md={6}>
-              <TextField label="Insurance" type="number" fullWidth value={job.insurance} disabled={!editable} onChange={(e) => set('insurance', Number(e.target.value))} />
+              <TextField label="Insurance" fullWidth value={job.insurance} disabled={!editable} onChange={(e) => set('insurance', e.target.value)} />
             </FormField>
             <FormField md={6}>
-              <TextField label="Declared Val Carraige" type="number" fullWidth value={job.declaredValCarriage} disabled={!editable} onChange={(e) => set('declaredValCarriage', Number(e.target.value))} />
+              <TextField label="Declared Val Carraige" fullWidth value={job.declaredValCarriage} disabled={!editable} onChange={(e) => set('declaredValCarriage', e.target.value)} />
             </FormField>
           </FormRow>
           <FormRow>
             <FormField md={12}>
-              <TextField label="Declared Val Customs" type="number" fullWidth value={job.declaredValCustoms} disabled={!editable} onChange={(e) => set('declaredValCustoms', Number(e.target.value))} />
+              <TextField label="Declared Val Customs" fullWidth value={job.declaredValCustoms} disabled={!editable} onChange={(e) => set('declaredValCustoms', e.target.value)} />
             </FormField>
           </FormRow>
           <FormRow>
@@ -565,19 +598,19 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           </FormRow>
           <FormRow>
             <FormField md={4}>
-              <TextField select label="Currency" fullWidth value={job.currency} disabled={!editable} onChange={(e) => set('currency', e.target.value)}>
+              <TextField select label="Currency" fullWidth value={job.currency} disabled={!editable} onChange={(e) => updateCurrency(e.target.value)}>
                 {currencies.map((c) => (
                   <MenuItem key={c.code} value={c.code}>
-                    {c.code}
+                    {c.code} - {c.name.toUpperCase()}
                   </MenuItem>
                 ))}
               </TextField>
             </FormField>
             <FormField md={4}>
-              <TextField label="Ex. Rate" type="number" fullWidth value={job.exRate} disabled={!editable} onChange={(e) => set('exRate', Number(e.target.value))} />
+              <TextField label="Ex. Rate" type="number" fullWidth value={formatNumber(job.exRate, 6)} disabled={!editable} inputProps={{ step: '0.000001' }} onChange={(e) => updateExchangeRate(Number(e.target.value))} />
             </FormField>
             <FormField md={4}>
-              <TextField label="Printable Ex. Rate" type="number" fullWidth value={job.printableExRate} disabled={!editable} onChange={(e) => set('printableExRate', Number(e.target.value))} />
+              <TextField label="Printable Ex. Rate" type="number" fullWidth value={formatNumber(job.printableExRate, 6)} disabled={!editable} inputProps={{ step: '0.000001' }} onChange={(e) => set('printableExRate', Number(e.target.value))} />
             </FormField>
           </FormRow>
 
@@ -591,23 +624,44 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   <TableCell>Gross Wt.</TableCell>
                   <TableCell>Cl</TableCell>
                   <TableCell>Comdty</TableCell>
-                  <TableCell>Charge Wt.</TableCell>
-                  <TableCell>Rate</TableCell>
-                  <TableCell>Total</TableCell>
+                  <TableCell>
+                    Charge Wt.
+                    <Tooltip title="Open Dimension Calculator">
+                      <IconButton size="small" color="primary" onClick={() => { setDimensionTargetLineId(dimensionTargetLineId ?? job.chargeLines[0]?.id ?? null); setDimensionCalculatorOpen(true); }} sx={{ ml: 0.5, p: 0.25 }}>
+                        <ViewInArIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell>Rate {job.currency}</TableCell>
+                  <TableCell>Rate PKR</TableCell>
+                  <TableCell>Total {job.currency}</TableCell>
                   <TableCell>Total PKR</TableCell>
+                  <TableCell>Dimension Wt.</TableCell>
                   <TableCell />
                 </TableRow>
               </TableHead>
               <TableBody>
-                {job.chargeLines.map((line) => (
-                  <TableRow key={line.id}>
+                {job.chargeLines.map((line, index) => (
+                  <TableRow key={line.id} onClick={() => setDimensionTargetLineId(line.id)} onBlur={() => updateChargeLine(line.id, {})} selected={dimensionTargetLineId === line.id}>
                     <TableCell sx={{ minWidth: 70 }}>
-                      <TextField
-                        variant="standard"
-                        value={line.rcp}
-                        disabled={!editable}
-                        onChange={(e) => updateChargeLine(line.id, { rcp: e.target.value })}
-                      />
+                      {index === 0 ? (
+                        <TextField
+                          variant="standard"
+                          value={line.rcp}
+                          disabled={!editable}
+                          onChange={(e) => updateChargeLine(line.id, { rcp: e.target.value })}
+                        />
+                      ) : (
+                        <TextField
+                          select
+                          variant="standard"
+                          value={line.rcp || 'NEW'}
+                          disabled={!editable}
+                          onChange={(e) => updateChargeLine(line.id, { rcp: e.target.value })}
+                        >
+                          {['NEW', 'INT', 'D/C', 'FAR', 'SCN'].map((rcp) => <MenuItem key={rcp} value={rcp}>{rcp}</MenuItem>)}
+                        </TextField>
+                      )}
                     </TableCell>
                     <TableCell sx={{ minWidth: 60 }}>
                       <TextField
@@ -618,11 +672,11 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                         onChange={(e) => updateChargeLine(line.id, { pcs: Number(e.target.value) })}
                       />
                     </TableCell>
-                    <TableCell sx={{ minWidth: 80 }}>
+                    <TableCell sx={{ minWidth: 110 }}>
                       <TextField
                         variant="standard"
                         type="number"
-                        value={line.grossWt}
+                        value={formatNumber(line.grossWt, 2)}
                         disabled={!editable}
                         onChange={(e) => updateChargeLine(line.id, { grossWt: Number(e.target.value) })}
                       />
@@ -633,26 +687,43 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                     <TableCell sx={{ minWidth: 70 }}>
                       <TextField variant="standard" value={line.comdty} disabled={!editable} onChange={(e) => updateChargeLine(line.id, { comdty: e.target.value })} />
                     </TableCell>
-                    <TableCell sx={{ minWidth: 80 }}>
+                    <TableCell sx={{ minWidth: 110 }}>
                       <TextField
                         variant="standard"
                         type="number"
-                        value={line.chargeWt}
+                        value={formatNumber(line.chargeWt, 2)}
                         disabled={!editable}
                         onChange={(e) => updateChargeLine(line.id, { chargeWt: Number(e.target.value) })}
                       />
                     </TableCell>
-                    <TableCell sx={{ minWidth: 80 }}>
+                    <TableCell sx={{ minWidth: 110 }}>
                       <TextField
                         variant="standard"
                         type="number"
-                        value={line.rate}
+                        value={formatNumber(line.rate, 4)}
                         disabled={!editable}
                         onChange={(e) => updateChargeLine(line.id, { rate: Number(e.target.value) })}
                       />
                     </TableCell>
-                    <TableCell>{line.total.toFixed(2)}</TableCell>
-                    <TableCell>{line.totalPkr.toFixed(2)}</TableCell>
+                    <TableCell sx={{ minWidth: 110 }}>
+                      <TextField
+                        variant="standard"
+                        type="number"
+                        value={formatNumber(line.ratePkr, 4)}
+                        InputProps={{ readOnly: true }}
+                      />
+                    </TableCell>
+                    <TableCell>{formatAmount(line.total, 4)}</TableCell>
+                    <TableCell>{formatAmount(line.totalPkr, 2)}</TableCell>
+                    <TableCell sx={{ minWidth: 100 }}>
+                      <TextField
+                        variant="standard"
+                        type="number"
+                        value={formatNumber(line.dimensionWt, 2)}
+                        disabled={!editable}
+                        onChange={(e) => updateChargeLine(line.id, { dimensionWt: Number(e.target.value) })}
+                      />
+                    </TableCell>
                     <TableCell>
                       <IconButton size="small" disabled={!editable} onClick={() => removeChargeLine(line.id)}>
                         <DeleteIcon fontSize="small" />
@@ -662,10 +733,12 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 ))}
               </TableBody>
             </Table>
-            <Button size="small" startIcon={<AddIcon />} disabled={!editable} onClick={addChargeLine} sx={{ m: 1 }}>
-              Add Charge Line
-            </Button>
           </Paper>
+          {job.chargeLines.some((line) => line.dimensionWt > 0 && line.dimensionWt < line.chargeWt) && (
+            <Typography variant="body2" color="error" sx={{ mt: 0.75, fontWeight: 700 }}>
+              ★ Dimension Weight is less than Charge Weight.
+            </Typography>
+          )}
 
           <SectionHeader>2.6 Totals</SectionHeader>
           <Paper variant="outlined" sx={{ p: 1.5 }}>
@@ -721,7 +794,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           </FormRow>
 
           <SectionHeader>2.8 Linked Records</SectionHeader>
-          <LinkedGrid title="Local/International Invoices" empty={job.linkedInvoices.length === 0}>
+          <LinkedGrid title="Local/International Invoices" empty={linkedInvoices.length === 0}>
             <TableHead>
               <TableRow>
                 <TableCell>No.</TableCell>
@@ -734,9 +807,13 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {job.linkedInvoices.map((inv, i) => (
+              {linkedInvoices.map((inv, i) => (
                 <TableRow key={i}>
-                  <TableCell>{inv.no}</TableCell>
+                  <TableCell>
+                    <Link component="button" type="button" onClick={() => navigate('/freight/air-export/local-invoices', { state: { invoiceId: inv.invoiceId } })} sx={{ fontWeight: 700, textAlign: 'left' }}>
+                      {inv.no}
+                    </Link>
+                  </TableCell>
                   <TableCell>{inv.date}</TableCell>
                   <TableCell>{inv.type}</TableCell>
                   <TableCell>{inv.curr}</TableCell>
@@ -810,7 +887,106 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           </LinkedGrid>
         </Grid>
       </Grid>
+      <DimensionCalculatorDialog open={dimensionCalculatorOpen} onClose={() => setDimensionCalculatorOpen(false)} onWeightChange={applyDimensionWeight} />
     </Box>
+  );
+}
+
+function formatNumber(value: number, decimals: number): string {
+  return Number(value || 0).toFixed(decimals);
+}
+
+function formatAmount(value: number, decimals: number): string {
+  return Number(value || 0).toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
+interface DimensionLine {
+  id: string;
+  pcs: number;
+  length: number;
+  width: number;
+  height: number;
+}
+
+function DimensionCalculatorDialog({ open, onClose, onWeightChange }: { open: boolean; onClose: () => void; onWeightChange: (weight: number) => void }) {
+  const [divisor, setDivisor] = useState(6000);
+  const [lines, setLines] = useState<DimensionLine[]>([]);
+
+  const updateLine = (id: string, patch: Partial<DimensionLine>) => {
+    setLines((current) => current.map((line) => (line.id === id ? { ...line, ...patch } : line)));
+  };
+  // The legacy calculator labels this as CBM, but derives it from the selected
+  // air-cargo divisor (for example: pcs × L × W × H ÷ 6,000,000 for divisor 6000).
+  const totalCbm = lines.reduce((total, line) => total + (line.pcs * line.length * line.width * line.height) / (divisor * 1000), 0);
+  const totalWeight = lines.reduce((total, line) => total + (line.pcs * line.length * line.width * line.height) / divisor, 0);
+
+  useEffect(() => {
+    if (open && lines.length > 0) onWeightChange(totalWeight);
+  }, [lines.length, onWeightChange, open, totalWeight]);
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'primary.dark', fontWeight: 700 }}>
+        Dimension Calculator
+        <IconButton aria-label="Close dimension calculator" onClick={onClose} color="error"><CloseIcon /></IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
+          <Grid item><Typography variant="body2" sx={{ fontWeight: 700 }}>Select Type</Typography></Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField select size="small" fullWidth value={divisor} onChange={(event) => setDivisor(Number(event.target.value))}>
+              <MenuItem value={6000}>Air Cargo (Cm) - 6000</MenuItem>
+              <MenuItem value={5000}>Air Cargo (Cm) - 5000</MenuItem>
+            </TextField>
+          </Grid>
+        </Grid>
+        <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell />
+                <TableCell>Pcs.</TableCell>
+                <TableCell>Length (cm)</TableCell>
+                <TableCell>Width (cm)</TableCell>
+                <TableCell>Height (cm)</TableCell>
+                <TableCell>Total</TableCell>
+                <TableCell>Total (Weight Kg)</TableCell>
+                <TableCell>CBM</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {lines.map((line) => {
+                const volume = line.length * line.width * line.height;
+                const weight = (line.pcs * volume) / divisor;
+                const cbm = weight / 1000;
+                return (
+                  <TableRow key={line.id}>
+                    <TableCell><IconButton size="small" color="error" onClick={() => setLines((current) => current.filter((item) => item.id !== line.id))}><DeleteIcon fontSize="small" /></IconButton></TableCell>
+                    {(['pcs', 'length', 'width', 'height'] as const).map((field) => <TableCell key={field}><TextField size="small" type="number" value={line[field]} inputProps={{ min: 0 }} onChange={(event) => updateLine(line.id, { [field]: Number(event.target.value) })} /></TableCell>)}
+                    <TableCell>{formatNumber(volume, 2)}</TableCell>
+                    <TableCell>{formatNumber(weight, 2)}</TableCell>
+                    <TableCell>{formatNumber(cbm, 2)}</TableCell>
+                  </TableRow>
+                );
+              })}
+              {lines.length === 0 && (
+                <TableRow><TableCell colSpan={8} align="center" sx={{ color: 'text.secondary' }}>No dimension lines added.</TableCell></TableRow>
+              )}
+              <TableRow sx={{ '& td': { fontWeight: 700 } }}>
+                <TableCell colSpan={5}>Total</TableCell>
+                <TableCell />
+                <TableCell>{formatNumber(totalWeight, 2)}</TableCell>
+                <TableCell>{formatNumber(totalCbm, 3)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Paper>
+        <Button startIcon={<AddIcon />} onClick={() => setLines((current) => [...current, { id: crypto.randomUUID(), pcs: 1, length: 0, width: 0, height: 0 }])} sx={{ mt: 1 }}>Add Dimension Line</Button>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -824,13 +1000,13 @@ function TotalRow({ label, value, valuePkr, highlight }: { label: string; value:
       </Grid>
       <Grid item xs={valuePkr !== undefined ? 3 : 6}>
         <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? 'primary.main' : 'inherit' }}>
-          {value.toFixed(2)}
+          {formatAmount(value, 4)}
         </Typography>
       </Grid>
       {valuePkr !== undefined && (
         <Grid item xs={3}>
           <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? 'primary.main' : 'inherit' }}>
-            {valuePkr.toFixed(2)}
+            {formatAmount(valuePkr, 2)}
           </Typography>
         </Grid>
       )}

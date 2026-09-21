@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -219,6 +220,21 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
     }
   };
 
+  const handleTabChange = (nextTab: number) => {
+    // Detail tabs are stored against a saved job. Keep a newly-created draft on
+    // Entry until its required details have been completed and saved.
+    if (nextTab > 0 && job && !jobRepo.get(job.id)) {
+      setMessage({
+        severity: 'warning',
+        text: `Entry is in process. Complete and save the Entry tab before opening ${TAB_LABELS[nextTab]}.`,
+      });
+      return;
+    }
+
+    setTab(nextTab);
+    setIsPrintingView(false);
+  };
+
   const disabledActions: ToolbarAction[] = [];
   if (!job) disabledActions.push('edit', 'delete', 'final', 'void', 'copy');
   if (job?.status.final) disabledActions.push('edit', 'delete', 'final');
@@ -239,11 +255,18 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         </Button>
       ) : undefined}
     >
-      {message && (
-        <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
-          {message.text}
-        </Alert>
-      )}
+      <Snackbar
+        open={Boolean(message)}
+        autoHideDuration={4000}
+        onClose={(_, reason) => { if (reason !== 'clickaway') setMessage(null); }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        {message ? (
+          <Alert severity={message.severity} onClose={() => setMessage(null)} variant="filled">
+            {message.text}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
 
       {!isPrintingView && (!job || tab === 0) && (
           <TransactionToolbar
@@ -272,7 +295,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
       {job && !isPrintingView && (
         <Tabs
           value={tab}
-          onChange={(_, v) => { setTab(v); setIsPrintingView(false); }}
+          onChange={(_, v) => handleTabChange(v)}
           sx={{
             mb: 2,
             borderBottom: 1,

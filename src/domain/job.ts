@@ -292,9 +292,9 @@ export interface Job extends AuditFields {
   shipmentStatus: string;
   shipmentStatusDate: IsoDate | '';
 
-  insurance: number;
-  declaredValCarriage: number;
-  declaredValCustoms: number;
+  insurance: string;
+  declaredValCarriage: string;
+  declaredValCustoms: string;
   handlingInformation: string;
   currency: string;
   exRate: number;

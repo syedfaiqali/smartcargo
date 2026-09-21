@@ -47,6 +47,7 @@ export function createEmptyLocalInvoice(branch = 'KHI'): LocalInvoice {
     partyName: '',
     partyAddress: '',
     agentParty: '',
+    moveChargesFromLastPartyInvoice: 'N',
     airportOfDeparture: '',
     destination: '',
     spoCode: '',

@@ -7,8 +7,9 @@ function sum<T>(items: T[], selector: (item: T) => number): number {
 
 export function recomputeInvoiceLine(line: InvoiceLine, exRate: number): InvoiceLine {
   const freight = line.rate * (line.chWeight || 0);
-  const freightPkr = freight * (exRate || 0);
-  return { ...line, freight, freightPkr };
+  const ratePkr = line.ratePkr || line.rate * (exRate || 0);
+  const freightPkr = ratePkr * (line.chWeight || 0);
+  return { ...line, ratePkr, freight, freightPkr };
 }
 
 export function recomputeAirwayBillLine(line: AirwayBillLine): AirwayBillLine {

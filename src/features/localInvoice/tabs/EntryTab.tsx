@@ -9,11 +9,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
 import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
 import { LocalInvoice } from '../../../domain/localInvoice';
 import { jobRepo } from '../../../data/jobService';
@@ -26,7 +22,7 @@ import {
   partyRepo,
   spoRepo,
 } from '../../../data/masterDataService';
-import { recomputeAirwayBillLine, recomputeInvoiceLine, recomputeInvoiceTotals } from '../invoiceCalculations';
+import { recomputeInvoiceLine, recomputeInvoiceTotals } from '../invoiceCalculations';
 
 interface EntryTabProps {
   invoice: LocalInvoice;
@@ -61,18 +57,67 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
       apply({ master: { jobNo: '', jobDate: '', awbNo: '', awbDate: '', pp: '', refNo: '' } });
       return;
     }
+    const { job } = ref;
     apply({
       master: { jobNo: ref.jobNo, jobDate: ref.jobDate, awbNo: ref.awbNo, awbDate: ref.awbDate, pp: '', refNo: '' },
-      ccPort: invoice.ccPort || ref.job.routing.ccPort,
-      airportOfDeparture: invoice.airportOfDeparture || ref.job.routing.airportOfDeparture,
-      destination: invoice.destination || ref.job.routing.destination,
-      formENo: invoice.formENo || ref.job.routing.formENo,
-      formEDate: invoice.formEDate || ref.job.routing.formEDate,
-      sbNo: invoice.sbNo || ref.job.routing.sbNo,
-      sbDate: invoice.sbDate || ref.job.routing.sbDate,
-      shipperInvoiceNo: invoice.shipperInvoiceNo || ref.job.routing.shipperInvoiceNo,
-      shipperInvoiceDate: invoice.shipperInvoiceDate || ref.job.routing.shipperInvoiceDate,
-      spoCode: invoice.spoCode || ref.job.agents.spoCode,
+      jobYear: Number(job.jobDate.slice(0, 4)) || invoice.jobYear,
+      jobType: job.jobType,
+      ccPort: job.routing.ccPort,
+      ownerCode: job.owner,
+      partyCode: job.party.partyCode,
+      partyName: job.party.name,
+      partyAddress: job.party.address,
+      agentParty: job.party.agentParty,
+      airportOfDeparture: job.routing.airportOfDeparture,
+      destination: job.routing.destination,
+      formENo: job.routing.formENo,
+      formEDate: job.routing.formEDate,
+      sbNo: job.routing.sbNo,
+      sbDate: job.routing.sbDate,
+      shipperInvoiceNo: job.routing.shipperInvoiceNo,
+      shipperInvoiceDate: job.routing.shipperInvoiceDate,
+      spoCode: job.agents.spoCode,
+      postInPkr: job.currency === 'PKR' ? 'Y' : 'N',
+      currency1: job.currency,
+      exRate1: job.exRate,
+      consignee: job.consignee.name,
+      dueCarrierLines: job.charges.dueCarrierLines.map((line) => ({ ...line })),
+      dueAgentLines: job.charges.dueAgentLines.map((line) => ({ ...line })),
+      invoiceLines: job.chargeLines.map((line) => ({
+        id: uuid(),
+        pcs: line.pcs,
+        grossWeight: line.grossWt,
+        cl: line.cl,
+        comdty: line.comdty,
+        chWeight: line.chargeWt,
+        curr: job.currency,
+        rate: line.rate,
+        ratePkr: line.ratePkr,
+        freight: line.total,
+        freightPkr: line.totalPkr,
+      })),
+      airwayBillLines: job.chargeLines.map((line) => ({
+        id: uuid(),
+        pcs: line.pcs,
+        grossWeight: line.grossWt,
+        cl: line.cl,
+        comdty: line.comdty,
+        chWeight: line.chargeWt,
+        rate: line.rate,
+        ratePkr: line.ratePkr,
+        freight: line.total,
+        freightPkr: line.totalPkr,
+        netNet: 0,
+        netRate: 0,
+        kbPercent: 0,
+        kbAmount: 0,
+      })),
+      awbCommissionAmount: job.totals.commission,
+      awbPayableToAirline: job.totals.payableToAirline,
+      awbExchangeRate: job.exRate,
+      agreedRate: job.kb.shipperAgreedRate,
+      agreedFreight: job.kb.shipperAgreedFreight,
+      kbRatePercent: job.kb.kbAdjustment === 'Y' ? 100 : 0,
     });
   };
 
@@ -87,35 +132,12 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
   };
 
   // --- Invoice grid (4.5) ---
-  const addInvoiceLine = () => {
-    apply({
-      invoiceLines: [
-        ...invoice.invoiceLines,
-        { id: uuid(), pcs: 0, grossWeight: 0, cl: '', comdty: '', chWeight: 0, curr: invoice.currency1, rate: 0, ratePkr: 0, freight: 0, freightPkr: 0 },
-      ],
-    });
-  };
   const updateInvoiceLine = (id: string, patch: Partial<LocalInvoice['invoiceLines'][number]>) => {
     const invoiceLines = invoice.invoiceLines.map((l) => (l.id === id ? recomputeInvoiceLine({ ...l, ...patch }, invoice.exRate1) : l));
     apply({ invoiceLines });
   };
-  const removeInvoiceLine = (id: string) => apply({ invoiceLines: invoice.invoiceLines.filter((l) => l.id !== id) });
 
   // --- Airway Bill grid (4.6) ---
-  const addAirwayBillLine = () => {
-    apply({
-      airwayBillLines: [
-        ...invoice.airwayBillLines,
-        { id: uuid(), pcs: 0, grossWeight: 0, cl: '', comdty: '', chWeight: 0, rate: 0, ratePkr: 0, freight: 0, freightPkr: 0, netNet: 0, netRate: 0, kbPercent: 0, kbAmount: 0 },
-      ],
-    });
-  };
-  const updateAirwayBillLine = (id: string, patch: Partial<LocalInvoice['airwayBillLines'][number]>) => {
-    const airwayBillLines = invoice.airwayBillLines.map((l) => (l.id === id ? recomputeAirwayBillLine({ ...l, ...patch }) : l));
-    apply({ airwayBillLines });
-  };
-  const removeAirwayBillLine = (id: string) => apply({ airwayBillLines: invoice.airwayBillLines.filter((l) => l.id !== id) });
-
   return (
     <Box
       sx={{
@@ -232,6 +254,21 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
           </FormRow>
 
           <SectionHeader>Party</SectionHeader>
+          <FormRow>
+            <FormField md={12}>
+              <TextField
+                select
+                label="Move Charges from Last Party Invoice"
+                fullWidth
+                value={invoice.moveChargesFromLastPartyInvoice ?? 'N'}
+                disabled={!editable}
+                onChange={(e) => apply({ moveChargesFromLastPartyInvoice: e.target.value as 'Y' | 'N' })}
+              >
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
+              </TextField>
+            </FormField>
+          </FormRow>
           <FormRow>
             <FormField md={6}>
               <TextField select label="Owner Code" fullWidth value={invoice.ownerCode} disabled={!editable} onChange={(e) => apply({ ownerCode: e.target.value })}>
@@ -567,9 +604,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
                   <TableCell>Comdty</TableCell>
                   <TableCell>Ch.Wt</TableCell>
                   <TableCell>Curr</TableCell>
-                  <TableCell>Rate</TableCell>
+                  <TableCell>Rate {invoice.currency1 || 'Foreign'}</TableCell>
+                  <TableCell>Rate PKR</TableCell>
+                  <TableCell>Freight {invoice.currency1 || 'Foreign'}</TableCell>
                   <TableCell>Freight PKR</TableCell>
-                  <TableCell />
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -596,19 +634,15 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
                     <TableCell sx={{ minWidth: 70 }}>
                       <TextField variant="standard" type="number" value={line.rate} disabled={!editable} onChange={(e) => updateInvoiceLine(line.id, { rate: Number(e.target.value) })} />
                     </TableCell>
-                    <TableCell>{line.freightPkr.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeInvoiceLine(line.id)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+                    <TableCell sx={{ minWidth: 70 }}>
+                      <TextField variant="standard" type="number" value={line.ratePkr} disabled={!editable} onChange={(e) => updateInvoiceLine(line.id, { ratePkr: Number(e.target.value) })} />
                     </TableCell>
+                    <TableCell>{line.freight.toFixed(4)}</TableCell>
+                    <TableCell>{line.freightPkr.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <Button size="small" startIcon={<AddIcon />} disabled={!editable} onClick={addInvoiceLine} sx={{ m: 1 }}>
-              Add Invoice Line
-            </Button>
           </Paper>
 
           <SectionHeader>4.6 Airway Bill Grid (KB Reconciliation)</SectionHeader>
@@ -617,47 +651,60 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               <TableHead>
                 <TableRow>
                   <TableCell>Pcs</TableCell>
+                  <TableCell>Gross Wt.</TableCell>
+                  <TableCell>Cl</TableCell>
+                  <TableCell>Comdty</TableCell>
                   <TableCell>Ch.Wt</TableCell>
+                  <TableCell>Rate {invoice.currency1 || 'Foreign'}</TableCell>
                   <TableCell>Rate PKR</TableCell>
+                  <TableCell>Freight {invoice.currency1 || 'Foreign'}</TableCell>
                   <TableCell>Freight PKR</TableCell>
                   <TableCell>Net Net</TableCell>
+                  <TableCell>Net Rate</TableCell>
                   <TableCell>KB %</TableCell>
                   <TableCell>KB Amount</TableCell>
-                  <TableCell />
                 </TableRow>
               </TableHead>
               <TableBody>
                 {invoice.airwayBillLines.map((line) => (
                   <TableRow key={line.id}>
                     <TableCell sx={{ minWidth: 55 }}>
-                      <TextField variant="standard" type="number" value={line.pcs} disabled={!editable} onChange={(e) => updateAirwayBillLine(line.id, { pcs: Number(e.target.value) })} />
+                      <TextField variant="standard" type="number" value={line.pcs} disabled />
                     </TableCell>
                     <TableCell sx={{ minWidth: 70 }}>
-                      <TextField variant="standard" type="number" value={line.chWeight} disabled={!editable} onChange={(e) => updateAirwayBillLine(line.id, { chWeight: Number(e.target.value) })} />
+                      <TextField variant="standard" type="number" value={line.grossWeight} disabled />
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 50 }}>
+                      <TextField variant="standard" value={line.cl} disabled />
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 70 }}>
+                      <TextField variant="standard" value={line.comdty} disabled />
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 70 }}>
+                      <TextField variant="standard" type="number" value={line.chWeight} disabled />
                     </TableCell>
                     <TableCell sx={{ minWidth: 80 }}>
-                      <TextField variant="standard" type="number" value={line.ratePkr} disabled={!editable} onChange={(e) => updateAirwayBillLine(line.id, { ratePkr: Number(e.target.value) })} />
+                      <TextField variant="standard" type="number" value={line.rate} disabled />
                     </TableCell>
+                    <TableCell sx={{ minWidth: 80 }}>
+                      <TextField variant="standard" type="number" value={line.ratePkr} disabled />
+                    </TableCell>
+                    <TableCell>{line.freight.toFixed(4)}</TableCell>
                     <TableCell>{line.freightPkr.toFixed(2)}</TableCell>
                     <TableCell sx={{ minWidth: 80 }}>
-                      <TextField variant="standard" type="number" value={line.netNet} disabled={!editable} onChange={(e) => updateAirwayBillLine(line.id, { netNet: Number(e.target.value) })} />
+                      <TextField variant="standard" type="number" value={line.netNet} disabled />
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 80 }}>
+                      <TextField variant="standard" type="number" value={line.netRate} disabled />
                     </TableCell>
                     <TableCell sx={{ minWidth: 65 }}>
-                      <TextField variant="standard" type="number" value={line.kbPercent} disabled={!editable} onChange={(e) => updateAirwayBillLine(line.id, { kbPercent: Number(e.target.value) })} />
+                      <TextField variant="standard" type="number" value={line.kbPercent} disabled />
                     </TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>{line.kbAmount.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeAirwayBillLine(line.id)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <Button size="small" startIcon={<AddIcon />} disabled={!editable} onClick={addAirwayBillLine} sx={{ m: 1 }}>
-              Add Airway Bill Line
-            </Button>
           </Paper>
           <Grid container spacing={1.5}>
             <Grid item xs={4}>

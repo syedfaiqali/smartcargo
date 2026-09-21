@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
@@ -10,19 +11,32 @@ import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { LocalInvoice } from '../../domain/localInvoice';
 import { createEmptyLocalInvoice } from '../../domain/localInvoiceFactory';
-import { localInvoiceRepo, nextInvoiceNo, voidLocalInvoice } from '../../data/localInvoiceService';
+import { localInvoiceRepo, nextInvoiceNo, syncLocalInvoiceLinks, voidLocalInvoice } from '../../data/localInvoiceService';
 import { recomputeInvoiceTotals } from './invoiceCalculations';
 import { EntryTab } from './tabs/EntryTab';
 import { PrintingTab } from './tabs/PrintingTab';
 import { LocalInvoiceGrid } from './LocalInvoiceGrid';
 
 export function LocalInvoicePage() {
+  const location = useLocation();
   const [tab, setTab] = useState(0);
   const [showList, setShowList] = useState(true);
   const [isPrintingView, setIsPrintingView] = useState(false);
   const [invoice, setInvoice] = useState<LocalInvoice | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
+
+  useEffect(() => {
+    const invoiceId = (location.state as { invoiceId?: string } | null)?.invoiceId;
+    if (!invoiceId) return;
+    const linkedInvoice = localInvoiceRepo.get(invoiceId);
+    if (!linkedInvoice) return;
+    setInvoice(linkedInvoice);
+    setEditable(false);
+    setTab(0);
+    setShowList(false);
+    setIsPrintingView(false);
+  }, [location.key, location.state]);
 
   const loadInvoice = (inv: LocalInvoice) => {
     setInvoice(inv);
@@ -54,6 +68,7 @@ export function LocalInvoicePage() {
 
   const deleteInvoiceFromList = (inv: LocalInvoice) => {
     localInvoiceRepo.remove(inv.id);
+    syncLocalInvoiceLinks(inv);
     setMessage({ severity: 'success', text: `Invoice ${inv.invoiceNo} deleted.` });
   };
 
@@ -88,6 +103,7 @@ export function LocalInvoicePage() {
       case 'delete': {
         if (!invoice) return;
         localInvoiceRepo.remove(invoice.id);
+        syncLocalInvoiceLinks(invoice);
         setInvoice(null);
         setMessage({ severity: 'success', text: 'Invoice deleted.' });
         break;
@@ -98,7 +114,9 @@ export function LocalInvoicePage() {
           setMessage({ severity: 'error', text: 'Party Code is required before finalizing.' });
           return;
         }
+        const previous = localInvoiceRepo.get(invoice.id);
         const saved = localInvoiceRepo.save({ ...invoice, status: { ...invoice.status, final: true } });
+        syncLocalInvoiceLinks(saved, previous);
         setInvoice(saved);
         setEditable(false);
         setMessage({ severity: 'success', text: `Invoice ${saved.invoiceNo} finalized.` });
@@ -108,6 +126,7 @@ export function LocalInvoicePage() {
         if (!invoice) return;
         const updated = voidLocalInvoice(invoice.id);
         if (updated) {
+          syncLocalInvoiceLinks(updated, invoice);
           setInvoice(updated);
           setMessage({ severity: 'success', text: `Invoice ${updated.invoiceNo} voided.` });
         }
@@ -131,7 +150,9 @@ export function LocalInvoicePage() {
       setMessage({ severity: 'error', text: 'Party Code is required to save.' });
       return;
     }
+    const previous = localInvoiceRepo.get(invoice.id);
     const saved = localInvoiceRepo.save(recomputeInvoiceTotals(invoice));
+    syncLocalInvoiceLinks(saved, previous);
     setInvoice(saved);
     setMessage({ severity: 'success', text: `Invoice ${saved.invoiceNo} saved.` });
   };
