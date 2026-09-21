@@ -111,6 +111,12 @@ export const seaImportMenu: NavGroup = {
       label: 'Credit Notes Received From Foreign Agents (Sea-Import)',
       path: '/freight/sea-import/credit-notes-received-from-foreign-agents',
     },
+  ],
+};
+
+export const seaImportOtherMenu: NavGroup = {
+  label: 'Sea Import',
+  items: [
     { label: 'Quotations', path: '/freight/sea-import/quotations' },
     { label: 'Document Receipt', path: '/freight/sea-import/document-receipt' },
   ],
@@ -151,6 +157,7 @@ export const freightMenu: NavGroup[] = [
   seaExportMenu,
   airImportMenu,
   seaImportMenu,
+  seaImportOtherMenu,
   initialSetupMenu,
 ];
 

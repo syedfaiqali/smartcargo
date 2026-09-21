@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -8,6 +8,10 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { Job, JobKind } from '../../domain/job';
@@ -21,8 +25,15 @@ import { KbTab } from './tabs/KbTab';
 import { RemarksTab } from './tabs/RemarksTab';
 import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
+import { navyTrustColors, navyTrustFontFamily, navyTrustHeadingFontFamily, navyTrustScreenSx, loadNavyTrustFonts } from '../../theme/navyTrustTheme';
 
-const TAB_LABELS = ['Entry', 'Charges', 'K.B.', 'Remarks'] as const;
+const TAB_LABELS = ['1.0 Entry Details', '2.0 Charges Grid', '3.0 K.B. Data', '4.0 Remarks'] as const;
+
+function useJobScreenFonts() {
+  useEffect(() => {
+    loadNavyTrustFonts();
+  }, []);
+}
 
 function guessAirlineFromMawb(mawbNo: string): string | undefined {
   const prefix = mawbNo.split('-')[0];
@@ -36,6 +47,7 @@ interface JobPageProps {
 }
 
 export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
+  useJobScreenFonts();
   const [tab, setTab] = useState(0);
   const [job, setJob] = useState<Job | null>(null);
   const [editable, setEditable] = useState(false);
@@ -241,94 +253,149 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
   if (job?.status.void) disabledActions.push('final', 'edit');
   if (!editable) disabledActions.push('save');
 
+  const jobTypeLabel = kind === 'MAWB' ? 'MAWB' : 'HAWB';
+
   return (
-    <PageShell
-      breadcrumbs={breadcrumbs}
-      title={title}
-      actions={job ? (
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => { setJob(null); setEditable(false); setIsPrintingView(false); setTab(0); setMessage(null); }}
-        >
-          Back to List
-        </Button>
-      ) : undefined}
-    >
-      <Snackbar
-        open={Boolean(message)}
-        autoHideDuration={4000}
-        onClose={(_, reason) => { if (reason !== 'clickaway') setMessage(null); }}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        {message ? (
-          <Alert severity={message.severity} onClose={() => setMessage(null)} variant="filled">
-            {message.text}
-          </Alert>
+    <Box sx={navyTrustScreenSx}>
+      <PageShell
+        breadcrumbs={breadcrumbs}
+        title={title}
+        actions={job ? (
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => { setJob(null); setEditable(false); setIsPrintingView(false); setTab(0); setMessage(null); }}
+              sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border, color: navyTrustColors.textSecondary }}
+            >
+              Back to List
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ContentCopyIcon fontSize="small" />}
+              disabled={disabledActions.includes('copy')}
+              onClick={() => handleAction('copy')}
+              sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border, color: navyTrustColors.textPrimary }}
+            >
+              Copy Job
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteOutlineIcon fontSize="small" />}
+              disabled={disabledActions.includes('void')}
+              onClick={() => handleAction('void')}
+              sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.dangerBorder, bgcolor: navyTrustColors.dangerBg }}
+            >
+              Void
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<DescriptionOutlinedIcon fontSize="small" />}
+              disabled={disabledActions.includes('final')}
+              onClick={() => handleAction('final')}
+              sx={{ fontFamily: navyTrustFontFamily, bgcolor: navyTrustColors.navy, '&:hover': { bgcolor: navyTrustColors.navyDark } }}
+            >
+              Finalize {jobTypeLabel}
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<SaveOutlinedIcon fontSize="small" />}
+              disabled={disabledActions.includes('save')}
+              onClick={() => handleAction('save')}
+              sx={{ fontFamily: navyTrustFontFamily }}
+            >
+              Save
+            </Button>
+          </Stack>
         ) : undefined}
-      </Snackbar>
-
-      {!isPrintingView && (!job || tab === 0) && (
-          <TransactionToolbar
-          actions={job ? ['save', 'final', 'void', 'copy'] : ['new']}
-          disabledActions={disabledActions}
-          onAction={handleAction}
-        />
-      )}
-
-      {job && !isPrintingView && (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <Chip label={`Job No: ${job.jobNo}`} color="primary" />
-          {kind === 'HAWB' && <Chip label={`HAWB No: ${job.hawbNo || '—'}`} variant="outlined" />}
-          {job.status.final && <Chip label="FINAL" color="success" />}
-          {job.status.void && <Chip label="VOID" color="warning" />}
-          {editable && <Chip label="EDITING" color="info" variant="outlined" />}
-        </Stack>
-      )}
-
-      {job && isPrintingView && (
-        <Tabs value={0} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', '& .MuiTab-root': { fontWeight: 700 } }}>
-          <Tab label="Printing" />
-        </Tabs>
-      )}
-
-      {job && !isPrintingView && (
-        <Tabs
-          value={tab}
-          onChange={(_, v) => handleTabChange(v)}
-          sx={{
-            mb: 2,
-            borderBottom: 1,
-            borderColor: 'divider',
-            '& .MuiTab-root': { fontWeight: 700, color: '#334155' },
-            '& .Mui-selected': { color: '#123b72' },
-          }}
+      >
+        <Snackbar
+          open={Boolean(message)}
+          autoHideDuration={4000}
+          onClose={(_, reason) => { if (reason !== 'clickaway') setMessage(null); }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
-          {TAB_LABELS.map((label) => (
-            <Tab key={label} label={label} />
-          ))}
-        </Tabs>
-      )}
+          {message ? (
+            <Alert severity={message.severity} onClose={() => setMessage(null)} variant="filled">
+              {message.text}
+            </Alert>
+          ) : undefined}
+        </Snackbar>
 
-      {!job ? (
-        <DetailSearchTab kind={kind} onOpenJob={loadJob} onEditJob={editJobFromList} onDeleteJob={deleteJobFromList} onPrintJob={printJobFromList} />
-      ) : (
-        <Box
-          sx={{
-            '& .MuiInputBase-input, & .MuiSelect-select': { fontWeight: 600, color: '#172554' },
-            '& .MuiInputLabel-root': { fontWeight: 600, color: '#475569' },
-            '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: '#172554', opacity: 1, fontWeight: 600 },
-          }}
-        >
-          {isPrintingView ? <PrintingTab job={job} editable={editable} onChange={setJob} /> : <>
-            {tab === 0 && <EntryTab job={job} editable={editable} onChange={setJob} />}
-            {tab === 1 && <ChargesTab job={job} editable={editable} onChange={setJob} />}
-            {tab === 2 && <KbTab job={job} editable={editable} onChange={setJob} />}
-            {tab === 3 && <RemarksTab job={job} editable={editable} onChange={setJob} />}
-          </>}
+        {!job && (
+          <TransactionToolbar actions={['new']} disabledActions={disabledActions} onAction={handleAction} />
+        )}
 
-        </Box>
-      )}
-    </PageShell>
+        {job && (
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+            <Chip
+              label={`Job: ${job.jobNo}`}
+              sx={{ bgcolor: navyTrustColors.navy, color: '#fff', fontWeight: 700, fontFamily: navyTrustHeadingFontFamily, fontSize: 12.5 }}
+            />
+            {kind === 'HAWB' && <Chip label={`HAWB No: ${job.hawbNo || '—'}`} variant="outlined" sx={{ borderColor: navyTrustColors.border }} />}
+            {editable && (
+              <Chip
+                label="EDITING"
+                sx={{ bgcolor: '#fff4e0', color: navyTrustColors.warning, fontWeight: 700, border: `1px solid #f5d599` }}
+              />
+            )}
+            {job.status.final && (
+              <Chip label="FINAL" sx={{ bgcolor: navyTrustColors.successBg, color: navyTrustColors.success, fontWeight: 700, border: `1px solid ${navyTrustColors.successBorder}` }} />
+            )}
+            {job.status.void && (
+              <Chip label="VOID" sx={{ bgcolor: navyTrustColors.dangerBg, color: navyTrustColors.danger, fontWeight: 700, border: `1px solid ${navyTrustColors.dangerBorder}` }} />
+            )}
+          </Stack>
+        )}
+
+        {job && isPrintingView && (
+          <Tabs
+            value={0}
+            sx={{
+              mb: 2,
+              borderBottom: `2px solid ${navyTrustColors.border}`,
+              '& .MuiTab-root': { fontFamily: navyTrustHeadingFontFamily, fontWeight: 700, fontSize: 12.5 },
+              '& .Mui-selected': { color: navyTrustColors.navy },
+              '& .MuiTabs-indicator': { backgroundColor: navyTrustColors.navy, height: 2.5 },
+            }}
+          >
+            <Tab label="Printing" />
+          </Tabs>
+        )}
+
+        {job && !isPrintingView && (
+          <Tabs
+            value={tab}
+            onChange={(_, v) => handleTabChange(v)}
+            sx={{
+              mb: 2,
+              borderBottom: `2px solid ${navyTrustColors.border}`,
+              '& .MuiTab-root': { fontFamily: navyTrustHeadingFontFamily, fontWeight: 700, fontSize: 12.5, color: navyTrustColors.textSecondary },
+              '& .Mui-selected': { color: navyTrustColors.navy },
+              '& .MuiTabs-indicator': { backgroundColor: navyTrustColors.navy, height: 2.5 },
+            }}
+          >
+            {TAB_LABELS.map((label) => (
+              <Tab key={label} label={label} />
+            ))}
+          </Tabs>
+        )}
+
+        {!job ? (
+          <DetailSearchTab kind={kind} onOpenJob={loadJob} onEditJob={editJobFromList} onDeleteJob={deleteJobFromList} onPrintJob={printJobFromList} />
+        ) : (
+          <Box>
+            {isPrintingView ? <PrintingTab job={job} editable={editable} onChange={setJob} /> : <>
+              {tab === 0 && <EntryTab job={job} editable={editable} onChange={setJob} />}
+              {tab === 1 && <ChargesTab job={job} editable={editable} onChange={setJob} />}
+              {tab === 2 && <KbTab job={job} editable={editable} onChange={setJob} />}
+              {tab === 3 && <RemarksTab job={job} editable={editable} onChange={setJob} />}
+            </>}
+          </Box>
+        )}
+      </PageShell>
+    </Box>
   );
 }

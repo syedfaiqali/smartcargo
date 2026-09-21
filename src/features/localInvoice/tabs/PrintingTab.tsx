@@ -12,7 +12,8 @@ import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { LocalInvoice } from '../../../domain/localInvoice';
-import { SectionHeader } from '../../../components/FormGrid';
+import { SectionCard } from '../../../components/SectionCard';
+import { navyTrustColors, navyTrustFontFamily } from '../../../theme/navyTrustTheme';
 
 interface PrintingTabProps {
   invoice: LocalInvoice;
@@ -45,20 +46,22 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
 
   return (
     <Box>
-      <Grid container spacing={2} sx={{ mb: 1 }}>
-        <Grid item xs={12} md={6}>
-          <TextField label="Branch" fullWidth value={invoice.branch} disabled />
+      <SectionCard number="5.1" title="Print Target">
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <TextField label="Branch" fullWidth value={invoice.branch} disabled />
+          </Grid>
+          <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Button variant="outlined" startIcon={<PictureAsPdfIcon />} sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}>
+              PDF
+            </Button>
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Button variant="outlined" startIcon={<PictureAsPdfIcon />}>
-            PDF
-          </Button>
-        </Grid>
-      </Grid>
+      </SectionCard>
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
-          <SectionHeader>Document Type</SectionHeader>
+          <SectionCard number="5.2" title="Document Type">
           <FormControl>
             <RadioGroup value={p.documentType} onChange={(e) => setP({ documentType: e.target.value as LocalInvoice['printing']['documentType'] })}>
               {DOCUMENT_TYPES.map(([value, label]) => (
@@ -79,10 +82,11 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
             <MenuItem value="INVOICE">Invoice</MenuItem>
             <MenuItem value="SALE_TAX_INVOICE">Sale Tax Invoice</MenuItem>
           </TextField>
+          </SectionCard>
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <SectionHeader>Batch &amp; Layout Options</SectionHeader>
+          <SectionCard number="5.3" title="Batch &amp; Layout Options">
           <Grid container spacing={1.5}>
             <Grid item xs={6}>
               <TextField
@@ -132,10 +136,11 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
               </TextField>
             </Grid>
           </Grid>
+          </SectionCard>
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <SectionHeader>Content Toggles</SectionHeader>
+          <SectionCard number="5.4" title="Content Toggles">
           <Grid container spacing={0.5}>
             {CONTENT_TOGGLES.map(({ key, label }) => (
               <Grid item xs={12} key={key}>
@@ -146,6 +151,7 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
               </Grid>
             ))}
           </Grid>
+          </SectionCard>
         </Grid>
       </Grid>
 

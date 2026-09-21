@@ -10,7 +10,8 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
+import { SectionCard, SectionCardRow, SectionCardField } from '../../../components/SectionCard';
+import { navyTrustColors } from '../../../theme/navyTrustTheme';
 import { LocalInvoice } from '../../../domain/localInvoice';
 import { jobRepo } from '../../../data/jobService';
 import { lookupJobRef } from '../../../data/localInvoiceService';
@@ -139,317 +140,309 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
 
   // --- Airway Bill grid (4.6) ---
   return (
-    <Box
-      sx={{
-        '& .MuiInputBase-input, & .MuiSelect-select': { color: '#172554', fontWeight: 700 },
-        '& .MuiInputLabel-root': { color: '#475569', fontWeight: 700 },
-        '& .MuiInputBase-input.Mui-disabled, & .MuiSelect-select.Mui-disabled': {
-          WebkitTextFillColor: '#172554',
-          color: '#172554',
-          opacity: 1,
-          fontWeight: 700,
-        },
-        '& .MuiInputLabel-root.Mui-disabled': { color: '#475569', opacity: 1, fontWeight: 700 },
-        '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
-      }}
-    >
+    <Box>
       <Grid container spacing={2}>
         {/* LEFT COLUMN — 4.2 Job Identification & Party */}
         <Grid item xs={12} md={5}>
-          <FormRow>
-            <FormField md={4}>
-              <TextField label="Branch" fullWidth value={invoice.branch} disabled={!editable} onChange={(e) => apply({ branch: e.target.value })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Invoice No." fullWidth value={invoice.invoiceNo} disabled />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Invoice Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={invoice.invoiceDate}
-                disabled={!editable}
-                onChange={(e) => apply({ invoiceDate: e.target.value })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField label="Job Year" type="number" fullWidth value={invoice.jobYear} disabled={!editable} onChange={(e) => apply({ jobYear: Number(e.target.value) })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Job Type" fullWidth value={invoice.jobType} disabled={!editable} onChange={(e) => apply({ jobType: e.target.value })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="CC Port" fullWidth value={invoice.ccPort} disabled={!editable} onChange={(e) => apply({ ccPort: e.target.value })} />
-            </FormField>
-          </FormRow>
+          <SectionCard number="4.1" title="Invoice Identifiers">
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField label="Branch" fullWidth value={invoice.branch} disabled={!editable} onChange={(e) => apply({ branch: e.target.value })} />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="Invoice No." fullWidth value={invoice.invoiceNo} disabled />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField
+                  label="Invoice Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={invoice.invoiceDate}
+                  disabled={!editable}
+                  onChange={(e) => apply({ invoiceDate: e.target.value })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField label="Job Year" type="number" fullWidth value={invoice.jobYear} disabled={!editable} onChange={(e) => apply({ jobYear: Number(e.target.value) })} />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="Job Type" fullWidth value={invoice.jobType} disabled={!editable} onChange={(e) => apply({ jobType: e.target.value })} />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="CC Port" fullWidth value={invoice.ccPort} disabled={!editable} onChange={(e) => apply({ ccPort: e.target.value })} />
+              </SectionCardField>
+            </SectionCardRow>
+          </SectionCard>
 
-          <SectionHeader>HOUSE</SectionHeader>
-          <FormRow>
-            <FormField md={6}>
-              <TextField select label="Job No. (HAWB)" fullWidth value={invoice.house.jobNo} disabled={!editable} onChange={(e) => setHouseJobNo(e.target.value)}>
-                <MenuItem value="">(none)</MenuItem>
-                {houseJobs.map((j) => (
-                  <MenuItem key={j.jobNo} value={j.jobNo}>
-                    {j.jobNo} — HAWB {j.hawbNo || '(unassigned)'}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Job Date" fullWidth value={invoice.house.jobDate} disabled />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField label="AWB No." fullWidth value={invoice.house.awbNo} disabled />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="AWB Date" fullWidth value={invoice.house.awbDate} disabled />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="PP" fullWidth value={invoice.house.pp} disabled={!editable} onChange={(e) => apply({ house: { ...invoice.house, pp: e.target.value } })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Ref No" fullWidth value={invoice.house.refNo} disabled={!editable} onChange={(e) => apply({ house: { ...invoice.house, refNo: e.target.value } })} />
-            </FormField>
-          </FormRow>
+          <SectionCard number="4.2" title="House">
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField select label="Job No. (HAWB)" fullWidth value={invoice.house.jobNo} disabled={!editable} onChange={(e) => setHouseJobNo(e.target.value)}>
+                  <MenuItem value="">(none)</MenuItem>
+                  {houseJobs.map((j) => (
+                    <MenuItem key={j.jobNo} value={j.jobNo}>
+                      {j.jobNo} — HAWB {j.hawbNo || '(unassigned)'}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField label="Job Date" fullWidth value={invoice.house.jobDate} disabled />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField label="AWB No." fullWidth value={invoice.house.awbNo} disabled />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="AWB Date" fullWidth value={invoice.house.awbDate} disabled />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="PP" fullWidth value={invoice.house.pp} disabled={!editable} onChange={(e) => apply({ house: { ...invoice.house, pp: e.target.value } })} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField label="Ref No" fullWidth value={invoice.house.refNo} disabled={!editable} onChange={(e) => apply({ house: { ...invoice.house, refNo: e.target.value } })} />
+              </SectionCardField>
+            </SectionCardRow>
+          </SectionCard>
 
-          <SectionHeader>MASTER</SectionHeader>
-          <FormRow>
-            <FormField md={6}>
-              <TextField select label="Job No. (MAWB)" fullWidth value={invoice.master.jobNo} disabled={!editable} onChange={(e) => setMasterJobNo(e.target.value)}>
-                <MenuItem value="">(none)</MenuItem>
-                {masterJobs.map((j) => (
-                  <MenuItem key={j.jobNo} value={j.jobNo}>
-                    {j.jobNo} — MAWB {j.mawbNo || '(unassigned)'}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Job Date" fullWidth value={invoice.master.jobDate} disabled />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField label="AWB No." fullWidth value={invoice.master.awbNo} disabled />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="AWB Date" fullWidth value={invoice.master.awbDate} disabled />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="PP" fullWidth value={invoice.master.pp} disabled={!editable} onChange={(e) => apply({ master: { ...invoice.master, pp: e.target.value } })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Ref No" fullWidth value={invoice.master.refNo} disabled={!editable} onChange={(e) => apply({ master: { ...invoice.master, refNo: e.target.value } })} />
-            </FormField>
-          </FormRow>
+          <SectionCard number="4.3" title="Master">
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField select label="Job No. (MAWB)" fullWidth value={invoice.master.jobNo} disabled={!editable} onChange={(e) => setMasterJobNo(e.target.value)}>
+                  <MenuItem value="">(none)</MenuItem>
+                  {masterJobs.map((j) => (
+                    <MenuItem key={j.jobNo} value={j.jobNo}>
+                      {j.jobNo} — MAWB {j.mawbNo || '(unassigned)'}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField label="Job Date" fullWidth value={invoice.master.jobDate} disabled />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField label="AWB No." fullWidth value={invoice.master.awbNo} disabled />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="AWB Date" fullWidth value={invoice.master.awbDate} disabled />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="PP" fullWidth value={invoice.master.pp} disabled={!editable} onChange={(e) => apply({ master: { ...invoice.master, pp: e.target.value } })} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField label="Ref No" fullWidth value={invoice.master.refNo} disabled={!editable} onChange={(e) => apply({ master: { ...invoice.master, refNo: e.target.value } })} />
+              </SectionCardField>
+            </SectionCardRow>
+          </SectionCard>
 
-          <SectionHeader>Party</SectionHeader>
-          <FormRow>
-            <FormField md={12}>
-              <TextField
-                select
-                label="Move Charges from Last Party Invoice"
-                fullWidth
-                value={invoice.moveChargesFromLastPartyInvoice ?? 'N'}
-                disabled={!editable}
-                onChange={(e) => apply({ moveChargesFromLastPartyInvoice: e.target.value as 'Y' | 'N' })}
-              >
-                <MenuItem value="N">N</MenuItem>
-                <MenuItem value="Y">Y</MenuItem>
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField select label="Owner Code" fullWidth value={invoice.ownerCode} disabled={!editable} onChange={(e) => apply({ ownerCode: e.target.value })}>
-                {owners.map((o) => (
-                  <MenuItem key={o.code} value={o.code}>
-                    {o.code} — {o.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField select label="Party Code" fullWidth value={invoice.partyCode} disabled={!editable} onChange={(e) => setPartyCode(e.target.value)}>
-                {parties.map((p) => (
-                  <MenuItem key={p.code} value={p.code}>
-                    {p.code} — {p.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Name" fullWidth value={invoice.partyName} disabled />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Address" fullWidth value={invoice.partyAddress} disabled />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Agent's Party" fullWidth value={invoice.agentParty} disabled={!editable} onChange={(e) => apply({ agentParty: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField select label="A/Port of Dep" fullWidth value={invoice.airportOfDeparture} disabled={!editable} onChange={(e) => apply({ airportOfDeparture: e.target.value })}>
-                {airports.map((a) => (
-                  <MenuItem key={a.code} value={a.code}>
-                    {a.code}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Destination" fullWidth value={invoice.destination} disabled={!editable} onChange={(e) => apply({ destination: e.target.value })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField select label="Spo Code" fullWidth value={invoice.spoCode} disabled={!editable} onChange={(e) => apply({ spoCode: e.target.value })}>
-                {spoCodes.map((s) => (
-                  <MenuItem key={s.code} value={s.code}>
-                    {s.code}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Form E No." fullWidth value={invoice.formENo} disabled={!editable} onChange={(e) => apply({ formENo: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={invoice.formEDate}
-                disabled={!editable}
-                onChange={(e) => apply({ formEDate: e.target.value })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="S/B No." fullWidth value={invoice.sbNo} disabled={!editable} onChange={(e) => apply({ sbNo: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="S/B Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={invoice.sbDate}
-                disabled={!editable}
-                onChange={(e) => apply({ sbDate: e.target.value })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Shipper Inv.No." fullWidth value={invoice.shipperInvoiceNo} disabled={!editable} onChange={(e) => apply({ shipperInvoiceNo: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={invoice.shipperInvoiceDate}
-                disabled={!editable}
-                onChange={(e) => apply({ shipperInvoiceDate: e.target.value })}
-              />
-            </FormField>
-          </FormRow>
+          <SectionCard number="4.4" title="Party">
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField
+                  select
+                  label="Move Charges from Last Party Invoice"
+                  fullWidth
+                  value={invoice.moveChargesFromLastPartyInvoice ?? 'N'}
+                  disabled={!editable}
+                  onChange={(e) => apply({ moveChargesFromLastPartyInvoice: e.target.value as 'Y' | 'N' })}
+                >
+                  <MenuItem value="N">N</MenuItem>
+                  <MenuItem value="Y">Y</MenuItem>
+                </TextField>
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField select label="Owner Code" fullWidth value={invoice.ownerCode} disabled={!editable} onChange={(e) => apply({ ownerCode: e.target.value })}>
+                  {owners.map((o) => (
+                    <MenuItem key={o.code} value={o.code}>
+                      {o.code} — {o.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField select label="Party Code" fullWidth value={invoice.partyCode} disabled={!editable} onChange={(e) => setPartyCode(e.target.value)}>
+                  {parties.map((p) => (
+                    <MenuItem key={p.code} value={p.code}>
+                      {p.code} — {p.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="Name" fullWidth value={invoice.partyName} disabled />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField label="Address" fullWidth value={invoice.partyAddress} disabled />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField label="Agent's Party" fullWidth value={invoice.agentParty} disabled={!editable} onChange={(e) => apply({ agentParty: e.target.value })} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField select label="A/Port of Dep" fullWidth value={invoice.airportOfDeparture} disabled={!editable} onChange={(e) => apply({ airportOfDeparture: e.target.value })}>
+                  {airports.map((a) => (
+                    <MenuItem key={a.code} value={a.code}>
+                      {a.code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="Destination" fullWidth value={invoice.destination} disabled={!editable} onChange={(e) => apply({ destination: e.target.value })} />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField select label="Spo Code" fullWidth value={invoice.spoCode} disabled={!editable} onChange={(e) => apply({ spoCode: e.target.value })}>
+                  {spoCodes.map((s) => (
+                    <MenuItem key={s.code} value={s.code}>
+                      {s.code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="Form E No." fullWidth value={invoice.formENo} disabled={!editable} onChange={(e) => apply({ formENo: e.target.value })} />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  label="Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={invoice.formEDate}
+                  disabled={!editable}
+                  onChange={(e) => apply({ formEDate: e.target.value })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="S/B No." fullWidth value={invoice.sbNo} disabled={!editable} onChange={(e) => apply({ sbNo: e.target.value })} />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  label="S/B Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={invoice.sbDate}
+                  disabled={!editable}
+                  onChange={(e) => apply({ sbDate: e.target.value })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="Shipper Inv.No." fullWidth value={invoice.shipperInvoiceNo} disabled={!editable} onChange={(e) => apply({ shipperInvoiceNo: e.target.value })} />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  label="Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={invoice.shipperInvoiceDate}
+                  disabled={!editable}
+                  onChange={(e) => apply({ shipperInvoiceDate: e.target.value })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
 
-          <FormRow>
-            <FormField md={4}>
-              <TextField select label="Post in PKR Currency (Y/N)" fullWidth value={invoice.postInPkr} disabled={!editable} onChange={(e) => apply({ postInPkr: e.target.value as 'Y' | 'N' })}>
-                <MenuItem value="N">N</MenuItem>
-                <MenuItem value="Y">Y</MenuItem>
-              </TextField>
-            </FormField>
-          </FormRow>
-          {[1, 2, 3].map((n) => {
-            const currKey = `currency${n}` as 'currency1' | 'currency2' | 'currency3';
-            const rateKey = `exRate${n}` as 'exRate1' | 'exRate2' | 'exRate3';
-            return (
-              <FormRow key={n}>
-                <FormField md={6}>
-                  <TextField select label={`Currency ${n}`} fullWidth value={invoice[currKey]} disabled={!editable} onChange={(e) => apply({ [currKey]: e.target.value } as Partial<LocalInvoice>)}>
-                    <MenuItem value="">(none)</MenuItem>
-                    {currencies.map((c) => (
-                      <MenuItem key={c.code} value={c.code}>
-                        {c.code}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </FormField>
-                <FormField md={6}>
-                  <TextField
-                    label="Ex.Rate"
-                    type="number"
-                    fullWidth
-                    value={invoice[rateKey]}
-                    disabled={!editable}
-                    onChange={(e) => apply({ [rateKey]: Number(e.target.value) } as Partial<LocalInvoice>)}
-                  />
-                </FormField>
-              </FormRow>
-            );
-          })}
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField select label="Post in PKR Currency (Y/N)" fullWidth value={invoice.postInPkr} disabled={!editable} onChange={(e) => apply({ postInPkr: e.target.value as 'Y' | 'N' })}>
+                  <MenuItem value="N">N</MenuItem>
+                  <MenuItem value="Y">Y</MenuItem>
+                </TextField>
+              </SectionCardField>
+            </SectionCardRow>
+            {[1, 2, 3].map((n) => {
+              const currKey = `currency${n}` as 'currency1' | 'currency2' | 'currency3';
+              const rateKey = `exRate${n}` as 'exRate1' | 'exRate2' | 'exRate3';
+              return (
+                <SectionCardRow key={n}>
+                  <SectionCardField md={6}>
+                    <TextField select label={`Currency ${n}`} fullWidth value={invoice[currKey]} disabled={!editable} onChange={(e) => apply({ [currKey]: e.target.value } as Partial<LocalInvoice>)}>
+                      <MenuItem value="">(none)</MenuItem>
+                      {currencies.map((c) => (
+                        <MenuItem key={c.code} value={c.code}>
+                          {c.code}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </SectionCardField>
+                  <SectionCardField md={6}>
+                    <TextField
+                      label="Ex.Rate"
+                      type="number"
+                      fullWidth
+                      value={invoice[rateKey]}
+                      disabled={!editable}
+                      onChange={(e) => apply({ [rateKey]: Number(e.target.value) } as Partial<LocalInvoice>)}
+                    />
+                  </SectionCardField>
+                </SectionCardRow>
+              );
+            })}
 
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Consignee" fullWidth multiline minRows={2} value={invoice.consignee} disabled={!editable} onChange={(e) => apply({ consignee: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField
-                label="Printable Remarks"
-                fullWidth
-                multiline
-                minRows={2}
-                value={invoice.printableRemarks}
-                disabled={!editable}
-                onChange={(e) => apply({ printableRemarks: e.target.value })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField select label="Bank Code" fullWidth value={invoice.bankCode} disabled={!editable} onChange={(e) => setBankCode(e.target.value)}>
-                <MenuItem value="">(none)</MenuItem>
-                {banks.map((b) => (
-                  <MenuItem key={b.code} value={b.code}>
-                    {b.code} — {b.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Bank Detail" fullWidth value={invoice.bankDetailText} disabled={!editable} onChange={(e) => apply({ bankDetailText: e.target.value })} />
-            </FormField>
-          </FormRow>
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField label="Consignee" fullWidth multiline minRows={2} value={invoice.consignee} disabled={!editable} onChange={(e) => apply({ consignee: e.target.value })} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField
+                  label="Printable Remarks"
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  value={invoice.printableRemarks}
+                  disabled={!editable}
+                  onChange={(e) => apply({ printableRemarks: e.target.value })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField select label="Bank Code" fullWidth value={invoice.bankCode} disabled={!editable} onChange={(e) => setBankCode(e.target.value)}>
+                  <MenuItem value="">(none)</MenuItem>
+                  {banks.map((b) => (
+                    <MenuItem key={b.code} value={b.code}>
+                      {b.code} — {b.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField label="Bank Detail" fullWidth value={invoice.bankDetailText} disabled={!editable} onChange={(e) => apply({ bankDetailText: e.target.value })} />
+              </SectionCardField>
+            </SectionCardRow>
+          </SectionCard>
         </Grid>
 
-        {/* MIDDLE COLUMN — 4.4 Due Carrier/Agent, 4.5/4.6 grids */}
+        {/* MIDDLE COLUMN — 4.5 Due Carrier/Agent, 4.6/4.7 grids */}
         <Grid item xs={12} md={4}>
-          <SectionHeader>4.4 Due Carrier Charges</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2 }}>
+          <SectionCard number="4.5" title="Due Carrier Charges">
+          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -525,9 +518,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </TableBody>
             </Table>
           </Paper>
+          </SectionCard>
 
-          <SectionHeader>Due Agent Charges</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2 }}>
+          <SectionCard number="4.6" title="Due Agent Charges">
+          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -590,11 +584,11 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
             value={invoice.nonPrintableRemarks}
             disabled={!editable}
             onChange={(e) => apply({ nonPrintableRemarks: e.target.value })}
-            sx={{ mb: 2 }}
           />
+          </SectionCard>
 
-          <SectionHeader>4.5 Invoice Grid</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2 }}>
+          <SectionCard number="4.7" title="Invoice Grid">
+          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -644,9 +638,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </TableBody>
             </Table>
           </Paper>
+          </SectionCard>
 
-          <SectionHeader>4.6 Airway Bill Grid (KB Reconciliation)</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2 }}>
+          <SectionCard number="4.8" title="Airway Bill Grid (KB Reconciliation)">
+          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -738,11 +733,12 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               />
             </Grid>
           </Grid>
+          </SectionCard>
         </Grid>
 
-        {/* RIGHT COLUMN — 4.3 Tax, Commission & Totals */}
+        {/* RIGHT COLUMN — 4.9 Tax, Commission & Totals */}
         <Grid item xs={12} md={3}>
-          <SectionHeader>4.3 Tax, Commission &amp; Totals</SectionHeader>
+          <SectionCard number="4.9" title="Tax, Commission &amp; Totals">
           <Grid container spacing={1.5}>
             <Grid item xs={12}>
               <TextField label="Sales Tax (%) / PST" type="number" fullWidth value={invoice.salesTaxPercent} disabled={!editable} onChange={(e) => apply({ salesTaxPercent: Number(e.target.value) })} />
@@ -786,7 +782,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
             </Grid>
 
             <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 1.5 }}>
+              <Paper variant="outlined" sx={{ p: 1.5, borderColor: navyTrustColors.border }}>
                 <TotalReadout label="Total Freight" value={invoice.totalFreight} />
                 <TotalReadout label="Total Due Carrier" value={invoice.totalDueCarrier} />
                 <TotalReadout label="Total Due Agent" value={invoice.totalDueAgent} />
@@ -834,7 +830,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
             </Grid>
 
             <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 1.5, bgcolor: '#f0f7ff' }}>
+              <Paper variant="outlined" sx={{ p: 1.5, bgcolor: navyTrustColors.headerBg, borderColor: navyTrustColors.border }}>
                 <TotalReadout label="Invoice Total" value={invoice.invoiceTotal} highlight />
               </Paper>
             </Grid>
@@ -853,9 +849,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </TextField>
             </Grid>
           </Grid>
+          </SectionCard>
 
-          <SectionHeader>Receipts</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <SectionCard number="4.10" title="Receipts">
+          <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -885,6 +882,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </TableBody>
             </Table>
           </Paper>
+          </SectionCard>
         </Grid>
       </Grid>
     </Box>
@@ -900,7 +898,7 @@ function TotalReadout({ label, value, highlight }: { label: string; value: numbe
         </Typography>
       </Grid>
       <Grid item xs={5}>
-        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? 'primary.main' : 'inherit' }}>
+        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? navyTrustColors.navy : 'inherit' }}>
           {value.toFixed(2)}
         </Typography>
       </Grid>

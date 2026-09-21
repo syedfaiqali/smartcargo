@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
@@ -7,6 +8,9 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { LocalInvoice } from '../../domain/localInvoice';
@@ -16,8 +20,16 @@ import { recomputeInvoiceTotals } from './invoiceCalculations';
 import { EntryTab } from './tabs/EntryTab';
 import { PrintingTab } from './tabs/PrintingTab';
 import { LocalInvoiceGrid } from './LocalInvoiceGrid';
+import { navyTrustColors, navyTrustFontFamily, navyTrustHeadingFontFamily, navyTrustScreenSx, loadNavyTrustFonts } from '../../theme/navyTrustTheme';
+
+function useNavyTrustFonts() {
+  useEffect(() => {
+    loadNavyTrustFonts();
+  }, []);
+}
 
 export function LocalInvoicePage() {
+  useNavyTrustFonts();
   const location = useLocation();
   const [tab, setTab] = useState(0);
   const [showList, setShowList] = useState(true);
@@ -164,65 +176,117 @@ export function LocalInvoicePage() {
   if (!editable || isPrintingView) disabledActions.push('save');
 
   return (
-    <PageShell
-      breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Local Invoices Entry and Printing']}
-      title="Local Invoices Entry and Printing (Air-Export)"
-      actions={!showList ? (
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setInvoice(null); setEditable(false); setTab(0); setIsPrintingView(false); setMessage(null); }}>
-          Back to List
-        </Button>
-      ) : undefined}
-    >
-      {message && (
-        <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
-          {message.text}
-        </Alert>
-      )}
+    <Box sx={navyTrustScreenSx}>
+      <PageShell
+        breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Local Invoices Entry and Printing']}
+        title="Local Invoices Entry and Printing (Air-Export)"
+        actions={!showList ? (
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => { setShowList(true); setInvoice(null); setEditable(false); setTab(0); setIsPrintingView(false); setMessage(null); }}
+              sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border, color: navyTrustColors.textSecondary }}
+            >
+              Back to List
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<BlockOutlinedIcon fontSize="small" />}
+              disabled={disabledActions.includes('void')}
+              onClick={() => handleAction('void')}
+              sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.dangerBorder, bgcolor: navyTrustColors.dangerBg }}
+            >
+              Void
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<DescriptionOutlinedIcon fontSize="small" />}
+              disabled={disabledActions.includes('final')}
+              onClick={() => handleAction('final')}
+              sx={{ fontFamily: navyTrustFontFamily, bgcolor: navyTrustColors.navy, '&:hover': { bgcolor: navyTrustColors.navyDark } }}
+            >
+              Final
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<SaveOutlinedIcon fontSize="small" />}
+              disabled={disabledActions.includes('save')}
+              onClick={() => handleAction('save')}
+              sx={{ fontFamily: navyTrustFontFamily }}
+            >
+              Save
+            </Button>
+          </Stack>
+        ) : undefined}
+      >
+        {message && (
+          <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
+            {message.text}
+          </Alert>
+        )}
 
-      {showList ? (
-        <>
-          <TransactionToolbar actions={['new']} onAction={handleAction} />
-          <LocalInvoiceGrid
-            invoices={localInvoiceRepo.list()}
-            onOpenInvoice={loadInvoice}
-            onEditInvoice={editInvoiceFromList}
-            onPrintInvoice={printInvoiceFromList}
-            onDeleteInvoice={deleteInvoiceFromList}
-          />
-        </>
-      ) : (
-        <>
-          <TransactionToolbar
-            actions={['save', 'final', 'void']}
-            disabledActions={disabledActions}
-            onAction={handleAction}
-          />
+        {showList ? (
+          <>
+            <TransactionToolbar actions={['new']} onAction={handleAction} />
+            <LocalInvoiceGrid
+              invoices={localInvoiceRepo.list()}
+              onOpenInvoice={loadInvoice}
+              onEditInvoice={editInvoiceFromList}
+              onPrintInvoice={printInvoiceFromList}
+              onDeleteInvoice={deleteInvoiceFromList}
+            />
+          </>
+        ) : (
+          <>
+            {invoice && (
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+                <Chip
+                  label={`Invoice No: ${invoice.invoiceNo}`}
+                  sx={{ bgcolor: navyTrustColors.navy, color: '#fff', fontWeight: 700, fontFamily: navyTrustHeadingFontFamily, fontSize: 12.5 }}
+                />
+                {editable && (
+                  <Chip
+                    label="EDITING"
+                    sx={{ bgcolor: '#fff4e0', color: navyTrustColors.warning, fontWeight: 700, border: '1px solid #f5d599' }}
+                  />
+                )}
+                {invoice.status.final && (
+                  <Chip label="FINAL" sx={{ bgcolor: navyTrustColors.successBg, color: navyTrustColors.success, fontWeight: 700, border: `1px solid ${navyTrustColors.successBorder}` }} />
+                )}
+                {invoice.status.void && (
+                  <Chip label="VOID" sx={{ bgcolor: navyTrustColors.dangerBg, color: navyTrustColors.danger, fontWeight: 700, border: `1px solid ${navyTrustColors.dangerBorder}` }} />
+                )}
+              </Stack>
+            )}
 
-      {invoice && (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <Chip label={`Invoice No: ${invoice.invoiceNo}`} color="primary" />
-          {invoice.status.final && <Chip label="FINAL" color="success" />}
-          {invoice.status.void && <Chip label="VOID" color="warning" />}
-          {editable && <Chip label="EDITING" color="info" variant="outlined" />}
-        </Stack>
-      )}
+            <Tabs
+              value={tab}
+              sx={{
+                mb: 2,
+                borderBottom: `2px solid ${navyTrustColors.border}`,
+                '& .MuiTab-root': { fontFamily: navyTrustHeadingFontFamily, fontWeight: 700, fontSize: 12.5, color: navyTrustColors.textSecondary },
+                '& .Mui-selected': { color: navyTrustColors.navy },
+                '& .MuiTabs-indicator': { backgroundColor: navyTrustColors.navy, height: 2.5 },
+              }}
+            >
+              {(isPrintingView ? ['Printing'] : ['Entry']).map((label) => (
+                <Tab key={label} label={label} />
+              ))}
+            </Tabs>
 
-      <Tabs value={tab} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        {(isPrintingView ? ['Printing'] : ['Entry']).map((label) => (
-          <Tab key={label} label={label} />
-        ))}
-      </Tabs>
-
-      {!invoice ? (
-        <Alert severity="info">Click NEW to create an invoice, or use Search to return to the invoice list.</Alert>
-      ) : (
-        <>
-          {isPrintingView ? <PrintingTab invoice={invoice} editable={editable} onChange={setInvoice} /> : <EntryTab invoice={invoice} editable={editable} onChange={setInvoice} />}
-
-        </>
-      )}
-        </>
-      )}
-    </PageShell>
+            {!invoice ? (
+              <Alert severity="info">Click NEW to create an invoice, or use Search to return to the invoice list.</Alert>
+            ) : (
+              <>
+                {isPrintingView ? <PrintingTab invoice={invoice} editable={editable} onChange={setInvoice} /> : <EntryTab invoice={invoice} editable={editable} onChange={setInvoice} />}
+              </>
+            )}
+          </>
+        )}
+      </PageShell>
+    </Box>
   );
 }

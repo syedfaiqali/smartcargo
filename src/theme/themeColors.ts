@@ -17,15 +17,15 @@ export const themeColors = {
   secondaryLight: '#7ba648',
 
   // Sidebar (left navigation) colors.
-  sidebarBg: '#152238',
-  sidebarText: '#aab4c4',
-  sidebarMuted: '#7c8aa0',
-  sidebarSectionLabel: '#5b6b83',
-  sidebarHover: 'rgba(255,255,255,0.05)',
-  sidebarSelectedBg: '#2f527f',
+  sidebarBg: '#0c1830',
+  sidebarText: '#a9b4c9',
+  sidebarMuted: '#7f8caa',
+  sidebarSectionLabel: '#57648099',
+  sidebarHover: 'rgba(255,255,255,0.06)',
+  sidebarSelectedBg: '#1f3a63',
   sidebarSelectedText: '#ffffff',
   sidebarDivider: 'rgba(255,255,255,0.08)',
-  sidebarAvatarBg: '#2f527f',
+  sidebarAvatarBg: '#3b6fd4',
   sidebarScrollbarThumb: 'rgba(255,255,255,0.16)',
   sidebarScrollbarThumbHover: 'rgba(255,255,255,0.28)',
 

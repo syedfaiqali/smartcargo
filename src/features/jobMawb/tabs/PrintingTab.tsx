@@ -14,7 +14,8 @@ import Alert from '@mui/material/Alert';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import GridOnIcon from '@mui/icons-material/GridOn';
 import { Job } from '../../../domain/job';
-import { SectionHeader } from '../../../components/FormGrid';
+import { SectionCard } from '../../../components/SectionCard';
+import { navyTrustColors, navyTrustFontFamily } from '../../../theme/navyTrustTheme';
 
 interface PrintingTabProps {
   job: Job;
@@ -59,40 +60,43 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
 
   return (
     <Box>
-      <Grid container spacing={2} sx={{ mb: 1 }}>
-        <Grid item xs={12} md={3}>
-          <TextField label="Branch" fullWidth value={job.branch} disabled />
+      <SectionCard number="4.1" title="Print Target">
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={3}>
+            <TextField label="Branch" fullWidth value={job.branch} disabled />
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <TextField label="Job No." fullWidth value={job.jobNo} disabled />
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <TextField label="AWB No." fullWidth value={job.mawbNo} disabled />
+          </Grid>
+          <Grid item xs={12} md={3} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Button variant="outlined" startIcon={<PictureAsPdfIcon />} sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}>
+              PDF
+            </Button>
+            <Button variant="outlined" startIcon={<GridOnIcon />} sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}>
+              Excel
+            </Button>
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <TextField label="Job No." fullWidth value={job.jobNo} disabled />
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <TextField label="AWB No." fullWidth value={job.mawbNo} disabled />
-        </Grid>
-        <Grid item xs={12} md={3} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Button variant="outlined" startIcon={<PictureAsPdfIcon />}>
-            PDF
-          </Button>
-          <Button variant="outlined" startIcon={<GridOnIcon />}>
-            Excel
-          </Button>
-        </Grid>
-      </Grid>
+      </SectionCard>
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
-          <SectionHeader>Document Type</SectionHeader>
-          <FormControl>
-            <RadioGroup value={p.documentType} onChange={(e) => setP({ documentType: e.target.value })}>
-              {DOCUMENT_TYPES.map(([value, label]) => (
-                <FormControlLabel key={value} value={value} control={<Radio size="small" />} label={label} />
-              ))}
-            </RadioGroup>
-          </FormControl>
+          <SectionCard number="4.2" title="Document Type">
+            <FormControl>
+              <RadioGroup value={p.documentType} onChange={(e) => setP({ documentType: e.target.value })}>
+                {DOCUMENT_TYPES.map(([value, label]) => (
+                  <FormControlLabel key={value} value={value} control={<Radio size="small" />} label={label} />
+                ))}
+              </RadioGroup>
+            </FormControl>
+          </SectionCard>
         </Grid>
 
         <Grid item xs={12} md={5}>
-          <SectionHeader>Air Waybill Print Options</SectionHeader>
+          <SectionCard number="4.3" title="Air Waybill Print Options">
           <Grid container spacing={1}>
             <Grid item xs={12}>
               <FormControl disabled={!editable}>
@@ -166,14 +170,16 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
               />
             </Grid>
           </Grid>
+          </SectionCard>
         </Grid>
 
         <Grid item xs={12} md={3}>
-          <SectionHeader>Copy Selection</SectionHeader>
+          <SectionCard number="4.4" title="Copy Selection">
           <Paper
             variant="outlined"
             sx={{
               p: 1.25,
+              borderColor: navyTrustColors.border,
               '& .MuiFormControlLabel-root': { display: 'flex', alignItems: 'center', m: 0, minHeight: 32 },
               '& .MuiFormControlLabel-label': { lineHeight: 1.25 },
             }}
@@ -208,6 +214,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
               />
             ))}
           </Paper>
+          </SectionCard>
         </Grid>
       </Grid>
 

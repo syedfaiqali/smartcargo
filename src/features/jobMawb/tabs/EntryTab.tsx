@@ -22,7 +22,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { Job } from '../../../domain/job';
-import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
+import { SectionCard, SectionCardRow, SectionCardField } from '../../../components/SectionCard';
+import { navyTrustColors } from '../../../theme/navyTrustTheme';
 import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo } from '../../../data/masterDataService';
 import { jobRepo } from '../../../data/jobService';
 import { getLocalInvoiceLinksForJob } from '../../../data/localInvoiceService';
@@ -120,241 +121,223 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   };
 
   return (
-    <Box
-      sx={{
-        '& .MuiInputBase-input, & .MuiSelect-select': { fontWeight: 600, color: '#172554' },
-        '& .MuiInputLabel-root': { fontWeight: 600, color: '#475569' },
-        '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: '#172554', opacity: 1, fontWeight: 600 },
-      }}
-    >
+    <Box>
       <Grid container spacing={2}>
-        {/* LEFT COLUMN — 2.3 Job Identification / Party / Consignee / Routing / Agents / Shipment */}
+        {/* LEFT COLUMN */}
         <Grid item xs={12} md={6}>
-          <FormRow>
-            <FormField md={3}>
-              <TextField label="Branch" fullWidth value={job.branch} disabled={!editable} onChange={(e) => set('branch', e.target.value)} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Job No." fullWidth value={job.jobNo} disabled />
-            </FormField>
-            <FormField md={5}>
-              <TextField
-                label="Job Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={job.jobDate}
-                disabled={!editable}
-                onChange={(e) => set('jobDate', e.target.value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Job Type" select fullWidth value={job.jobType} disabled={!editable} onChange={(e) => set('jobType', e.target.value)}>
-                <MenuItem value="EXPORT">Export</MenuItem>
-                <MenuItem value="TRANSSHIPMENT">Transshipment</MenuItem>
-                <MenuItem value="CONSOLIDATION">Consolidation</MenuItem>
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Nomination (Y/N)" select fullWidth value={job.nomination} disabled={!editable} onChange={(e) => set('nomination', e.target.value as 'Y' | 'N')}>
-                <MenuItem value="N">N</MenuItem>
-                <MenuItem value="Y">Y</MenuItem>
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Quot.Ref.No." fullWidth value={job.quotRefNo} disabled={!editable} onChange={(e) => set('quotRefNo', e.target.value)} />
-            </FormField>
-          </FormRow>
-          {job.kind === 'HAWB' && (
-            <FormRow>
-              <FormField md={12}>
+          <SectionCard number="1.1" title="Primary Identifiers" meta={`SC-ID: ${job.jobNo || '—'}`}>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField label="Branch Office" fullWidth value={job.branch} disabled={!editable} onChange={(e) => set('branch', e.target.value)} />
+              </SectionCardField>
+              <SectionCardField md={4}>
                 <TextField
-                  select
-                  label="Master Job No. (MAWB)"
+                  label="Job Date"
+                  type="date"
                   fullWidth
-                  value={job.parentJobNo ?? ''}
+                  InputLabelProps={{ shrink: true }}
+                  value={job.jobDate}
                   disabled={!editable}
-                  onChange={(e) => setParentJobNo(e.target.value)}
-                  helperText="A House job is always created against a parent Job (MAWB) — docs Section 3"
-                >
-                  {masterJobs.map((m) => (
-                    <MenuItem key={m.jobNo} value={m.jobNo}>
-                      {m.jobNo} — MAWB {m.mawbNo || '(unassigned)'}
+                  onChange={(e) => set('jobDate', e.target.value)}
+                />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="Nomination" select fullWidth value={job.nomination} disabled={!editable} onChange={(e) => set('nomination', e.target.value as 'Y' | 'N')}>
+                  <MenuItem value="N">N - Standard</MenuItem>
+                  <MenuItem value="Y">Y - Nominated</MenuItem>
+                </TextField>
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                {job.kind === 'HAWB' ? (
+                  <TextField label="HAWB No." fullWidth value={job.hawbNo ?? ''} disabled />
+                ) : (
+                  <TextField label="MAWB Serial Number" fullWidth value={job.mawbNo} disabled={!editable} onChange={(e) => set('mawbNo', e.target.value)} placeholder="From AWB Stock" />
+                )}
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField label="Quotation Reference" fullWidth value={job.quotRefNo} disabled={!editable} onChange={(e) => set('quotRefNo', e.target.value)} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField select label="Owner" fullWidth value={job.owner} disabled={!editable} onChange={(e) => set('owner', e.target.value)}>
+                  {owners.map((o) => (
+                    <MenuItem key={o.code} value={o.code}>
+                      {o.code} — {o.name}
                     </MenuItem>
                   ))}
                 </TextField>
-              </FormField>
-            </FormRow>
-          )}
-          <FormRow>
-            <FormField md={6}>
-              {job.kind === 'HAWB' ? (
-                <TextField label="HAWB No." fullWidth value={job.hawbNo ?? ''} disabled />
-              ) : (
-                <TextField label="MAWB No." fullWidth value={job.mawbNo} disabled={!editable} onChange={(e) => set('mawbNo', e.target.value)} placeholder="From AWB Stock" />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  label="Sales Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={job.saleDate}
+                  disabled={!editable}
+                  onChange={(e) => set('saleDate', e.target.value)}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField label="Job Type" select fullWidth value={job.jobType} disabled={!editable} onChange={(e) => set('jobType', e.target.value)}>
+                  <MenuItem value="EXPORT">Export</MenuItem>
+                  <MenuItem value="TRANSSHIPMENT">Transshipment</MenuItem>
+                  <MenuItem value="CONSOLIDATION">Consolidation</MenuItem>
+                </TextField>
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField
+                  label="AWB Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={job.awbDate}
+                  disabled={!editable || job.kind === 'HAWB'}
+                  onChange={(e) => set('awbDate', e.target.value)}
+                />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="Charge Code" fullWidth value={job.chargeCode} disabled={!editable} onChange={(e) => set('chargeCode', e.target.value)} />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="Station" fullWidth value={job.station} disabled={!editable} onChange={(e) => set('station', e.target.value)} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="IncoTerm" fullWidth value={job.incoTerm} disabled={!editable} onChange={(e) => set('incoTerm', e.target.value)} />
+              </SectionCardField>
+              {job.kind === 'HAWB' && (
+                <SectionCardField md={6}>
+                  <TextField
+                    select
+                    label="Master Job No. (MAWB)"
+                    fullWidth
+                    value={job.parentJobNo ?? ''}
+                    disabled={!editable}
+                    onChange={(e) => setParentJobNo(e.target.value)}
+                    helperText="A House job is always created against a parent Job (MAWB)"
+                  >
+                    {masterJobs.map((m) => (
+                      <MenuItem key={m.jobNo} value={m.jobNo}>
+                        {m.jobNo} — MAWB {m.mawbNo || '(unassigned)'}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </SectionCardField>
               )}
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="AWB Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={job.awbDate}
-                disabled={!editable || job.kind === 'HAWB'}
-                onChange={(e) => set('awbDate', e.target.value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField
-                label="Sale Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={job.saleDate}
-                disabled={!editable}
-                onChange={(e) => set('saleDate', e.target.value)}
-              />
-            </FormField>
-            <FormField md={6}>
-              <TextField select label="Owner" fullWidth value={job.owner} disabled={!editable} onChange={(e) => set('owner', e.target.value)}>
-                {owners.map((o) => (
-                  <MenuItem key={o.code} value={o.code}>
-                    {o.code} — {o.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField label="Charge Code" fullWidth value={job.chargeCode} disabled={!editable} onChange={(e) => set('chargeCode', e.target.value)} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Station" fullWidth value={job.station} disabled={!editable} onChange={(e) => set('station', e.target.value)} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="IncoTerm" fullWidth value={job.incoTerm} disabled={!editable} onChange={(e) => set('incoTerm', e.target.value)} />
-            </FormField>
-          </FormRow>
+            </SectionCardRow>
+          </SectionCard>
 
-          <SectionHeader>{job.kind === 'HAWB' ? 'PARTY (Actual Shipper)' : 'PARTY'}</SectionHeader>
-          <FormRow>
-            <FormField md={4}>
-              <TextField label="Credit Limit" fullWidth value={job.party.creditLimit} disabled />
-            </FormField>
-            <FormField md={4}>
-              <TextField select label="Party Code" fullWidth value={job.party.partyCode} disabled={!editable} onChange={(e) => setParty(e.target.value)}>
-                {parties.map((p) => (
-                  <MenuItem key={p.code} value={p.code}>
-                    {p.code} — {p.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                select
-                label="Agent Party"
-                fullWidth
-                value={job.party.agentParty}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, party: { ...job.party, agentParty: e.target.value } })}
-              >
-                <MenuItem value="">— Select Agent Party —</MenuItem>
-                {parties.map((party) => (
-                  <MenuItem key={party.code} value={party.code}>
-                    {party.code} — {party.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Name" fullWidth value={job.party.name} disabled />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Address" fullWidth value={job.party.address} disabled />
-            </FormField>
-          </FormRow>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <SectionCard number="1.2" title={job.kind === 'HAWB' ? 'Shipper (Actual)' : 'Shipper / Consignor'}>
+                <SectionCardRow>
+                  <SectionCardField md={6}>
+                    <TextField select label="Party Code" fullWidth value={job.party.partyCode} disabled={!editable} onChange={(e) => setParty(e.target.value)}>
+                      {parties.map((p) => (
+                        <MenuItem key={p.code} value={p.code}>
+                          {p.code} — {p.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </SectionCardField>
+                  <SectionCardField md={6}>
+                    <TextField label="Credit Limit" fullWidth value={job.party.creditLimit} disabled />
+                  </SectionCardField>
+                </SectionCardRow>
+                <SectionCardRow>
+                  <SectionCardField md={12}>
+                    <TextField
+                      select
+                      label="Agent Party"
+                      fullWidth
+                      value={job.party.agentParty}
+                      disabled={!editable}
+                      onChange={(e) => onChange({ ...job, party: { ...job.party, agentParty: e.target.value } })}
+                    >
+                      <MenuItem value="">— Select Agent Party —</MenuItem>
+                      {parties.map((party) => (
+                        <MenuItem key={party.code} value={party.code}>
+                          {party.code} — {party.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </SectionCardField>
+                </SectionCardRow>
+                <SectionCardRow>
+                  <SectionCardField md={12}>
+                    <TextField label="Full Name" fullWidth value={job.party.name} disabled />
+                  </SectionCardField>
+                </SectionCardRow>
+                <SectionCardRow>
+                  <SectionCardField md={12}>
+                    <TextField label="Address" fullWidth multiline minRows={2} value={job.party.address} disabled />
+                  </SectionCardField>
+                </SectionCardRow>
+              </SectionCard>
+            </Grid>
 
-          <SectionHeader>{job.kind === 'HAWB' ? 'CONSIGNEE (Actual Consignee)' : 'CONSIGNEE'}</SectionHeader>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                select
-                label="Consolidation (Y/N)"
-                fullWidth
-                value={job.consignee.consolidation}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, consignee: { ...job.consignee, consolidation: e.target.value as 'Y' | 'N' } })}
-              >
-                <MenuItem value="N">N</MenuItem>
-                <MenuItem value="Y">Y</MenuItem>
-              </TextField>
-            </FormField>
-            <FormField md={8}>
-              <TextField select label="Code (Foreign Agent)" fullWidth value={job.consignee.code} disabled={!editable || job.consignee.consolidation !== 'Y'} onChange={(e) => setConsigneeCode(e.target.value)}>
-                {foreignAgents.map((a) => (
-                  <MenuItem key={a.code} value={a.code}>
-                    {a.code} — {a.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Name" fullWidth value={job.consignee.name} disabled />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Address" fullWidth value={job.consignee.address} disabled />
-            </FormField>
-          </FormRow>
+            <Grid item xs={12} sm={6}>
+              <SectionCard number="1.3" title={job.kind === 'HAWB' ? 'Consignee (Actual)' : 'Consignee'}>
+                <SectionCardRow>
+                  <SectionCardField md={6}>
+                    <TextField
+                      select
+                      label="Consolidation"
+                      fullWidth
+                      value={job.consignee.consolidation}
+                      disabled={!editable}
+                      onChange={(e) => onChange({ ...job, consignee: { ...job.consignee, consolidation: e.target.value as 'Y' | 'N' } })}
+                    >
+                      <MenuItem value="N">N</MenuItem>
+                      <MenuItem value="Y">Y</MenuItem>
+                    </TextField>
+                  </SectionCardField>
+                  <SectionCardField md={6}>
+                    <TextField select label="Foreign Agent Code" fullWidth value={job.consignee.code} disabled={!editable || job.consignee.consolidation !== 'Y'} onChange={(e) => setConsigneeCode(e.target.value)}>
+                      {foreignAgents.map((a) => (
+                        <MenuItem key={a.code} value={a.code}>
+                          {a.code} — {a.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </SectionCardField>
+                </SectionCardRow>
+                <SectionCardRow>
+                  <SectionCardField md={12}>
+                    <TextField label="Full Name" fullWidth value={job.consignee.name} disabled />
+                  </SectionCardField>
+                </SectionCardRow>
+                <SectionCardRow>
+                  <SectionCardField md={12}>
+                    <TextField label="Address" fullWidth multiline minRows={2} value={job.consignee.address} disabled />
+                  </SectionCardField>
+                </SectionCardRow>
+              </SectionCard>
+            </Grid>
+          </Grid>
 
-          <SectionHeader>Routing &amp; Shipment Details</SectionHeader>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="CC Port" fullWidth value={job.routing.ccPort} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, ccPort: e.target.value } })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                select
-                label="Airport of Departure"
-                fullWidth
-                value={job.routing.airportOfDeparture}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, airportOfDeparture: e.target.value } })}
-              >
-                {airports.map((a) => (
-                  <MenuItem key={a.code} value={a.code}>
-                    {a.code} — {a.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          {job.routing.legs.map((leg, i) => (
-            <FormRow key={i}>
-              <FormField md={8}>
+          <SectionCard number="1.4" title="Routing &amp; Shipment Details">
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="CC Port" fullWidth value={job.routing.ccPort} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, ccPort: e.target.value } })} />
+              </SectionCardField>
+              <SectionCardField md={6}>
                 <TextField
                   select
-                  label={`To (leg ${i + 1})`}
+                  label="Airport of Departure"
                   fullWidth
-                  value={leg.to}
+                  value={job.routing.airportOfDeparture}
                   disabled={!editable}
-                  onChange={(e) => {
-                    const legs = [...job.routing.legs];
-                    legs[i] = { ...legs[i], to: e.target.value };
-                    onChange({ ...job, routing: { ...job.routing, legs } });
-                  }}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, airportOfDeparture: e.target.value } })}
                 >
                   {airports.map((a) => (
                     <MenuItem key={a.code} value={a.code}>
@@ -362,260 +345,288 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                     </MenuItem>
                   ))}
                 </TextField>
-              </FormField>
-              <FormField md={4}>
+              </SectionCardField>
+            </SectionCardRow>
+            {job.routing.legs.map((leg, i) => (
+              <SectionCardRow key={i}>
+                <SectionCardField md={8}>
+                  <TextField
+                    select
+                    label={`To (leg ${i + 1})`}
+                    fullWidth
+                    value={leg.to}
+                    disabled={!editable}
+                    onChange={(e) => {
+                      const legs = [...job.routing.legs];
+                      legs[i] = { ...legs[i], to: e.target.value };
+                      onChange({ ...job, routing: { ...job.routing, legs } });
+                    }}
+                  >
+                    {airports.map((a) => (
+                      <MenuItem key={a.code} value={a.code}>
+                        {a.code} — {a.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </SectionCardField>
+                <SectionCardField md={4}>
+                  <TextField
+                    label="By"
+                    fullWidth
+                    value={leg.by}
+                    disabled={!editable}
+                    onChange={(e) => {
+                      const legs = [...job.routing.legs];
+                      legs[i] = { ...legs[i], by: e.target.value };
+                      onChange({ ...job, routing: { ...job.routing, legs } });
+                    }}
+                  />
+                </SectionCardField>
+              </SectionCardRow>
+            ))}
+            <SectionCardRow>
+              <SectionCardField md={12}>
                 <TextField
-                  label="By"
+                  label="Destination"
                   fullWidth
-                  value={leg.by}
+                  value={job.routing.destination}
                   disabled={!editable}
-                  onChange={(e) => {
-                    const legs = [...job.routing.legs];
-                    legs[i] = { ...legs[i], by: e.target.value };
-                    onChange({ ...job, routing: { ...job.routing, legs } });
-                  }}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, destination: e.target.value } })}
                 />
-              </FormField>
-            </FormRow>
-          ))}
-          <FormRow>
-            <FormField md={12}>
-              <TextField
-                label="Destination"
-                fullWidth
-                value={job.routing.destination}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, destination: e.target.value } })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField
-                label="Account No."
-                fullWidth
-                value={job.routing.accountNo}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, accountNo: e.target.value } })}
-              />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="HS Code" fullWidth value={job.routing.hsCode} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, hsCode: e.target.value } })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                label="Flight No. 1"
-                fullWidth
-                value={job.routing.flightNo1}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightNo1: e.target.value } })}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Flight No. 2"
-                fullWidth
-                value={job.routing.flightNo2}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightNo2: e.target.value } })}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={job.routing.flightDate}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightDate: e.target.value } })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Form E No." fullWidth value={job.routing.formENo} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, formENo: e.target.value } })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={job.routing.formEDate}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, formEDate: e.target.value } })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField
-                label="Shipper Invoice No."
-                fullWidth
-                value={job.routing.shipperInvoiceNo}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceNo: e.target.value } })}
-              />
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={job.routing.shipperInvoiceDate}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceDate: e.target.value } })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="S/B No." fullWidth value={job.routing.sbNo} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, sbNo: e.target.value } })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="S/B Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={job.routing.sbDate}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, routing: { ...job.routing, sbDate: e.target.value } })}
-              />
-            </FormField>
-          </FormRow>
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField
+                  label="Account No."
+                  fullWidth
+                  value={job.routing.accountNo}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, accountNo: e.target.value } })}
+                />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField label="HS Code" fullWidth value={job.routing.hsCode} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, hsCode: e.target.value } })} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField
+                  label="Flight No. 1"
+                  fullWidth
+                  value={job.routing.flightNo1}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightNo1: e.target.value } })}
+                />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField
+                  label="Flight No. 2"
+                  fullWidth
+                  value={job.routing.flightNo2}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightNo2: e.target.value } })}
+                />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField
+                  label="Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={job.routing.flightDate}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightDate: e.target.value } })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="Form E No." fullWidth value={job.routing.formENo} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, formENo: e.target.value } })} />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  label="Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={job.routing.formEDate}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, formEDate: e.target.value } })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField
+                  label="Shipper Invoice No."
+                  fullWidth
+                  value={job.routing.shipperInvoiceNo}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceNo: e.target.value } })}
+                />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  label="Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={job.routing.shipperInvoiceDate}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceDate: e.target.value } })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="S/B No." fullWidth value={job.routing.sbNo} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, sbNo: e.target.value } })} />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  label="S/B Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={job.routing.sbDate}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, sbDate: e.target.value } })}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+          </SectionCard>
 
-          <SectionHeader>Agents &amp; References</SectionHeader>
-          <FormRow>
-            <FormField md={6}>
-              <TextField
-                select
-                label="Clearing Agent"
-                fullWidth
-                value={job.agents.clearingAgent}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, agents: { ...job.agents, clearingAgent: e.target.value } })}
-              >
-                {clearingAgents.map((a) => (
-                  <MenuItem key={a.code} value={a.code}>
-                    {a.code} — {a.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                select
-                label="Delivery Agent"
-                fullWidth
-                value={job.agents.deliveryAgent}
-                disabled={!editable}
-                onChange={(e) => onChange({ ...job, agents: { ...job.agents, deliveryAgent: e.target.value } })}
-              >
-                {deliveryAgents.map((a) => (
-                  <MenuItem key={a.code} value={a.code}>
-                    {a.code} — {a.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField select label="SPO Code" fullWidth value={job.agents.spoCode} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, spoCode: e.target.value } })}>
-                {spoCodes.map((s) => (
-                  <MenuItem key={s.code} value={s.code}>
-                    {s.code} — {s.description}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={2}>
-              <TextField label="Run No." fullWidth value={job.agents.runNo} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, runNo: e.target.value } })} />
-            </FormField>
-            <FormField md={2}>
-              <TextField label="Prefix" fullWidth value={job.agents.prefix} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, prefix: e.target.value } })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="RO No." fullWidth value={job.agents.roNo} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, roNo: e.target.value } })} />
-            </FormField>
-          </FormRow>
+          <SectionCard number="1.5" title="Agents &amp; References">
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField
+                  select
+                  label="Clearing Agent"
+                  fullWidth
+                  value={job.agents.clearingAgent}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, agents: { ...job.agents, clearingAgent: e.target.value } })}
+                >
+                  {clearingAgents.map((a) => (
+                    <MenuItem key={a.code} value={a.code}>
+                      {a.code} — {a.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  select
+                  label="Delivery Agent"
+                  fullWidth
+                  value={job.agents.deliveryAgent}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, agents: { ...job.agents, deliveryAgent: e.target.value } })}
+                >
+                  {deliveryAgents.map((a) => (
+                    <MenuItem key={a.code} value={a.code}>
+                      {a.code} — {a.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField select label="SPO Code" fullWidth value={job.agents.spoCode} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, spoCode: e.target.value } })}>
+                  {spoCodes.map((s) => (
+                    <MenuItem key={s.code} value={s.code}>
+                      {s.code} — {s.description}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={2}>
+                <TextField label="Run No." fullWidth value={job.agents.runNo} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, runNo: e.target.value } })} />
+              </SectionCardField>
+              <SectionCardField md={2}>
+                <TextField label="Prefix" fullWidth value={job.agents.prefix} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, prefix: e.target.value } })} />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="RO No." fullWidth value={job.agents.roNo} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, roNo: e.target.value } })} />
+              </SectionCardField>
+            </SectionCardRow>
+          </SectionCard>
 
-          <SectionHeader>Shipment</SectionHeader>
-          <FormRow>
-            <FormField md={6}>
-              <TextField select label="Status" fullWidth value={job.shipmentStatus} disabled={!editable} onChange={(e) => set('shipmentStatus', e.target.value)}>
-                <MenuItem value="OPEN">Open</MenuItem>
-                <MenuItem value="IN_TRANSIT">In Transit</MenuItem>
-                <MenuItem value="CLOSED">Closed</MenuItem>
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={job.shipmentStatusDate}
-                disabled={!editable}
-                onChange={(e) => set('shipmentStatusDate', e.target.value)}
-              />
-            </FormField>
-          </FormRow>
+          <SectionCard number="1.6" title="Shipment Status">
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField select label="Status" fullWidth value={job.shipmentStatus} disabled={!editable} onChange={(e) => set('shipmentStatus', e.target.value)}>
+                  <MenuItem value="OPEN">Open</MenuItem>
+                  <MenuItem value="IN_TRANSIT">In Transit</MenuItem>
+                  <MenuItem value="CLOSED">Closed</MenuItem>
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField
+                  label="Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={job.shipmentStatusDate}
+                  disabled={!editable}
+                  onChange={(e) => set('shipmentStatusDate', e.target.value)}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+          </SectionCard>
         </Grid>
 
-        {/* RIGHT COLUMN — 2.4 Insurance/Handling/Currency, 2.5 Charges grid, 2.6 Totals, 2.7 Notes, 2.8 Linked grids */}
+        {/* RIGHT COLUMN */}
         <Grid item xs={12} md={6}>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Insurance" fullWidth value={job.insurance} disabled={!editable} onChange={(e) => set('insurance', e.target.value)} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Declared Val Carraige" fullWidth value={job.declaredValCarriage} disabled={!editable} onChange={(e) => set('declaredValCarriage', e.target.value)} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Declared Val Customs" fullWidth value={job.declaredValCustoms} disabled={!editable} onChange={(e) => set('declaredValCustoms', e.target.value)} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField
-                label="Handling Information"
-                fullWidth
-                multiline
-                minRows={2}
-                value={job.handlingInformation}
-                disabled={!editable}
-                onChange={(e) => set('handlingInformation', e.target.value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField select label="Currency" fullWidth value={job.currency} disabled={!editable} onChange={(e) => updateCurrency(e.target.value)}>
-                {currencies.map((c) => (
-                  <MenuItem key={c.code} value={c.code}>
-                    {c.code} - {c.name.toUpperCase()}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Ex. Rate" type="number" fullWidth value={formatNumber(job.exRate, 6)} disabled={!editable} inputProps={{ step: '0.000001' }} onChange={(e) => updateExchangeRate(Number(e.target.value))} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Printable Ex. Rate" type="number" fullWidth value={formatNumber(job.printableExRate, 6)} disabled={!editable} inputProps={{ step: '0.000001' }} onChange={(e) => set('printableExRate', Number(e.target.value))} />
-            </FormField>
-          </FormRow>
+          <SectionCard number="1.7" title="Insurance, Handling &amp; Currency">
+            <SectionCardRow>
+              <SectionCardField md={6}>
+                <TextField label="Insurance" fullWidth value={job.insurance} disabled={!editable} onChange={(e) => set('insurance', e.target.value)} />
+              </SectionCardField>
+              <SectionCardField md={6}>
+                <TextField label="Declared Val Carraige" fullWidth value={job.declaredValCarriage} disabled={!editable} onChange={(e) => set('declaredValCarriage', e.target.value)} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField label="Declared Val Customs" fullWidth value={job.declaredValCustoms} disabled={!editable} onChange={(e) => set('declaredValCustoms', e.target.value)} />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={12}>
+                <TextField
+                  label="Handling Information"
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  value={job.handlingInformation}
+                  disabled={!editable}
+                  onChange={(e) => set('handlingInformation', e.target.value)}
+                />
+              </SectionCardField>
+            </SectionCardRow>
+            <SectionCardRow>
+              <SectionCardField md={4}>
+                <TextField select label="Currency" fullWidth value={job.currency} disabled={!editable} onChange={(e) => updateCurrency(e.target.value)}>
+                  {currencies.map((c) => (
+                    <MenuItem key={c.code} value={c.code}>
+                      {c.code} - {c.name.toUpperCase()}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="Ex. Rate" type="number" fullWidth value={formatNumber(job.exRate, 6)} disabled={!editable} inputProps={{ step: '0.000001' }} onChange={(e) => updateExchangeRate(Number(e.target.value))} />
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField label="Printable Ex. Rate" type="number" fullWidth value={formatNumber(job.printableExRate, 6)} disabled={!editable} inputProps={{ step: '0.000001' }} onChange={(e) => set('printableExRate', Number(e.target.value))} />
+              </SectionCardField>
+            </SectionCardRow>
+          </SectionCard>
 
-          <SectionHeader>2.5 Charges Grid</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <SectionCard number="1.8" title="Charges Grid">
+            <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -734,29 +745,31 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </TableBody>
             </Table>
           </Paper>
-          {job.chargeLines.some((line) => line.dimensionWt > 0 && line.dimensionWt < line.chargeWt) && (
-            <Typography variant="body2" color="error" sx={{ mt: 0.75, fontWeight: 700 }}>
-              ★ Dimension Weight is less than Charge Weight.
-            </Typography>
-          )}
+            {job.chargeLines.some((line) => line.dimensionWt > 0 && line.dimensionWt < line.chargeWt) && (
+              <Typography variant="body2" color="error" sx={{ mt: 0.75, fontWeight: 700 }}>
+                ★ Dimension Weight is less than Charge Weight.
+              </Typography>
+            )}
+          </SectionCard>
 
-          <SectionHeader>2.6 Totals</SectionHeader>
-          <Paper variant="outlined" sx={{ p: 1.5 }}>
-            <Grid container spacing={1}>
-              <TotalRow label="Freight" value={job.totals.freight} valuePkr={job.totals.freightPkr} />
-              <TotalRow label="Due Carrier" value={job.totals.dueCarrier} valuePkr={job.totals.dueCarrierPkr} />
-              <TotalRow label="Due Agent" value={job.totals.dueAgent} valuePkr={job.totals.dueAgentPkr} />
-              <TotalRow label="Total AWB Amount" value={job.totals.totalAwbAmount} valuePkr={job.totals.totalAwbAmountPkr} highlight />
-              <TotalRow label="Total K.B. Amount" value={job.totals.totalKbAmount} />
-              <TotalRow label="Commission" value={job.totals.commission} />
-              <TotalRow label="WHT Amount" value={job.totals.whtAmount} />
-              <TotalRow label="Payable To Airline" value={job.totals.payableToAirline} valuePkr={job.totals.payableToAirlinePkr} highlight />
-            </Grid>
-          </Paper>
+          <SectionCard number="1.9" title="Totals">
+            <Paper variant="outlined" sx={{ p: 1.5, borderColor: navyTrustColors.border }}>
+              <Grid container spacing={1}>
+                <TotalRow label="Freight" value={job.totals.freight} valuePkr={job.totals.freightPkr} />
+                <TotalRow label="Due Carrier" value={job.totals.dueCarrier} valuePkr={job.totals.dueCarrierPkr} />
+                <TotalRow label="Due Agent" value={job.totals.dueAgent} valuePkr={job.totals.dueAgentPkr} />
+                <TotalRow label="Total AWB Amount" value={job.totals.totalAwbAmount} valuePkr={job.totals.totalAwbAmountPkr} highlight />
+                <TotalRow label="Total K.B. Amount" value={job.totals.totalKbAmount} />
+                <TotalRow label="Commission" value={job.totals.commission} />
+                <TotalRow label="WHT Amount" value={job.totals.whtAmount} />
+                <TotalRow label="Payable To Airline" value={job.totals.payableToAirline} valuePkr={job.totals.payableToAirlinePkr} highlight />
+              </Grid>
+            </Paper>
+          </SectionCard>
 
-          <SectionHeader>2.7 Notes Blocks &amp; Invoice Flag</SectionHeader>
-          <FormRow>
-            <FormField md={12}>
+          <SectionCard number="1.10" title="Notes &amp; Invoice Flags">
+          <SectionCardRow>
+            <SectionCardField md={12}>
               <TextField
                 label="Accounting Information / Notify"
                 fullWidth
@@ -766,34 +779,35 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 disabled={!editable}
                 onChange={(e) => set('accountingInformationNotify', e.target.value)}
               />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
+            </SectionCardField>
+          </SectionCardRow>
+          <SectionCardRow>
+            <SectionCardField md={12}>
               <TextField label="Said To Contain" fullWidth multiline minRows={2} value={job.saidToContain} disabled={!editable} onChange={(e) => set('saidToContain', e.target.value)} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
+            </SectionCardField>
+          </SectionCardRow>
+          <SectionCardRow>
+            <SectionCardField md={12}>
               <TextField label="Other Information" fullWidth multiline minRows={2} value={job.otherInformation} disabled={!editable} onChange={(e) => set('otherInformation', e.target.value)} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
+            </SectionCardField>
+          </SectionCardRow>
+          <SectionCardRow>
+            <SectionCardField md={6}>
               <TextField select label="Invoice Required" fullWidth value={job.invoiceRequired} disabled={!editable} onChange={(e) => set('invoiceRequired', e.target.value as 'Y' | 'N')}>
                 <MenuItem value="N">N</MenuItem>
                 <MenuItem value="Y">Y</MenuItem>
               </TextField>
-            </FormField>
-            <FormField md={6}>
+            </SectionCardField>
+            <SectionCardField md={6}>
               <TextField select label="Local Invoice (Y/N)" fullWidth value={job.localInvoice} disabled={!editable} onChange={(e) => set('localInvoice', e.target.value as 'Y' | 'N')}>
                 <MenuItem value="N">N</MenuItem>
                 <MenuItem value="Y">Y</MenuItem>
               </TextField>
-            </FormField>
-          </FormRow>
+            </SectionCardField>
+          </SectionCardRow>
+          </SectionCard>
 
-          <SectionHeader>2.8 Linked Records</SectionHeader>
+          <SectionCard number="1.11" title="Linked Records">
           <LinkedGrid title="Local/International Invoices" empty={linkedInvoices.length === 0}>
             <TableHead>
               <TableRow>
@@ -885,6 +899,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               ))}
             </TableBody>
           </LinkedGrid>
+          </SectionCard>
         </Grid>
       </Grid>
       <DimensionCalculatorDialog open={dimensionCalculatorOpen} onClose={() => setDimensionCalculatorOpen(false)} onWeightChange={applyDimensionWeight} />
@@ -999,13 +1014,13 @@ function TotalRow({ label, value, valuePkr, highlight }: { label: string; value:
         </Typography>
       </Grid>
       <Grid item xs={valuePkr !== undefined ? 3 : 6}>
-        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? 'primary.main' : 'inherit' }}>
+        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? navyTrustColors.navy : 'inherit' }}>
           {formatAmount(value, 4)}
         </Typography>
       </Grid>
       {valuePkr !== undefined && (
         <Grid item xs={3}>
-          <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? 'primary.main' : 'inherit' }}>
+          <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? navyTrustColors.navy : 'inherit' }}>
             {formatAmount(valuePkr, 2)}
           </Typography>
         </Grid>
@@ -1017,10 +1032,10 @@ function TotalRow({ label, value, valuePkr, highlight }: { label: string; value:
 function LinkedGrid({ title, empty, children }: { title: string; empty: boolean; children: React.ReactNode }) {
   return (
     <Box sx={{ mb: 2 }}>
-      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+      <Typography variant="caption" sx={{ fontWeight: 700, color: navyTrustColors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.3 }}>
         {title}
       </Typography>
-      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+      <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border, mt: 0.5 }}>
         <Table size="small">{children}</Table>
         {empty && (
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', p: 1 }}>
