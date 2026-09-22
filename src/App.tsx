@@ -110,6 +110,7 @@ function App() {
               path="/freight/air-export/job-mawb"
               element={
                 <JobPage
+                  key="mawb-job-page"
                   kind="MAWB"
                   breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Job (MAWB) Entry and Printing']}
                   title="Job (MAWB) Entry and Printing"
@@ -120,6 +121,7 @@ function App() {
               path="/freight/air-export/job-hawb"
               element={
                 <JobPage
+                  key="hawb-job-page"
                   kind="HAWB"
                   breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Job (HAWB) Entry and Printing']}
                   title="Job (HAWB) Entry and Printing"

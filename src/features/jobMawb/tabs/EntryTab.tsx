@@ -130,7 +130,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               <SectionCardField md={3}>
                 <TextField label="Branch Office" fullWidth value={job.branch} disabled={!editable} onChange={(e) => set('branch', e.target.value)} />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
+                <TextField label="Job No." fullWidth value={job.jobNo} disabled helperText="System generated" />
+              </SectionCardField>
+              <SectionCardField md={3}>
                 <TextField
                   label="Job Date"
                   type="date"
@@ -141,7 +144,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   onChange={(e) => set('jobDate', e.target.value)}
                 />
               </SectionCardField>
-              <SectionCardField md={5}>
+              <SectionCardField md={3}>
                 <TextField label="Nomination" select fullWidth value={job.nomination} disabled={!editable} onChange={(e) => set('nomination', e.target.value as 'Y' | 'N')}>
                   <MenuItem value="N">N - Standard</MenuItem>
                   <MenuItem value="Y">Y - Nominated</MenuItem>
