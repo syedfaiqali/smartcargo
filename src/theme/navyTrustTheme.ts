@@ -44,12 +44,12 @@ export const navyTrustScreenSx = {
   '& .MuiInputBase-root, & .MuiSelect-select, & .MuiMenuItem-root, & .MuiButton-root, & .MuiTableCell-root': {
     fontFamily: navyTrustFontFamily,
   },
-  '& .MuiInputBase-input, & .MuiSelect-select': { fontWeight: 600, color: navyTrustColors.textPrimary, fontSize: 13.5 },
+  '& .MuiInputBase-input, & .MuiSelect-select': { fontWeight: 600, color: navyTrustColors.textPrimary, fontSize: 14 },
   '& .MuiInputLabel-root': {
     fontWeight: 700,
-    color: navyTrustColors.textSecondary,
-    fontSize: 11,
-    letterSpacing: 0.3,
+    color: '#000000',
+    fontSize: 13,
+    letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
   '& .MuiInputLabel-root.Mui-focused': { color: navyTrustColors.accent },
