@@ -127,7 +127,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
         <Grid item xs={12} md={6}>
           <SectionCard number="1.1" title="Primary Identifiers" meta={`SC-ID: ${job.jobNo || '—'}`}>
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="Branch Office" fullWidth value={job.branch} disabled={!editable} onChange={(e) => set('branch', e.target.value)} />
               </SectionCardField>
               <SectionCardField md={4}>
@@ -141,7 +141,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   onChange={(e) => set('jobDate', e.target.value)}
                 />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={5}>
                 <TextField label="Nomination" select fullWidth value={job.nomination} disabled={!editable} onChange={(e) => set('nomination', e.target.value as 'Y' | 'N')}>
                   <MenuItem value="N">N - Standard</MenuItem>
                   <MenuItem value="Y">Y - Nominated</MenuItem>
@@ -161,7 +161,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField select label="Owner" fullWidth value={job.owner} disabled={!editable} onChange={(e) => set('owner', e.target.value)}>
                   {owners.map((o) => (
                     <MenuItem key={o.code} value={o.code}>
@@ -170,7 +170,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   ))}
                 </TextField>
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField
                   label="Sales Date"
                   type="date"
@@ -203,19 +203,19 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   onChange={(e) => set('awbDate', e.target.value)}
                 />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="Charge Code" fullWidth value={job.chargeCode} disabled={!editable} onChange={(e) => set('chargeCode', e.target.value)} />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={5}>
                 <TextField label="Station" fullWidth value={job.station} disabled={!editable} onChange={(e) => set('station', e.target.value)} />
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={job.kind === 'HAWB' ? 4 : 12}>
                 <TextField label="IncoTerm" fullWidth value={job.incoTerm} disabled={!editable} onChange={(e) => set('incoTerm', e.target.value)} />
               </SectionCardField>
               {job.kind === 'HAWB' && (
-                <SectionCardField md={6}>
+                <SectionCardField md={8}>
                   <TextField
                     select
                     label="Master Job No. (MAWB)"
@@ -240,7 +240,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             <Grid item xs={12} sm={6}>
               <SectionCard number="1.2" title={job.kind === 'HAWB' ? 'Shipper (Actual)' : 'Shipper / Consignor'}>
                 <SectionCardRow>
-                  <SectionCardField md={6}>
+                  <SectionCardField md={8}>
                     <TextField select label="Party Code" fullWidth value={job.party.partyCode} disabled={!editable} onChange={(e) => setParty(e.target.value)}>
                       {parties.map((p) => (
                         <MenuItem key={p.code} value={p.code}>
@@ -249,7 +249,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                       ))}
                     </TextField>
                   </SectionCardField>
-                  <SectionCardField md={6}>
+                  <SectionCardField md={4}>
                     <TextField label="Credit Limit" fullWidth value={job.party.creditLimit} disabled />
                   </SectionCardField>
                 </SectionCardRow>
@@ -288,7 +288,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             <Grid item xs={12} sm={6}>
               <SectionCard number="1.3" title={job.kind === 'HAWB' ? 'Consignee (Actual)' : 'Consignee'}>
                 <SectionCardRow>
-                  <SectionCardField md={6}>
+                  <SectionCardField md={3}>
                     <TextField
                       select
                       label="Consolidation"
@@ -301,7 +301,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                       <MenuItem value="Y">Y</MenuItem>
                     </TextField>
                   </SectionCardField>
-                  <SectionCardField md={6}>
+                  <SectionCardField md={9}>
                     <TextField select label="Foreign Agent Code" fullWidth value={job.consignee.code} disabled={!editable || job.consignee.consolidation !== 'Y'} onChange={(e) => setConsigneeCode(e.target.value)}>
                       {foreignAgents.map((a) => (
                         <MenuItem key={a.code} value={a.code}>
@@ -327,10 +327,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
           <SectionCard number="1.4" title="Routing &amp; Shipment Details">
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField label="CC Port" fullWidth value={job.routing.ccPort} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, ccPort: e.target.value } })} />
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField
                   select
                   label="Airport of Departure"
@@ -396,7 +396,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField
                   label="Account No."
                   fullWidth
@@ -405,7 +405,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   onChange={(e) => onChange({ ...job, routing: { ...job.routing, accountNo: e.target.value } })}
                 />
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField label="HS Code" fullWidth value={job.routing.hsCode} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, hsCode: e.target.value } })} />
               </SectionCardField>
             </SectionCardRow>
@@ -441,10 +441,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField label="Form E No." fullWidth value={job.routing.formENo} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, formENo: e.target.value } })} />
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField
                   label="Date"
                   type="date"
@@ -457,7 +457,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField
                   label="Shipper Invoice No."
                   fullWidth
@@ -466,7 +466,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   onChange={(e) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceNo: e.target.value } })}
                 />
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField
                   label="Date"
                   type="date"
@@ -479,10 +479,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField label="S/B No." fullWidth value={job.routing.sbNo} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, sbNo: e.target.value } })} />
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField
                   label="S/B Date"
                   type="date"
@@ -532,7 +532,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={5}>
                 <TextField select label="SPO Code" fullWidth value={job.agents.spoCode} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, spoCode: e.target.value } })}>
                   {spoCodes.map((s) => (
                     <MenuItem key={s.code} value={s.code}>
@@ -547,7 +547,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               <SectionCardField md={2}>
                 <TextField label="Prefix" fullWidth value={job.agents.prefix} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, prefix: e.target.value } })} />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="RO No." fullWidth value={job.agents.roNo} disabled={!editable} onChange={(e) => onChange({ ...job, agents: { ...job.agents, roNo: e.target.value } })} />
               </SectionCardField>
             </SectionCardRow>
@@ -555,14 +555,14 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
           <SectionCard number="1.6" title="Shipment Status">
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField select label="Status" fullWidth value={job.shipmentStatus} disabled={!editable} onChange={(e) => set('shipmentStatus', e.target.value)}>
                   <MenuItem value="OPEN">Open</MenuItem>
                   <MenuItem value="IN_TRANSIT">In Transit</MenuItem>
                   <MenuItem value="CLOSED">Closed</MenuItem>
                 </TextField>
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField
                   label="Date"
                   type="date"
@@ -607,7 +607,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={6}>
                 <TextField select label="Currency" fullWidth value={job.currency} disabled={!editable} onChange={(e) => updateCurrency(e.target.value)}>
                   {currencies.map((c) => (
                     <MenuItem key={c.code} value={c.code}>
@@ -616,10 +616,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   ))}
                 </TextField>
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="Ex. Rate" type="number" fullWidth value={formatNumber(job.exRate, 6)} disabled={!editable} inputProps={{ step: '0.000001' }} onChange={(e) => updateExchangeRate(Number(e.target.value))} />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="Printable Ex. Rate" type="number" fullWidth value={formatNumber(job.printableExRate, 6)} disabled={!editable} inputProps={{ step: '0.000001' }} onChange={(e) => set('printableExRate', Number(e.target.value))} />
               </SectionCardField>
             </SectionCardRow>
@@ -792,13 +792,13 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </SectionCardField>
           </SectionCardRow>
           <SectionCardRow>
-            <SectionCardField md={6}>
+            <SectionCardField md={3}>
               <TextField select label="Invoice Required" fullWidth value={job.invoiceRequired} disabled={!editable} onChange={(e) => set('invoiceRequired', e.target.value as 'Y' | 'N')}>
                 <MenuItem value="N">N</MenuItem>
                 <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </SectionCardField>
-            <SectionCardField md={6}>
+            <SectionCardField md={3}>
               <TextField select label="Local Invoice (Y/N)" fullWidth value={job.localInvoice} disabled={!editable} onChange={(e) => set('localInvoice', e.target.value as 'Y' | 'N')}>
                 <MenuItem value="N">N</MenuItem>
                 <MenuItem value="Y">Y</MenuItem>

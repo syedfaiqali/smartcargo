@@ -146,13 +146,13 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
         <Grid item xs={12} md={5}>
           <SectionCard number="4.1" title="Invoice Identifiers">
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="Branch" fullWidth value={invoice.branch} disabled={!editable} onChange={(e) => apply({ branch: e.target.value })} />
               </SectionCardField>
               <SectionCardField md={4}>
                 <TextField label="Invoice No." fullWidth value={invoice.invoiceNo} disabled />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={5}>
                 <TextField
                   label="Invoice Date"
                   type="date"
@@ -165,10 +165,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="Job Year" type="number" fullWidth value={invoice.jobYear} disabled={!editable} onChange={(e) => apply({ jobYear: Number(e.target.value) })} />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={5}>
                 <TextField label="Job Type" fullWidth value={invoice.jobType} disabled={!editable} onChange={(e) => apply({ jobType: e.target.value })} />
               </SectionCardField>
               <SectionCardField md={4}>
@@ -179,7 +179,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
 
           <SectionCard number="4.2" title="House">
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField select label="Job No. (HAWB)" fullWidth value={invoice.house.jobNo} disabled={!editable} onChange={(e) => setHouseJobNo(e.target.value)}>
                   <MenuItem value="">(none)</MenuItem>
                   {houseJobs.map((j) => (
@@ -189,18 +189,18 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
                   ))}
                 </TextField>
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField label="Job Date" fullWidth value={invoice.house.jobDate} disabled />
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={5}>
                 <TextField label="AWB No." fullWidth value={invoice.house.awbNo} disabled />
               </SectionCardField>
               <SectionCardField md={4}>
                 <TextField label="AWB Date" fullWidth value={invoice.house.awbDate} disabled />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="PP" fullWidth value={invoice.house.pp} disabled={!editable} onChange={(e) => apply({ house: { ...invoice.house, pp: e.target.value } })} />
               </SectionCardField>
             </SectionCardRow>
@@ -213,7 +213,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
 
           <SectionCard number="4.3" title="Master">
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField select label="Job No. (MAWB)" fullWidth value={invoice.master.jobNo} disabled={!editable} onChange={(e) => setMasterJobNo(e.target.value)}>
                   <MenuItem value="">(none)</MenuItem>
                   {masterJobs.map((j) => (
@@ -223,18 +223,18 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
                   ))}
                 </TextField>
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField label="Job Date" fullWidth value={invoice.master.jobDate} disabled />
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={5}>
                 <TextField label="AWB No." fullWidth value={invoice.master.awbNo} disabled />
               </SectionCardField>
               <SectionCardField md={4}>
                 <TextField label="AWB Date" fullWidth value={invoice.master.awbDate} disabled />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField label="PP" fullWidth value={invoice.master.pp} disabled={!editable} onChange={(e) => apply({ master: { ...invoice.master, pp: e.target.value } })} />
               </SectionCardField>
             </SectionCardRow>
@@ -295,7 +295,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField select label="A/Port of Dep" fullWidth value={invoice.airportOfDeparture} disabled={!editable} onChange={(e) => apply({ airportOfDeparture: e.target.value })}>
                   {airports.map((a) => (
                     <MenuItem key={a.code} value={a.code}>
@@ -304,10 +304,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
                   ))}
                 </TextField>
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={6}>
                 <TextField label="Destination" fullWidth value={invoice.destination} disabled={!editable} onChange={(e) => apply({ destination: e.target.value })} />
               </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField select label="Spo Code" fullWidth value={invoice.spoCode} disabled={!editable} onChange={(e) => apply({ spoCode: e.target.value })}>
                   {spoCodes.map((s) => (
                     <MenuItem key={s.code} value={s.code}>
@@ -318,10 +318,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField label="Form E No." fullWidth value={invoice.formENo} disabled={!editable} onChange={(e) => apply({ formENo: e.target.value })} />
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField
                   label="Date"
                   type="date"
@@ -334,10 +334,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField label="S/B No." fullWidth value={invoice.sbNo} disabled={!editable} onChange={(e) => apply({ sbNo: e.target.value })} />
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField
                   label="S/B Date"
                   type="date"
@@ -350,10 +350,10 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={8}>
                 <TextField label="Shipper Inv.No." fullWidth value={invoice.shipperInvoiceNo} disabled={!editable} onChange={(e) => apply({ shipperInvoiceNo: e.target.value })} />
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={4}>
                 <TextField
                   label="Date"
                   type="date"
@@ -379,7 +379,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               const rateKey = `exRate${n}` as 'exRate1' | 'exRate2' | 'exRate3';
               return (
                 <SectionCardRow key={n}>
-                  <SectionCardField md={6}>
+                  <SectionCardField md={4}>
                     <TextField select label={`Currency ${n}`} fullWidth value={invoice[currKey]} disabled={!editable} onChange={(e) => apply({ [currKey]: e.target.value } as Partial<LocalInvoice>)}>
                       <MenuItem value="">(none)</MenuItem>
                       {currencies.map((c) => (
@@ -389,7 +389,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
                       ))}
                     </TextField>
                   </SectionCardField>
-                  <SectionCardField md={6}>
+                  <SectionCardField md={8}>
                     <TextField
                       label="Ex.Rate"
                       type="number"
@@ -422,7 +422,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={6}>
+              <SectionCardField md={7}>
                 <TextField select label="Bank Code" fullWidth value={invoice.bankCode} disabled={!editable} onChange={(e) => setBankCode(e.target.value)}>
                   <MenuItem value="">(none)</MenuItem>
                   {banks.map((b) => (
@@ -432,7 +432,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
                   ))}
                 </TextField>
               </SectionCardField>
-              <SectionCardField md={6}>
+              <SectionCardField md={5}>
                 <TextField label="Bank Detail" fullWidth value={invoice.bankDetailText} disabled={!editable} onChange={(e) => apply({ bankDetailText: e.target.value })} />
               </SectionCardField>
             </SectionCardRow>
