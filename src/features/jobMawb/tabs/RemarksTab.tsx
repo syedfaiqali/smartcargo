@@ -11,7 +11,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import Alert from '@mui/material/Alert';
 import { DocStatus, Job } from '../../../domain/job';
-import { SectionHeader } from '../../../components/FormGrid';
+import { SectionCard } from '../../../components/SectionCard';
+import { navyTrustColors } from '../../../theme/navyTrustTheme';
 
 interface RemarksTabProps {
   job: Job;
@@ -31,8 +32,8 @@ export function RemarksTab({ job, editable, onChange }: RemarksTabProps) {
 
   return (
     <Box>
-      <SectionHeader>Shipment Schedule</SectionHeader>
-      <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2 }}>
+      <SectionCard number="4.1" title="Shipment Schedule" tint="blue">
+      <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -102,11 +103,12 @@ export function RemarksTab({ job, editable, onChange }: RemarksTabProps) {
           </TableBody>
         </Table>
       </Paper>
+      </SectionCard>
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <SectionHeader>Milestone Dates</SectionHeader>
-          <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+          <SectionCard number="4.2" title="Milestone Dates" tint="mint">
+          <Paper variant="outlined" sx={{ p: 1.5, mb: 2, borderColor: navyTrustColors.border }}>
             <Grid container spacing={1.5}>
               <Grid item xs={6}>
                 <TextField label="Received On" type="date" fullWidth InputLabelProps={{ shrink: true }} value={r.receivedOn} disabled={!editable} onChange={(e) => setR({ receivedOn: e.target.value })} />
@@ -167,9 +169,10 @@ export function RemarksTab({ job, editable, onChange }: RemarksTabProps) {
               </Grid>
             </Grid>
           </Paper>
+          </SectionCard>
 
-          <SectionHeader>Process Milestones</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <SectionCard number="4.3" title="Process Milestones" tint="lavender">
+          <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -226,15 +229,16 @@ export function RemarksTab({ job, editable, onChange }: RemarksTabProps) {
               </TableBody>
             </Table>
           </Paper>
+          </SectionCard>
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <SectionHeader>Document Checklist — Airline / Party</SectionHeader>
+          <SectionCard number="4.4" title="Document Checklist — Airline / Party" tint="cyan">
           <Alert severity="warning" sx={{ mb: 1 }}>
             FEC, APC, IPB, C/M, Encash codes should be confirmed with the business owner — see docs/screens-phase.md
             Section 2.11.
           </Alert>
-          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2 }}>
+          <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -307,8 +311,9 @@ export function RemarksTab({ job, editable, onChange }: RemarksTabProps) {
               </Grid>
             </Grid>
           </Paper>
+          </SectionCard>
 
-          <SectionHeader>Remarks &amp; Instructions</SectionHeader>
+          <SectionCard number="4.5" title="Remarks & Instructions" tint="purple">
           <Grid container spacing={1.5}>
             <Grid item xs={12}>
               <TextField
@@ -347,6 +352,7 @@ export function RemarksTab({ job, editable, onChange }: RemarksTabProps) {
               />
             </Grid>
           </Grid>
+          </SectionCard>
         </Grid>
       </Grid>
     </Box>
