@@ -18,11 +18,11 @@ export function recomputeJobTotals(job: Job): JobTotals {
   const totalKbAmount = job.totals.totalKbAmount;
   const commission = job.totals.commission;
   const whtAmount = job.totals.whtAmount;
-  // The legacy Entry screen does not derive "Payable To Airline" from the
-  // freight totals. It remains at its saved value until the payable workflow
-  // supplies it (a new job therefore displays zero here).
-  const payableToAirline = job.totals.payableToAirline;
-  const payableToAirlinePkr = job.totals.payableToAirlinePkr;
+  // Match the legacy Charges screen: the airline settlement is the K.B.
+  // amount after commission and WHT, less the charges collected for the
+  // agent.  For example, K.B. 0 and Due Agent 500 gives -500.00.
+  const payableToAirline = totalKbAmount - commission - whtAmount - dueAgent;
+  const payableToAirlinePkr = totalKbAmount - commission - whtAmount - dueAgentPkr;
 
   return {
     freight,

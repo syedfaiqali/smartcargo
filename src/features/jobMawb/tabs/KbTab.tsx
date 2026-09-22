@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import { Job, KbFreightLine } from '../../../domain/job';
 import { SectionHeader } from '../../../components/FormGrid';
+import { recomputeJobTotals } from '../jobCalculations';
 
 interface KbTabProps {
   job: Job;
@@ -34,11 +35,12 @@ export function KbTab({ job, editable, onChange }: KbTabProps) {
     const totalKbAmount = lines.reduce((a, l) => a + l.kbAmount, 0);
     const netPayable =
       job.totals.freight + job.totals.dueCarrier + job.totals.dueAgent - totalKbAmount - job.kb.totalOtherChargesPayable;
-    onChange({
+    const updatedJob: Job = {
       ...job,
       kb: { ...job.kb, lines, netPayable },
       totals: { ...job.totals, totalKbAmount },
-    });
+    };
+    onChange({ ...updatedJob, totals: recomputeJobTotals(updatedJob) });
   };
 
   return (

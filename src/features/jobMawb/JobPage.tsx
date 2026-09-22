@@ -25,6 +25,7 @@ import { KbTab } from './tabs/KbTab';
 import { RemarksTab } from './tabs/RemarksTab';
 import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
+import { recomputeJobTotals } from './jobCalculations';
 import { navyTrustColors, navyTrustFontFamily, navyTrustHeadingFontFamily, navyTrustScreenSx, loadNavyTrustFonts } from '../../theme/navyTrustTheme';
 
 const TAB_LABELS = ['1.0 Entry Details', '2.0 Charges Grid', '3.0 K.B. Data', '4.0 Remarks'] as const;
@@ -57,9 +58,12 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
   const loadJob = (j: Job) => {
-    setJob(j);
-    setOriginalMawb(j.mawbNo);
-    setOriginalParentJobNo(j.parentJobNo ?? '');
+    // Older saved jobs can contain stale derived totals.  Normalize them on
+    // open so the Charges and Entry summaries always use the same formula.
+    const normalizedJob = { ...j, totals: recomputeJobTotals(j) };
+    setJob(normalizedJob);
+    setOriginalMawb(normalizedJob.mawbNo);
+    setOriginalParentJobNo(normalizedJob.parentJobNo ?? '');
     setEditable(false);
     setIsPrintingView(false);
     setTab(0);
