@@ -24,8 +24,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { Job } from '../../../domain/job';
 import { SectionCard, SectionCardRow, SectionCardField } from '../../../components/SectionCard';
-import { FinancialsSummaryCard } from '../../../components/FinancialsSummaryCard';
-import { navyTrustColors } from '../../../theme/navyTrustTheme';
+import { navyTrustColors, navyTrustHeadingFontFamily } from '../../../theme/navyTrustTheme';
 import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo } from '../../../data/masterDataService';
 import { jobRepo } from '../../../data/jobService';
 import { getLocalInvoiceLinksForJob } from '../../../data/localInvoiceService';
@@ -52,6 +51,16 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const spoCodes = spoRepo.list();
   const masterJobs = job.kind === 'HAWB' ? jobRepo.find((j) => j.kind === 'MAWB') : [];
   const linkedInvoices = getLocalInvoiceLinksForJob(job.jobNo);
+  const calculationRows = [
+    { label: 'Freight', foreign: job.totals.freight, pkr: job.totals.freightPkr },
+    { label: 'Due Carrier', foreign: job.totals.dueCarrier, pkr: job.totals.dueCarrierPkr },
+    { label: 'Due Agent', foreign: job.totals.dueAgent, pkr: job.totals.dueAgentPkr },
+    { label: 'Total AWB Amount', foreign: job.totals.totalAwbAmount, pkr: job.totals.totalAwbAmountPkr, total: true },
+    { label: 'Total K.B. Amount', foreign: job.totals.totalKbAmount, pkr: job.totals.totalKbAmount },
+    { label: 'Commission', foreign: job.totals.commission, pkr: job.totals.commission },
+    { label: 'WHT Amount', foreign: job.totals.whtAmount, pkr: job.totals.whtAmount },
+    { label: 'Payable To Airline', foreign: job.totals.payableToAirline, pkr: job.totals.payableToAirlinePkr, total: true },
+  ];
 
   const set = <K extends keyof Job>(key: K, value: Job[K]) => onChange({ ...job, [key]: value });
 
@@ -759,20 +768,35 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             )}
           </SectionCard>
 
-          <FinancialsSummaryCard
-            title="Shipment financials"
-            rows={[
-              { label: 'Freight amount', value: formatAmount(job.totals.freight, 2) },
-              { label: 'Due carrier', value: formatAmount(job.totals.dueCarrier, 2) },
-              { label: 'Due agent', value: formatAmount(job.totals.dueAgent, 2) },
-              { label: 'Total K.B. amount', value: formatAmount(job.totals.totalKbAmount, 2) },
-              { label: 'Commission', value: formatAmount(job.totals.commission, 2) },
-              { label: 'WHT amount', value: formatAmount(job.totals.whtAmount, 2) },
-              { label: 'Payable to airline', value: formatAmount(job.totals.payableToAirline, 2) },
-            ]}
-            totalLabel="Total AWB amount"
-            totalValue={`PKR ${formatAmount(job.totals.totalAwbAmountPkr, 2)}`}
-          />
+          <Box sx={{ bgcolor: '#0f1c33', borderRadius: '14px', p: 2.5, mb: 2, color: '#e6ebf5' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1.15fr 0.9fr 0.9fr', alignItems: 'center', columnGap: 1, mb: 1.5 }}>
+              <Typography sx={{ fontFamily: navyTrustHeadingFontFamily, fontSize: 13.5, fontWeight: 700, color: '#fff' }}>Shipment financials</Typography>
+              <Typography align="right" sx={{ fontSize: 11.5, fontWeight: 800, color: '#ff8b9a' }}>PKR</Typography>
+              <Typography align="right" sx={{ fontSize: 11.5, fontWeight: 800, color: '#a5e66d' }}>PKR</Typography>
+            </Box>
+            {calculationRows.map((row, index) => (
+              <Box
+                key={row.label}
+                sx={{
+                  display: 'grid', gridTemplateColumns: '1.15fr 0.9fr 0.9fr', alignItems: 'center', columnGap: 1,
+                  py: row.total ? 0.9 : 0.55,
+                  mt: index === 4 ? 1 : 0,
+                  borderTop: index === 4 ? '1px solid rgba(255,255,255,0.16)' : undefined,
+                  borderRadius: row.total ? 1 : 0,
+                  px: row.total ? 1 : 0,
+                  bgcolor: row.total ? 'rgba(57, 157, 255, 0.18)' : 'transparent',
+                }}
+              >
+                <Typography sx={{ fontSize: 13, fontWeight: row.total ? 800 : 400, color: row.total ? '#fff' : 'rgba(230,235,245,0.78)' }}>{row.label}</Typography>
+                <Typography align="right" sx={{ fontFamily: row.total ? navyTrustHeadingFontFamily : undefined, fontSize: row.total ? 16 : 13, fontWeight: 800, color: row.total ? '#5fd0ff' : '#e6ebf5' }}>
+                  {formatAmount(row.foreign, 2)}
+                </Typography>
+                <Typography align="right" sx={{ fontFamily: row.total ? navyTrustHeadingFontFamily : undefined, fontSize: row.total ? 16 : 13, fontWeight: 800, color: row.total ? '#5fd0ff' : '#e6ebf5' }}>
+                  {formatAmount(row.pkr, 2)}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
 
           <SectionCard number="1.10" title="Notes &amp; Invoice Flags" tint="green">
           <SectionCardRow>
