@@ -19,10 +19,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import CloseIcon from '@mui/icons-material/Close';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { Job } from '../../../domain/job';
 import { SectionCard, SectionCardRow, SectionCardField } from '../../../components/SectionCard';
+import { FinancialsSummaryCard } from '../../../components/FinancialsSummaryCard';
 import { navyTrustColors } from '../../../theme/navyTrustTheme';
 import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo } from '../../../data/masterDataService';
 import { jobRepo } from '../../../data/jobService';
@@ -125,7 +127,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
       <Grid container spacing={2}>
         {/* LEFT COLUMN */}
         <Grid item xs={12} md={6}>
-          <SectionCard number="1.1" title="Primary Identifiers" meta={`SC-ID: ${job.jobNo || '—'}`}>
+          <SectionCard number="1.1" title="Primary Identifiers" tint="blue" meta={`SC-ID: ${job.jobNo || '—'}`}>
             <SectionCardRow>
               <SectionCardField md={3}>
                 <TextField label="Branch Office" fullWidth value={job.branch} disabled={!editable} onChange={(e) => set('branch', e.target.value)} />
@@ -238,7 +240,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <SectionCard number="1.2" title={job.kind === 'HAWB' ? 'Shipper (Actual)' : 'Shipper / Consignor'}>
+              <SectionCard number="1.2" title={job.kind === 'HAWB' ? 'Shipper (Actual)' : 'Shipper / Consignor'} tint="mint">
                 <SectionCardRow>
                   <SectionCardField md={8}>
                     <TextField select label="Party Code" fullWidth value={job.party.partyCode} disabled={!editable} onChange={(e) => setParty(e.target.value)}>
@@ -286,9 +288,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <SectionCard number="1.3" title={job.kind === 'HAWB' ? 'Consignee (Actual)' : 'Consignee'}>
+              <SectionCard number="1.3" title={job.kind === 'HAWB' ? 'Consignee (Actual)' : 'Consignee'} tint="lavender">
                 <SectionCardRow>
-                  <SectionCardField md={3}>
+                  <SectionCardField md={5}>
                     <TextField
                       select
                       label="Consolidation"
@@ -301,7 +303,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                       <MenuItem value="Y">Y</MenuItem>
                     </TextField>
                   </SectionCardField>
-                  <SectionCardField md={9}>
+                  <SectionCardField md={7}>
                     <TextField select label="Foreign Agent Code" fullWidth value={job.consignee.code} disabled={!editable || job.consignee.consolidation !== 'Y'} onChange={(e) => setConsigneeCode(e.target.value)}>
                       {foreignAgents.map((a) => (
                         <MenuItem key={a.code} value={a.code}>
@@ -325,7 +327,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </Grid>
           </Grid>
 
-          <SectionCard number="1.4" title="Routing &amp; Shipment Details">
+          <SectionCard number="1.4" title="Routing &amp; Shipment Details" tint="cyan">
             <SectionCardRow>
               <SectionCardField md={4}>
                 <TextField label="CC Port" fullWidth value={job.routing.ccPort} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, ccPort: e.target.value } })} />
@@ -496,7 +498,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </SectionCardRow>
           </SectionCard>
 
-          <SectionCard number="1.5" title="Agents &amp; References">
+          <SectionCard number="1.5" title="Agents &amp; References" tint="purple">
             <SectionCardRow>
               <SectionCardField md={6}>
                 <TextField
@@ -553,7 +555,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </SectionCardRow>
           </SectionCard>
 
-          <SectionCard number="1.6" title="Shipment Status">
+          <SectionCard number="1.6" title="Shipment Status" tint="slate">
             <SectionCardRow>
               <SectionCardField md={8}>
                 <TextField select label="Status" fullWidth value={job.shipmentStatus} disabled={!editable} onChange={(e) => set('shipmentStatus', e.target.value)}>
@@ -579,7 +581,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
         {/* RIGHT COLUMN */}
         <Grid item xs={12} md={6}>
-          <SectionCard number="1.7" title="Insurance, Handling &amp; Currency">
+          <SectionCard number="1.7" title="Insurance, Handling &amp; Currency" tint="peach">
             <SectionCardRow>
               <SectionCardField md={6}>
                 <TextField label="Insurance" fullWidth value={job.insurance} disabled={!editable} onChange={(e) => set('insurance', e.target.value)} />
@@ -625,9 +627,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </SectionCardRow>
           </SectionCard>
 
-          <SectionCard number="1.8" title="Charges Grid">
+          <SectionCard number="1.8" title="Charges Grid" tint="rose">
             <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border }}>
-            <Table size="small">
+            <Table size="small" sx={chargesGridTableSx}>
               <TableHead>
                 <TableRow>
                   <TableCell>RCP</TableCell>
@@ -635,17 +637,19 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   <TableCell>Gross Wt.</TableCell>
                   <TableCell>Cl</TableCell>
                   <TableCell>Comdty</TableCell>
-                  <TableCell>
-                    Charge Wt.
-                    <Tooltip title="Open Dimension Calculator">
-                      <IconButton size="small" color="primary" onClick={() => { setDimensionTargetLineId(dimensionTargetLineId ?? job.chargeLines[0]?.id ?? null); setDimensionCalculatorOpen(true); }} sx={{ ml: 0.5, p: 0.25 }}>
-                        <ViewInArIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                  <TableCell sx={{ minWidth: 130 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                      Charge Wt.
+                      <Tooltip title="Open Dimension Calculator">
+                        <IconButton size="small" color="primary" onClick={() => { setDimensionTargetLineId(dimensionTargetLineId ?? job.chargeLines[0]?.id ?? null); setDimensionCalculatorOpen(true); }} sx={{ ml: 0.5, p: 0.25 }}>
+                          <ViewInArIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
-                  <TableCell>Rate {job.currency}</TableCell>
+                  <TableCell>{job.currency === 'PKR' ? 'Rate (Foreign)' : `Rate ${job.currency}`}</TableCell>
                   <TableCell>Rate PKR</TableCell>
-                  <TableCell>Total {job.currency}</TableCell>
+                  <TableCell>{job.currency === 'PKR' ? 'Total (Foreign)' : `Total ${job.currency}`}</TableCell>
                   <TableCell>Total PKR</TableCell>
                   <TableCell>Dimension Wt.</TableCell>
                   <TableCell />
@@ -653,7 +657,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </TableHead>
               <TableBody>
                 {job.chargeLines.map((line, index) => (
-                  <TableRow key={line.id} onClick={() => setDimensionTargetLineId(line.id)} onBlur={() => updateChargeLine(line.id, {})} selected={dimensionTargetLineId === line.id}>
+                  <TableRow key={line.id} onClick={() => setDimensionTargetLineId(line.id)} onBlur={() => updateChargeLine(line.id, {})}>
                     <TableCell sx={{ minWidth: 70 }}>
                       {index === 0 ? (
                         <TextField
@@ -752,22 +756,22 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             )}
           </SectionCard>
 
-          <SectionCard number="1.9" title="Totals">
-            <Paper variant="outlined" sx={{ p: 1.5, borderColor: navyTrustColors.border }}>
-              <Grid container spacing={1}>
-                <TotalRow label="Freight" value={job.totals.freight} valuePkr={job.totals.freightPkr} />
-                <TotalRow label="Due Carrier" value={job.totals.dueCarrier} valuePkr={job.totals.dueCarrierPkr} />
-                <TotalRow label="Due Agent" value={job.totals.dueAgent} valuePkr={job.totals.dueAgentPkr} />
-                <TotalRow label="Total AWB Amount" value={job.totals.totalAwbAmount} valuePkr={job.totals.totalAwbAmountPkr} highlight />
-                <TotalRow label="Total K.B. Amount" value={job.totals.totalKbAmount} />
-                <TotalRow label="Commission" value={job.totals.commission} />
-                <TotalRow label="WHT Amount" value={job.totals.whtAmount} />
-                <TotalRow label="Payable To Airline" value={job.totals.payableToAirline} valuePkr={job.totals.payableToAirlinePkr} highlight />
-              </Grid>
-            </Paper>
-          </SectionCard>
+          <FinancialsSummaryCard
+            title="Shipment financials"
+            rows={[
+              { label: 'Freight amount', value: formatAmount(job.totals.freight, 2) },
+              { label: 'Due carrier', value: formatAmount(job.totals.dueCarrier, 2) },
+              { label: 'Due agent', value: formatAmount(job.totals.dueAgent, 2) },
+              { label: 'Total K.B. amount', value: formatAmount(job.totals.totalKbAmount, 2) },
+              { label: 'Commission', value: formatAmount(job.totals.commission, 2) },
+              { label: 'WHT amount', value: formatAmount(job.totals.whtAmount, 2) },
+              { label: 'Payable to airline', value: formatAmount(job.totals.payableToAirline, 2) },
+            ]}
+            totalLabel="Total AWB amount"
+            totalValue={`PKR ${formatAmount(job.totals.totalAwbAmountPkr, 2)}`}
+          />
 
-          <SectionCard number="1.10" title="Notes &amp; Invoice Flags">
+          <SectionCard number="1.10" title="Notes &amp; Invoice Flags" tint="green">
           <SectionCardRow>
             <SectionCardField md={12}>
               <TextField
@@ -807,7 +811,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           </SectionCardRow>
           </SectionCard>
 
-          <SectionCard number="1.11" title="Linked Records">
+          <SectionCard number="1.11" title="Linked Records" tint="slate">
           <LinkedGrid title="Local/International Invoices" empty={linkedInvoices.length === 0}>
             <TableHead>
               <TableRow>
@@ -907,6 +911,30 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   );
 }
 
+/**
+ * Keeps the Charges Grid's header cells and underlined inputs vertically aligned:
+ * fixed row height, top-aligned multi-line headers, and a stable hover tint
+ * instead of the old click-to-"select" row highlight (which made rows look
+ * randomly shaded rather than consistently laid out).
+ */
+const chargesGridTableSx = {
+  tableLayout: 'auto',
+  '& .MuiTableCell-root': {
+    verticalAlign: 'middle',
+    whiteSpace: 'nowrap',
+    borderColor: navyTrustColors.border,
+  },
+  '& .MuiTableHead-root .MuiTableCell-root': {
+    verticalAlign: 'middle',
+    whiteSpace: 'nowrap',
+    lineHeight: 1.3,
+  },
+  '& .MuiTableBody-root .MuiTableRow-root:hover': {
+    backgroundColor: '#fafbfc',
+  },
+  '& .MuiInput-underline:before': { borderBottomColor: navyTrustColors.border },
+} as const;
+
 function formatNumber(value: number, decimals: number): string {
   return Number(value || 0).toFixed(decimals);
 }
@@ -1005,29 +1033,6 @@ function DimensionCalculatorDialog({ open, onClose, onWeightChange }: { open: bo
   );
 }
 
-function TotalRow({ label, value, valuePkr, highlight }: { label: string; value: number; valuePkr?: number; highlight?: boolean }) {
-  return (
-    <>
-      <Grid item xs={6}>
-        <Typography variant="body2" sx={{ fontWeight: highlight ? 700 : 400 }}>
-          {label}
-        </Typography>
-      </Grid>
-      <Grid item xs={valuePkr !== undefined ? 3 : 6}>
-        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? navyTrustColors.navy : 'inherit' }}>
-          {formatAmount(value, 4)}
-        </Typography>
-      </Grid>
-      {valuePkr !== undefined && (
-        <Grid item xs={3}>
-          <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? navyTrustColors.navy : 'inherit' }}>
-            {formatAmount(valuePkr, 2)}
-          </Typography>
-        </Grid>
-      )}
-    </>
-  );
-}
 
 function LinkedGrid({ title, empty, children }: { title: string; empty: boolean; children: React.ReactNode }) {
   return (
@@ -1035,14 +1040,17 @@ function LinkedGrid({ title, empty, children }: { title: string; empty: boolean;
       <Typography variant="caption" sx={{ fontWeight: 700, color: navyTrustColors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.3 }}>
         {title}
       </Typography>
-      <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border, mt: 0.5 }}>
-        <Table size="small">{children}</Table>
-        {empty && (
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', p: 1 }}>
-            No records found.
-          </Typography>
-        )}
-      </Paper>
+      {empty ? (
+        <Box sx={{ textAlign: 'center', py: 3, color: navyTrustColors.textSecondary }}>
+          <DescriptionOutlinedIcon sx={{ fontSize: 26, opacity: 0.5, mb: 0.75 }} />
+          <Typography sx={{ fontSize: 13, fontWeight: 700, color: navyTrustColors.textPrimary }}>No records found</Typography>
+          <Typography sx={{ fontSize: 12 }}>Linked {title.toLowerCase()} will appear here.</Typography>
+        </Box>
+      ) : (
+        <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border, mt: 0.5 }}>
+          <Table size="small">{children}</Table>
+        </Paper>
+      )}
     </Box>
   );
 }

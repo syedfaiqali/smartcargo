@@ -10,7 +10,9 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import { SectionCard, SectionCardRow, SectionCardField } from '../../../components/SectionCard';
+import { FinancialsSummaryCard } from '../../../components/FinancialsSummaryCard';
 import { navyTrustColors } from '../../../theme/navyTrustTheme';
 import { LocalInvoice } from '../../../domain/localInvoice';
 import { jobRepo } from '../../../data/jobService';
@@ -144,7 +146,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
       <Grid container spacing={2}>
         {/* LEFT COLUMN — 4.2 Job Identification & Party */}
         <Grid item xs={12} md={5}>
-          <SectionCard number="4.1" title="Invoice Identifiers">
+          <SectionCard number="4.1" title="Invoice Identifiers" tint="blue">
             <SectionCardRow>
               <SectionCardField md={3}>
                 <TextField label="Branch" fullWidth value={invoice.branch} disabled={!editable} onChange={(e) => apply({ branch: e.target.value })} />
@@ -177,7 +179,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
             </SectionCardRow>
           </SectionCard>
 
-          <SectionCard number="4.2" title="House">
+          <SectionCard number="4.2" title="House" tint="mint">
             <SectionCardRow>
               <SectionCardField md={8}>
                 <TextField select label="Job No. (HAWB)" fullWidth value={invoice.house.jobNo} disabled={!editable} onChange={(e) => setHouseJobNo(e.target.value)}>
@@ -211,7 +213,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
             </SectionCardRow>
           </SectionCard>
 
-          <SectionCard number="4.3" title="Master">
+          <SectionCard number="4.3" title="Master" tint="lavender">
             <SectionCardRow>
               <SectionCardField md={8}>
                 <TextField select label="Job No. (MAWB)" fullWidth value={invoice.master.jobNo} disabled={!editable} onChange={(e) => setMasterJobNo(e.target.value)}>
@@ -245,7 +247,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
             </SectionCardRow>
           </SectionCard>
 
-          <SectionCard number="4.4" title="Party">
+          <SectionCard number="4.4" title="Party" tint="cyan">
             <SectionCardRow>
               <SectionCardField md={12}>
                 <TextField
@@ -441,7 +443,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
 
         {/* MIDDLE COLUMN — 4.5 Due Carrier/Agent, 4.6/4.7 grids */}
         <Grid item xs={12} md={4}>
-          <SectionCard number="4.5" title="Due Carrier Charges">
+          <SectionCard number="4.5" title="Due Carrier Charges" tint="peach">
           <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
@@ -520,7 +522,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
           </Paper>
           </SectionCard>
 
-          <SectionCard number="4.6" title="Due Agent Charges">
+          <SectionCard number="4.6" title="Due Agent Charges" tint="purple">
           <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
@@ -587,7 +589,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
           />
           </SectionCard>
 
-          <SectionCard number="4.7" title="Invoice Grid">
+          <SectionCard number="4.7" title="Invoice Grid" tint="rose">
           <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
@@ -640,7 +642,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
           </Paper>
           </SectionCard>
 
-          <SectionCard number="4.8" title="Airway Bill Grid (KB Reconciliation)">
+          <SectionCard number="4.8" title="Airway Bill Grid (KB Reconciliation)" tint="green">
           <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
@@ -738,7 +740,7 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
 
         {/* RIGHT COLUMN — 4.9 Tax, Commission & Totals */}
         <Grid item xs={12} md={3}>
-          <SectionCard number="4.9" title="Tax, Commission &amp; Totals">
+          <SectionCard number="4.9" title="Tax &amp; Commission" tint="peach">
           <Grid container spacing={1.5}>
             <Grid item xs={12}>
               <TextField label="Sales Tax (%) / PST" type="number" fullWidth value={invoice.salesTaxPercent} disabled={!editable} onChange={(e) => apply({ salesTaxPercent: Number(e.target.value) })} />
@@ -781,15 +783,6 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
               />
             </Grid>
 
-            <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 1.5, borderColor: navyTrustColors.border }}>
-                <TotalReadout label="Total Freight" value={invoice.totalFreight} />
-                <TotalReadout label="Total Due Carrier" value={invoice.totalDueCarrier} />
-                <TotalReadout label="Total Due Agent" value={invoice.totalDueAgent} />
-                <TotalReadout label="Gross Invoice Amount" value={invoice.grossInvoiceAmount} highlight />
-              </Paper>
-            </Grid>
-
             <Grid item xs={7}>
               <TextField label="Commission (%)" type="number" fullWidth value={invoice.commissionPercent} disabled={!editable} onChange={(e) => apply({ commissionPercent: Number(e.target.value) })} />
             </Grid>
@@ -830,12 +823,6 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
             </Grid>
 
             <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 1.5, bgcolor: navyTrustColors.headerBg, borderColor: navyTrustColors.border }}>
-                <TotalReadout label="Invoice Total" value={invoice.invoiceTotal} highlight />
-              </Paper>
-            </Grid>
-
-            <Grid item xs={12}>
               <TextField
                 select
                 label="Print Incentive/Commission/WHT (Y/N)"
@@ -851,37 +838,37 @@ export function EntryTab({ invoice, editable, onChange }: EntryTabProps) {
           </Grid>
           </SectionCard>
 
-          <SectionCard number="4.10" title="Receipts">
-          <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Receipt No.</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Amount</TableCell>
+          <FinancialsSummaryCard
+            title="Invoice financials"
+            rows={[
+              { label: 'Total freight', value: invoice.totalFreight.toFixed(2) },
+              { label: 'Total due carrier', value: invoice.totalDueCarrier.toFixed(2) },
+              { label: 'Total due agent', value: invoice.totalDueAgent.toFixed(2) },
+              { label: 'Gross invoice amount', value: invoice.grossInvoiceAmount.toFixed(2) },
+            ]}
+            totalLabel="Invoice total"
+            totalValue={invoice.invoiceTotal.toFixed(2)}
+          />
+
+          <SectionCard number="4.10" title="Receipts" tint="slate">
+          <LinkedGrid title="Receipts" empty={invoice.receipts.length === 0}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Receipt No.</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Amount</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {invoice.receipts.map((r, i) => (
+                <TableRow key={i}>
+                  <TableCell>{r.receiptNo}</TableCell>
+                  <TableCell>{r.receiptDate}</TableCell>
+                  <TableCell>{r.amount}</TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {invoice.receipts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3}>
-                      <Typography variant="caption" color="text.secondary">
-                        No receipts recorded.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  invoice.receipts.map((r, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{r.receiptNo}</TableCell>
-                      <TableCell>{r.receiptDate}</TableCell>
-                      <TableCell>{r.amount}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Paper>
+              ))}
+            </TableBody>
+          </LinkedGrid>
           </SectionCard>
         </Grid>
       </Grid>
@@ -903,5 +890,23 @@ function TotalReadout({ label, value, highlight }: { label: string; value: numbe
         </Typography>
       </Grid>
     </Grid>
+  );
+}
+
+function LinkedGrid({ title, empty, children }: { title: string; empty: boolean; children: React.ReactNode }) {
+  return (
+    <Box sx={{ mb: 2 }}>
+      {empty ? (
+        <Box sx={{ textAlign: 'center', py: 3, color: navyTrustColors.textSecondary }}>
+          <DescriptionOutlinedIcon sx={{ fontSize: 26, opacity: 0.5, mb: 0.75 }} />
+          <Typography sx={{ fontSize: 13, fontWeight: 700, color: navyTrustColors.textPrimary }}>No records found</Typography>
+          <Typography sx={{ fontSize: 12 }}>Linked {title.toLowerCase()} will appear here.</Typography>
+        </Box>
+      ) : (
+        <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border }}>
+          <Table size="small">{children}</Table>
+        </Paper>
+      )}
+    </Box>
   );
 }

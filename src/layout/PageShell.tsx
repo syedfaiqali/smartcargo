@@ -11,12 +11,15 @@ import { themeColors } from '../theme/themeColors';
 interface PageShellProps {
   breadcrumbs: string[];
   title: string;
+  /** Small uppercase label above the title, e.g. "AIR EXPORT · HOUSE WAYBILL". */
+  eyebrow?: string;
+  eyebrowColor?: string;
   subtitle?: string;
   actions?: ReactNode;
   children: ReactNode;
 }
 
-export function PageShell({ breadcrumbs, title, subtitle, actions, children }: PageShellProps) {
+export function PageShell({ breadcrumbs, title, eyebrow, eyebrowColor, subtitle, actions, children }: PageShellProps) {
   return (
     <Box>
       <Box
@@ -75,6 +78,20 @@ export function PageShell({ breadcrumbs, title, subtitle, actions, children }: P
           }}
         >
           <Box>
+            {eyebrow && (
+              <Typography
+                sx={{
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                  color: eyebrowColor ?? themeColors.primary,
+                  mb: 0.5,
+                }}
+              >
+                {eyebrow}
+              </Typography>
+            )}
             <Typography sx={{ fontSize: 22, fontWeight: 700, color: themeColors.textPrimary, lineHeight: 1.25 }}>
               {title}
             </Typography>

@@ -46,7 +46,7 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
 
   return (
     <Box>
-      <SectionCard number="5.1" title="Print Target">
+      <SectionCard number="5.1" title="Print Target" tint="blue">
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
             <TextField label="Branch" fullWidth value={invoice.branch} disabled />
@@ -61,7 +61,7 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
-          <SectionCard number="5.2" title="Document Type">
+          <SectionCard number="5.2" title="Document Type" tint="mint">
           <FormControl>
             <RadioGroup value={p.documentType} onChange={(e) => setP({ documentType: e.target.value as LocalInvoice['printing']['documentType'] })}>
               {DOCUMENT_TYPES.map(([value, label]) => (
@@ -86,7 +86,7 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <SectionCard number="5.3" title="Batch &amp; Layout Options">
+          <SectionCard number="5.3" title="Batch &amp; Layout Options" tint="cyan">
           <Grid container spacing={1.5}>
             <Grid item xs={6}>
               <TextField
@@ -140,7 +140,7 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <SectionCard number="5.4" title="Content Toggles">
+          <SectionCard number="5.4" title="Content Toggles" tint="purple">
           <Grid container spacing={0.5}>
             {CONTENT_TOGGLES.map(({ key, label }) => (
               <Grid item xs={12} key={key}>

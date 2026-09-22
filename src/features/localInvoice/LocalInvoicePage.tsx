@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
@@ -20,7 +18,9 @@ import { recomputeInvoiceTotals } from './invoiceCalculations';
 import { EntryTab } from './tabs/EntryTab';
 import { PrintingTab } from './tabs/PrintingTab';
 import { LocalInvoiceGrid } from './LocalInvoiceGrid';
-import { navyTrustColors, navyTrustFontFamily, navyTrustHeadingFontFamily, navyTrustScreenSx, loadNavyTrustFonts } from '../../theme/navyTrustTheme';
+import { navyTrustColors, navyTrustFontFamily, navyTrustHeadingFontFamily, navyTrustScreenSx, navyTrustPillTabsSx, loadNavyTrustFonts } from '../../theme/navyTrustTheme';
+
+const pillTabsSx = navyTrustPillTabsSx;
 
 function useNavyTrustFonts() {
   useEffect(() => {
@@ -179,7 +179,9 @@ export function LocalInvoicePage() {
     <Box sx={navyTrustScreenSx}>
       <PageShell
         breadcrumbs={['Freight', 'Transactions Menu (Air Export)', 'Local Invoices Entry and Printing']}
-        title="Local Invoices Entry and Printing (Air-Export)"
+        title="Local invoice entry & printing"
+        eyebrow="Air Export · Local Invoice"
+        subtitle="Complete the invoice details, charges, and print options."
         actions={!showList ? (
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <Button
@@ -242,40 +244,33 @@ export function LocalInvoicePage() {
         ) : (
           <>
             {invoice && (
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
                 <Chip
-                  label={`Invoice No: ${invoice.invoiceNo}`}
-                  sx={{ bgcolor: navyTrustColors.navy, color: '#fff', fontWeight: 700, fontFamily: navyTrustHeadingFontFamily, fontSize: 12.5 }}
+                  label={invoice.invoiceNo}
+                  sx={{ bgcolor: '#1a2233', color: '#fff', fontWeight: 700, fontFamily: navyTrustHeadingFontFamily, fontSize: 12.5, borderRadius: '8px' }}
                 />
                 {editable && (
                   <Chip
-                    label="EDITING"
+                    label="Editing"
                     sx={{ bgcolor: '#fff4e0', color: navyTrustColors.warning, fontWeight: 700, border: '1px solid #f5d599' }}
                   />
                 )}
                 {invoice.status.final && (
-                  <Chip label="FINAL" sx={{ bgcolor: navyTrustColors.successBg, color: navyTrustColors.success, fontWeight: 700, border: `1px solid ${navyTrustColors.successBorder}` }} />
+                  <Chip label="Final" sx={{ bgcolor: navyTrustColors.successBg, color: navyTrustColors.success, fontWeight: 700, border: `1px solid ${navyTrustColors.successBorder}` }} />
                 )}
                 {invoice.status.void && (
-                  <Chip label="VOID" sx={{ bgcolor: navyTrustColors.dangerBg, color: navyTrustColors.danger, fontWeight: 700, border: `1px solid ${navyTrustColors.dangerBorder}` }} />
+                  <Chip label="Void" sx={{ bgcolor: navyTrustColors.dangerBg, color: navyTrustColors.danger, fontWeight: 700, border: `1px solid ${navyTrustColors.dangerBorder}` }} />
                 )}
               </Stack>
             )}
 
-            <Tabs
-              value={tab}
-              sx={{
-                mb: 2,
-                borderBottom: `2px solid ${navyTrustColors.border}`,
-                '& .MuiTab-root': { fontFamily: navyTrustHeadingFontFamily, fontWeight: 700, fontSize: 12.5, color: navyTrustColors.textSecondary },
-                '& .Mui-selected': { color: navyTrustColors.navy },
-                '& .MuiTabs-indicator': { backgroundColor: navyTrustColors.navy, height: 2.5 },
-              }}
-            >
-              {(isPrintingView ? ['Printing'] : ['Entry']).map((label) => (
-                <Tab key={label} label={label} />
+            <Box sx={pillTabsSx}>
+              {(isPrintingView ? ['Printing'] : ['Entry']).map((label, i) => (
+                <Box key={label} className={`pill-tab${tab === i ? ' active' : ''}`} onClick={() => setTab(i)}>
+                  {label}
+                </Box>
               ))}
-            </Tabs>
+            </Box>
 
             {!invoice ? (
               <Alert severity="info">Click NEW to create an invoice, or use Search to return to the invoice list.</Alert>

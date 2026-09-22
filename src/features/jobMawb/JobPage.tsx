@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
+import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import Chip from '@mui/material/Chip';
@@ -25,9 +24,17 @@ import { KbTab } from './tabs/KbTab';
 import { RemarksTab } from './tabs/RemarksTab';
 import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
-import { navyTrustColors, navyTrustFontFamily, navyTrustHeadingFontFamily, navyTrustScreenSx, loadNavyTrustFonts } from '../../theme/navyTrustTheme';
+import {
+  navyTrustColors,
+  navyTrustFontFamily,
+  navyTrustHeadingFontFamily,
+  navyTrustScreenSx,
+  navyTrustPillTabsSx,
+  loadNavyTrustFonts,
+} from '../../theme/navyTrustTheme';
 
-const TAB_LABELS = ['1.0 Entry Details', '2.0 Charges Grid', '3.0 K.B. Data', '4.0 Remarks'] as const;
+const TAB_LABELS = ['01 Entry details', '02 Charges', '03 K.B. data', '04 Remarks'] as const;
+const pillTabsSx = navyTrustPillTabsSx;
 
 function useJobScreenFonts() {
   useEffect(() => {
@@ -259,7 +266,9 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
     <Box sx={navyTrustScreenSx}>
       <PageShell
         breadcrumbs={breadcrumbs}
-        title={title}
+        title="Job entry & printing"
+        eyebrow={`Air Export · ${kind === 'MAWB' ? 'Master Waybill' : 'House Waybill'}`}
+        subtitle="Complete the shipment details, charges, and billing information."
         actions={job ? (
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <Button
@@ -329,58 +338,45 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
         )}
 
         {job && (
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
             <Chip
-              label={`Job: ${job.jobNo}`}
-              sx={{ bgcolor: navyTrustColors.navy, color: '#fff', fontWeight: 700, fontFamily: navyTrustHeadingFontFamily, fontSize: 12.5 }}
+              label={job.jobNo}
+              sx={{ bgcolor: '#1a2233', color: '#fff', fontWeight: 700, fontFamily: navyTrustHeadingFontFamily, fontSize: 12.5, borderRadius: '8px' }}
             />
-            {kind === 'HAWB' && <Chip label={`HAWB No: ${job.hawbNo || '—'}`} variant="outlined" sx={{ borderColor: navyTrustColors.border }} />}
+            {kind === 'HAWB' && job.parentJobNo && (
+              <Typography sx={{ fontSize: 13, fontWeight: 600, color: navyTrustColors.textSecondary }}>
+                MAWB: {job.parentJobNo}
+              </Typography>
+            )}
             {editable && (
               <Chip
-                label="EDITING"
-                sx={{ bgcolor: '#fff4e0', color: navyTrustColors.warning, fontWeight: 700, border: `1px solid #f5d599` }}
+                label="Editing"
+                sx={{ bgcolor: '#fff4e0', color: navyTrustColors.warning, fontWeight: 700, border: '1px solid #f5d599' }}
               />
             )}
             {job.status.final && (
-              <Chip label="FINAL" sx={{ bgcolor: navyTrustColors.successBg, color: navyTrustColors.success, fontWeight: 700, border: `1px solid ${navyTrustColors.successBorder}` }} />
+              <Chip label="Final" sx={{ bgcolor: navyTrustColors.successBg, color: navyTrustColors.success, fontWeight: 700, border: `1px solid ${navyTrustColors.successBorder}` }} />
             )}
             {job.status.void && (
-              <Chip label="VOID" sx={{ bgcolor: navyTrustColors.dangerBg, color: navyTrustColors.danger, fontWeight: 700, border: `1px solid ${navyTrustColors.dangerBorder}` }} />
+              <Chip label="Void" sx={{ bgcolor: navyTrustColors.dangerBg, color: navyTrustColors.danger, fontWeight: 700, border: `1px solid ${navyTrustColors.dangerBorder}` }} />
             )}
           </Stack>
         )}
 
         {job && isPrintingView && (
-          <Tabs
-            value={0}
-            sx={{
-              mb: 2,
-              borderBottom: `2px solid ${navyTrustColors.border}`,
-              '& .MuiTab-root': { fontFamily: navyTrustHeadingFontFamily, fontWeight: 700, fontSize: 12.5 },
-              '& .Mui-selected': { color: navyTrustColors.navy },
-              '& .MuiTabs-indicator': { backgroundColor: navyTrustColors.navy, height: 2.5 },
-            }}
-          >
-            <Tab label="Printing" />
-          </Tabs>
+          <Box sx={pillTabsSx}>
+            <Box className="pill-tab active">Printing</Box>
+          </Box>
         )}
 
         {job && !isPrintingView && (
-          <Tabs
-            value={tab}
-            onChange={(_, v) => handleTabChange(v)}
-            sx={{
-              mb: 2,
-              borderBottom: `2px solid ${navyTrustColors.border}`,
-              '& .MuiTab-root': { fontFamily: navyTrustHeadingFontFamily, fontWeight: 700, fontSize: 12.5, color: navyTrustColors.textSecondary },
-              '& .Mui-selected': { color: navyTrustColors.navy },
-              '& .MuiTabs-indicator': { backgroundColor: navyTrustColors.navy, height: 2.5 },
-            }}
-          >
-            {TAB_LABELS.map((label) => (
-              <Tab key={label} label={label} />
+          <Box sx={pillTabsSx}>
+            {TAB_LABELS.map((label, i) => (
+              <Box key={label} className={`pill-tab${tab === i ? ' active' : ''}`} onClick={() => handleTabChange(i)}>
+                {label}
+              </Box>
             ))}
-          </Tabs>
+          </Box>
         )}
 
         {!job ? (

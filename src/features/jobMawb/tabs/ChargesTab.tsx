@@ -11,7 +11,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import { Job } from '../../../domain/job';
-import { SectionHeader } from '../../../components/FormGrid';
+import { SectionCard } from '../../../components/SectionCard';
+import { navyTrustColors } from '../../../theme/navyTrustTheme';
 import { recomputeChargesTotals, recomputeJobTotals } from '../jobCalculations';
 
 interface ChargesTabProps {
@@ -48,8 +49,8 @@ export function ChargesTab({ job, editable, onChange }: ChargesTabProps) {
       </Typography>
       <Grid container spacing={2}>
         <Grid item xs={12} md={7}>
-          <SectionHeader>Due Carrier Panel</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <SectionCard number="2.1" title="Due Carrier Panel" tint="rose">
+          <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -122,15 +123,16 @@ export function ChargesTab({ job, editable, onChange }: ChargesTabProps) {
             </Table>
           </Paper>
 
-          <Paper variant="outlined" sx={{ p: 1.5, mt: 1.5 }}>
+          <Paper variant="outlined" sx={{ p: 1.5, mt: 1.5, borderColor: navyTrustColors.border }}>
             <Typography variant="caption" color="text.secondary">
               Gross Weight: {job.chargeLines.reduce((a, l) => a + l.grossWt, 0)} kg &nbsp;|&nbsp; Chargeable Weight:{' '}
               {job.chargeLines.reduce((a, l) => a + l.chargeWt, 0)} kg &nbsp;|&nbsp; Rate: {job.exRate} ({job.currency})
             </Typography>
           </Paper>
+          </SectionCard>
 
-          <SectionHeader>Due Agent Panel</SectionHeader>
-          <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <SectionCard number="2.2" title="Due Agent Panel" tint="peach">
+          <Paper variant="outlined" sx={{ overflowX: 'auto', borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -183,11 +185,12 @@ export function ChargesTab({ job, editable, onChange }: ChargesTabProps) {
               </TableBody>
             </Table>
           </Paper>
+          </SectionCard>
         </Grid>
 
         <Grid item xs={12} md={5}>
-          <SectionHeader>Summary Totals Panel</SectionHeader>
-          <Paper variant="outlined" sx={{ p: 1.5 }}>
+          <SectionCard number="2.3" title="Summary Totals Panel" tint="slate">
+          <Paper variant="outlined" sx={{ p: 1.5, borderColor: navyTrustColors.border }}>
             <Grid container spacing={1} sx={{ mb: 1 }}>
               <Grid item xs={8}>
                 <Typography variant="body2">CC Scaning Payable (Y/N)</Typography>
@@ -226,6 +229,7 @@ export function ChargesTab({ job, editable, onChange }: ChargesTabProps) {
               </Grid>
             </Grid>
           </Paper>
+          </SectionCard>
         </Grid>
       </Grid>
     </Box>
@@ -241,7 +245,7 @@ function SummaryRow({ label, value, highlight }: { label: string; value: number;
         </Typography>
       </Grid>
       <Grid item xs={4}>
-        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? 'primary.main' : 'inherit' }}>
+        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? navyTrustColors.navy : 'inherit' }}>
           {value.toFixed(2)}
         </Typography>
       </Grid>

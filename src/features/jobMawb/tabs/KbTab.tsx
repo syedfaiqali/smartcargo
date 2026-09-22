@@ -11,7 +11,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import { Job, KbFreightLine } from '../../../domain/job';
-import { SectionHeader } from '../../../components/FormGrid';
+import { SectionCard } from '../../../components/SectionCard';
+import { navyTrustColors } from '../../../theme/navyTrustTheme';
 
 interface KbTabProps {
   job: Job;
@@ -48,8 +49,8 @@ export function KbTab({ job, editable, onChange }: KbTabProps) {
         business owner — see docs/screens-phase.md Section 2.10.
       </Alert>
 
-      <SectionHeader>Line-wise Freight (Line No. 1–3)</SectionHeader>
-      <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2 }}>
+      <SectionCard number="3.1" title="Line-wise Freight (Line No. 1–3)" tint="blue">
+      <Paper variant="outlined" sx={{ overflowX: 'auto', mb: 2, borderColor: navyTrustColors.border }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -132,11 +133,12 @@ export function KbTab({ job, editable, onChange }: KbTabProps) {
           </TableBody>
         </Table>
       </Paper>
+      </SectionCard>
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <SectionHeader>Other Charges Payable</SectionHeader>
-          <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+          <SectionCard number="3.2" title="Other Charges Payable" tint="mint">
+          <Paper variant="outlined" sx={{ p: 1.5, mb: 2, borderColor: navyTrustColors.border }}>
             <Grid container spacing={1}>
               {job.kb.otherCharges.map((c, i) => (
                 <Grid container item spacing={1} key={c.id} alignItems="center">
@@ -184,9 +186,10 @@ export function KbTab({ job, editable, onChange }: KbTabProps) {
               </Grid>
             </Grid>
           </Paper>
+          </SectionCard>
 
-          <SectionHeader>Owner Panel</SectionHeader>
-          <Paper variant="outlined" sx={{ p: 1.5 }}>
+          <SectionCard number="3.3" title="Owner Panel" tint="lavender">
+          <Paper variant="outlined" sx={{ p: 1.5, borderColor: navyTrustColors.border }}>
             <Grid container spacing={1.5}>
               <Grid item xs={6}>
                 <TextField
@@ -223,11 +226,12 @@ export function KbTab({ job, editable, onChange }: KbTabProps) {
               </Grid>
             </Grid>
           </Paper>
+          </SectionCard>
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <SectionHeader>Net Payable Summary</SectionHeader>
-          <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+          <SectionCard number="3.4" title="Net Payable Summary" tint="cyan">
+          <Paper variant="outlined" sx={{ p: 1.5, mb: 2, borderColor: navyTrustColors.border }}>
             <SummaryLine label="Freight" value={job.totals.freight} />
             <SummaryLine label="Due Carrier" value={job.totals.dueCarrier} />
             <SummaryLine label="Due Agent" value={job.totals.dueAgent} />
@@ -261,9 +265,10 @@ export function KbTab({ job, editable, onChange }: KbTabProps) {
               </Grid>
             </Grid>
           </Paper>
+          </SectionCard>
 
-          <SectionHeader>Shipper Agreed and Invoiced Rates</SectionHeader>
-          <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+          <SectionCard number="3.5" title="Shipper Agreed and Invoiced Rates" tint="purple">
+          <Paper variant="outlined" sx={{ p: 1.5, mb: 2, borderColor: navyTrustColors.border }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -323,8 +328,9 @@ export function KbTab({ job, editable, onChange }: KbTabProps) {
               </TableBody>
             </Table>
           </Paper>
+          </SectionCard>
 
-          <SectionHeader>Printable Remarks</SectionHeader>
+          <SectionCard number="3.6" title="Printable Remarks" tint="peach">
           <TextField
             fullWidth
             multiline
@@ -333,6 +339,7 @@ export function KbTab({ job, editable, onChange }: KbTabProps) {
             disabled={!editable}
             onChange={(e) => onChange({ ...job, kb: { ...job.kb, printableRemarks: e.target.value } })}
           />
+          </SectionCard>
         </Grid>
       </Grid>
     </Box>
@@ -348,7 +355,7 @@ function SummaryLine({ label, value, highlight }: { label: string; value: number
         </Typography>
       </Grid>
       <Grid item xs={4}>
-        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? 'primary.main' : 'inherit' }}>
+        <Typography variant="body2" align="right" sx={{ fontWeight: highlight ? 700 : 400, color: highlight ? navyTrustColors.navy : 'inherit' }}>
           {value.toFixed(2)}
         </Typography>
       </Grid>

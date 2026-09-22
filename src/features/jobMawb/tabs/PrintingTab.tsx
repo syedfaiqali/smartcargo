@@ -60,7 +60,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
 
   return (
     <Box>
-      <SectionCard number="4.1" title="Print Target">
+      <SectionCard number="4.1" title="Print Target" tint="blue">
         <Grid container spacing={2}>
           <Grid item xs={12} md={3}>
             <TextField label="Branch" fullWidth value={job.branch} disabled />
@@ -84,7 +84,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
-          <SectionCard number="4.2" title="Document Type">
+          <SectionCard number="4.2" title="Document Type" tint="mint">
             <FormControl>
               <RadioGroup value={p.documentType} onChange={(e) => setP({ documentType: e.target.value })}>
                 {DOCUMENT_TYPES.map(([value, label]) => (
@@ -96,7 +96,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
         </Grid>
 
         <Grid item xs={12} md={5}>
-          <SectionCard number="4.3" title="Air Waybill Print Options">
+          <SectionCard number="4.3" title="Air Waybill Print Options" tint="cyan">
           <Grid container spacing={1}>
             <Grid item xs={12}>
               <FormControl disabled={!editable}>
@@ -174,7 +174,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
         </Grid>
 
         <Grid item xs={12} md={3}>
-          <SectionCard number="4.4" title="Copy Selection">
+          <SectionCard number="4.4" title="Copy Selection" tint="purple">
           <Paper
             variant="outlined"
             sx={{
