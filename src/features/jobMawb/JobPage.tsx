@@ -24,6 +24,7 @@ import { KbTab } from './tabs/KbTab';
 import { RemarksTab } from './tabs/RemarksTab';
 import { DetailSearchTab } from './tabs/DetailSearchTab';
 import { PrintingTab } from './tabs/PrintingTab';
+import { recomputeJobTotals } from './jobCalculations';
 import {
   navyTrustColors,
   navyTrustFontFamily,
