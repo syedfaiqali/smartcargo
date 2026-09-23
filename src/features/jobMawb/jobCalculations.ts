@@ -42,8 +42,9 @@ export function recomputeJobTotals(job: Job): JobTotals {
 }
 
 export function recomputeChargesTotals(charges: ChargesTab): ChargesTab {
-  const totalDueCarrier = sum(charges.dueCarrierLines, (l) => l.charges);
-  const totalDueCarrierPkr = sum(charges.dueCarrierLines, (l) => l.chargesPkr);
+  const carrierLines = [...charges.dueCarrierLines, ...(charges.additionalDueCarrierLines ?? [])];
+  const totalDueCarrier = sum(carrierLines, (l) => l.charges);
+  const totalDueCarrierPkr = sum(carrierLines, (l) => l.chargesPkr);
   const totalDueAgent = sum(charges.dueAgentLines, (l) => l.chargesForeign);
   const totalDueAgentPkr = sum(charges.dueAgentLines, (l) => l.chargesPkr);
   return { ...charges, totalDueCarrier, totalDueCarrierPkr, totalDueAgent, totalDueAgentPkr };

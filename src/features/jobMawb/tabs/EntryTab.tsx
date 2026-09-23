@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
@@ -25,9 +26,10 @@ import Box from '@mui/material/Box';
 import { Job } from '../../../domain/job';
 import { SectionCard, SectionCardRow, SectionCardField } from '../../../components/SectionCard';
 import { navyTrustColors, navyTrustHeadingFontFamily } from '../../../theme/navyTrustTheme';
-import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo } from '../../../data/masterDataService';
+import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo, chargeableRepo } from '../../../data/masterDataService';
 import { jobRepo } from '../../../data/jobService';
 import { getLocalInvoiceLinksForJob } from '../../../data/localInvoiceService';
+import { seaImportQuotationRepo } from '../../../data/seaImportQuotationService';
 import { recomputeChargeLineTotal, recomputeJobTotals } from '../jobCalculations';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,10 +44,12 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const [dimensionCalculatorOpen, setDimensionCalculatorOpen] = useState(false);
   const [dimensionTargetLineId, setDimensionTargetLineId] = useState<string | null>(null);
   const owners = ownerRepo.list();
+  const chargeableCodes = chargeableRepo.list();
   const parties = partyRepo.list();
   const foreignAgents = foreignAgentRepo.list();
   const airports = airportRepo.list();
   const currencies = currencyRepo.list();
+  const quotations = seaImportQuotationRepo.list();
   const clearingAgents = agentRepo.find((a) => a.kind === 'CLEARING');
   const deliveryAgents = agentRepo.find((a) => a.kind === 'DELIVERY');
   const spoCodes = spoRepo.list();
@@ -63,6 +67,13 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   ];
 
   const set = <K extends keyof Job>(key: K, value: Job[K]) => onChange({ ...job, [key]: value });
+
+  // Owner codes are branch-prefixed (for example, KHI-OWN), so the prefix is
+  // the station assigned to a job when its owner changes.
+  const setOwner = (owner: string) => {
+    const station = owner.split('-')[0] ?? '';
+    onChange({ ...job, owner, station });
+  };
 
   const setParty = (partyCode: string) => {
     const p = parties.find((x) => x.code === partyCode);
@@ -171,12 +182,25 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 )}
               </SectionCardField>
               <SectionCardField md={6}>
-                <TextField label="Quotation Reference" fullWidth value={job.quotRefNo} disabled={!editable} onChange={(e) => set('quotRefNo', e.target.value)} />
+                <Autocomplete
+                  options={quotations}
+                  value={quotations.find((quotation) => quotation.quotationNo === job.quotRefNo) ?? null}
+                  getOptionLabel={(quotation) => quotation.quotationNo}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  disabled={!editable}
+                  onChange={(_, quotation) => set('quotRefNo', quotation?.quotationNo ?? '')}
+                  renderOption={(props, quotation) => (
+                    <li {...props} key={quotation.id}>
+                      {quotation.quotationNo} — {quotation.name || quotation.partyCode || 'Unnamed quotation'}
+                    </li>
+                  )}
+                  renderInput={(params) => <TextField {...params} label="Quotation Reference" fullWidth placeholder="Search quotation" />}
+                />
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
               <SectionCardField md={8}>
-                <TextField select label="Owner" fullWidth value={job.owner} disabled={!editable} onChange={(e) => set('owner', e.target.value)}>
+                <TextField select label="Owner" fullWidth value={job.owner} disabled={!editable} onChange={(e) => setOwner(e.target.value)}>
                   {owners.map((o) => (
                     <MenuItem key={o.code} value={o.code}>
                       {o.code} — {o.name}
@@ -218,15 +242,29 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 />
               </SectionCardField>
               <SectionCardField md={3}>
-                <TextField label="Charge Code" fullWidth value={job.chargeCode} disabled={!editable} onChange={(e) => set('chargeCode', e.target.value)} />
+                <TextField select label="Charge Code" fullWidth value={job.chargeCode} disabled={!editable} onChange={(e) => set('chargeCode', e.target.value)}>
+                  <MenuItem value="">(none)</MenuItem>
+                  {chargeableCodes.map((chargeCode) => (
+                    <MenuItem key={chargeCode.code} value={chargeCode.code}>
+                      {chargeCode.code} — {chargeCode.description}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </SectionCardField>
               <SectionCardField md={5}>
-                <TextField label="Station" fullWidth value={job.station} disabled={!editable} onChange={(e) => set('station', e.target.value)} />
+                <TextField label="Station" fullWidth value={job.station} disabled helperText="Set from the selected owner" />
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
               <SectionCardField md={job.kind === 'HAWB' ? 4 : 12}>
-                <TextField label="IncoTerm" fullWidth value={job.incoTerm} disabled={!editable} onChange={(e) => set('incoTerm', e.target.value)} />
+                <TextField select label="IncoTerm" fullWidth value={job.incoTerm} disabled={!editable} onChange={(e) => set('incoTerm', e.target.value)}>
+                  <MenuItem value="">(none)</MenuItem>
+                  {chargeableCodes.map((chargeCode) => (
+                    <MenuItem key={chargeCode.code} value={chargeCode.code}>
+                      {chargeCode.code} — {chargeCode.description}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </SectionCardField>
               {job.kind === 'HAWB' && (
                 <SectionCardField md={8}>
@@ -342,7 +380,14 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           <SectionCard number="1.4" title="Routing &amp; Shipment Details" tint="cyan">
             <SectionCardRow>
               <SectionCardField md={4}>
-                <TextField label="CC Port" fullWidth value={job.routing.ccPort} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, ccPort: e.target.value } })} />
+                <TextField select label="CC Port" fullWidth value={job.routing.ccPort} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, ccPort: e.target.value } })}>
+                  <MenuItem value="">(none)</MenuItem>
+                  {airports.map((airport) => (
+                    <MenuItem key={airport.code} value={airport.code}>
+                      {airport.code} — {airport.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </SectionCardField>
               <SectionCardField md={8}>
                 <TextField
@@ -424,7 +469,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField
                   label="Flight No. 1"
                   fullWidth
@@ -433,16 +478,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightNo1: e.target.value } })}
                 />
               </SectionCardField>
-              <SectionCardField md={4}>
-                <TextField
-                  label="Flight No. 2"
-                  fullWidth
-                  value={job.routing.flightNo2}
-                  disabled={!editable}
-                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightNo2: e.target.value } })}
-                />
-              </SectionCardField>
-              <SectionCardField md={4}>
+              <SectionCardField md={3}>
                 <TextField
                   label="Date"
                   type="date"
@@ -453,10 +489,51 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightDate: e.target.value } })}
                 />
               </SectionCardField>
+              <SectionCardField md={3}>
+                <TextField
+                  label="Flight No. 2"
+                  fullWidth
+                  value={job.routing.flightNo2}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightNo2: e.target.value } })}
+                />
+              </SectionCardField>
+              <SectionCardField md={3}>
+                <TextField
+                  label="Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={job.routing.flightDate2 ?? ''}
+                  disabled={!editable}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, flightDate2: e.target.value } })}
+                />
+              </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
-              <SectionCardField md={8}>
-                <TextField label="Form E No." fullWidth value={job.routing.formENo} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, formENo: e.target.value } })} />
+              <SectionCardField md={4}>
+                <TextField
+                  select
+                  fullWidth
+                  value={job.routing.formEType ?? ''}
+                  disabled={!editable}
+                  SelectProps={{ displayEmpty: true }}
+                  inputProps={{ 'aria-label': 'Form E field type' }}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, formEType: e.target.value as 'FORM_E_NO' | 'FIN_INST_NO' | '' } })}
+                >
+                  <MenuItem value="">(select field)</MenuItem>
+                  <MenuItem value="FORM_E_NO">Form E No.</MenuItem>
+                  <MenuItem value="FIN_INST_NO">Fin.Inst.No.</MenuItem>
+                </TextField>
+              </SectionCardField>
+              <SectionCardField md={4}>
+                <TextField
+                  label={job.routing.formEType === 'FIN_INST_NO' ? 'Fin.Inst.No.' : job.routing.formEType === 'FORM_E_NO' ? 'Form E No.' : ''}
+                  fullWidth
+                  value={job.routing.formENo}
+                  disabled={!editable || !job.routing.formEType}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, formENo: e.target.value } })}
+                />
               </SectionCardField>
               <SectionCardField md={4}>
                 <TextField
@@ -823,17 +900,24 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </SectionCardField>
           </SectionCardRow>
           <SectionCardRow>
-            <SectionCardField md={3}>
-              <TextField select label="Invoice Required" fullWidth value={job.invoiceRequired} disabled={!editable} onChange={(e) => set('invoiceRequired', e.target.value as 'Y' | 'N')}>
-                <MenuItem value="N">N</MenuItem>
-                <MenuItem value="Y">Y</MenuItem>
-              </TextField>
-            </SectionCardField>
-            <SectionCardField md={3}>
-              <TextField select label="Local Invoice (Y/N)" fullWidth value={job.localInvoice} disabled={!editable} onChange={(e) => set('localInvoice', e.target.value as 'Y' | 'N')}>
-                <MenuItem value="N">N</MenuItem>
-                <MenuItem value="Y">Y</MenuItem>
-              </TextField>
+            <SectionCardField md={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice Required</Typography>
+                <TextField
+                  select
+                  label="Local Invoice (Y/N)"
+                  fullWidth
+                  value={job.localInvoice}
+                  disabled={!editable}
+                  onChange={(e) => {
+                    const value = e.target.value as 'Y' | 'N';
+                    onChange({ ...job, localInvoice: value, invoiceRequired: value });
+                  }}
+                >
+                  <MenuItem value="N">N</MenuItem>
+                  <MenuItem value="Y">Y</MenuItem>
+                </TextField>
+              </Box>
             </SectionCardField>
           </SectionCardRow>
           </SectionCard>

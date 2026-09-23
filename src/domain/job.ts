@@ -59,6 +59,8 @@ export interface DueAgentChargeLine {
 
 export interface ChargesTab {
   dueCarrierLines: DueCarrierChargeLine[];
+  /** Extra carrier-charge rows entered below the standard airline charge heads. */
+  additionalDueCarrierLines: DueCarrierChargeLine[];
   totalDueCarrier: number;
   totalDueCarrierPkr: number;
   dueAgentLines: DueAgentChargeLine[];
@@ -215,7 +217,10 @@ export interface JobRouting {
   hsCode: string;
   flightNo1: string;
   flightNo2: string;
+  /** Date for Flight No. 2; `flightDate` remains the date for Flight No. 1. */
+  flightDate2: IsoDate | '';
   flightDate: IsoDate | '';
+  formEType: '' | 'FORM_E_NO' | 'FIN_INST_NO';
   formENo: string;
   formEDate: IsoDate | '';
   shipperInvoiceNo: string;

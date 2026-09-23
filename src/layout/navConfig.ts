@@ -8,6 +8,9 @@ export interface NavGroup {
   items: NavLeaf[];
 }
 
+/** A menu item displayed directly under a module, without a collapsible parent group. */
+export type NavMenuEntry = NavGroup | NavLeaf;
+
 export const airExportMenu: NavGroup = {
   label: 'Transactions Menu (Air Export)',
   items: [
@@ -114,14 +117,6 @@ export const seaImportMenu: NavGroup = {
   ],
 };
 
-export const seaImportOtherMenu: NavGroup = {
-  label: 'Sea Import',
-  items: [
-    { label: 'Quotations', path: '/freight/sea-import/quotations' },
-    { label: 'Document Receipt', path: '/freight/sea-import/document-receipt' },
-  ],
-};
-
 export const initialSetupMenu: NavGroup = {
   label: 'Initial Setup',
   items: [
@@ -152,13 +147,14 @@ export const initialSetupMenu: NavGroup = {
   ],
 };
 
-export const freightMenu: NavGroup[] = [
+export const freightMenu: NavMenuEntry[] = [
+  initialSetupMenu,
   airExportMenu,
   seaExportMenu,
   airImportMenu,
   seaImportMenu,
-  seaImportOtherMenu,
-  initialSetupMenu,
+  { label: 'Quotations', path: '/freight/sea-import/quotations' },
+  { label: 'Document Receipt', path: '/freight/sea-import/document-receipt' },
 ];
 
 export const financeInitialSetupMenu: NavGroup = {
@@ -206,7 +202,7 @@ export interface SidebarModule {
   label: string;
   icon: 'home' | 'hr' | 'finance' | 'freight' | 'courier' | 'sales' | 'inventory' | 'logs';
   path?: string;
-  submenu?: NavGroup[];
+  submenu?: NavMenuEntry[];
   /** Modules present in the reference UI but out of scope for docs/screens-phase.md — shown, not clickable. */
   disabled?: boolean;
 }

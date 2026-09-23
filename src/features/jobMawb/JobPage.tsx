@@ -14,7 +14,7 @@ import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { Job, JobKind } from '../../domain/job';
-import { createEmptyJob } from '../../domain/jobFactory';
+import { createEmptyJob, ensureChargesTabFields } from '../../domain/jobFactory';
 import { jobRepo, nextJobNo, nextHawbNo, voidJob, syncHouseAwbsOnMaster } from '../../data/jobService';
 import { consumeAwb, isAwbAvailable, releaseAwb } from '../../data/awbStockService';
 import { airlineRepo } from '../../data/masterDataService';
@@ -67,7 +67,8 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
   const loadJob = (j: Job) => {
     // Older saved jobs can contain stale derived totals.  Normalize them on
     // open so the Charges and Entry summaries always use the same formula.
-    const normalizedJob = { ...j, totals: recomputeJobTotals(j) };
+    const charges = ensureChargesTabFields(j.charges);
+    const normalizedJob = { ...j, charges, totals: recomputeJobTotals({ ...j, charges }) };
     setJob(normalizedJob);
     setOriginalMawb(normalizedJob.mawbNo);
     setOriginalParentJobNo(normalizedJob.parentJobNo ?? '');

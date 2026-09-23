@@ -129,6 +129,21 @@ export function Sidebar() {
                 <Collapse in={isOpen} timeout="auto" unmountOnExit>
                   <List dense disablePadding sx={{ mt: 0.5 }}>
                     {mod.submenu.map((group) => {
+                      if (!('items' in group)) {
+                        return (
+                          <ListItemButton
+                            key={group.path}
+                            selected={location.pathname === group.path}
+                            onClick={() => navigate(group.path)}
+                            sx={{ ...navItemSx, ml: 1.25, py: 0.65, pl: 2.5, borderRadius: 2 }}
+                          >
+                            <ListItemText
+                              primary={group.label}
+                              primaryTypographyProps={{ fontSize: 12.5, fontWeight: 600, sx: { whiteSpace: 'normal' } }}
+                            />
+                          </ListItemButton>
+                        );
+                      }
                       const groupKey = `${mod.key}:${group.label}`;
                       const containsActiveScreen = group.items.some((item) => item.path === location.pathname);
                       const isGroupOpen = expandedGroups[groupKey] ?? containsActiveScreen;

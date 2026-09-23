@@ -64,15 +64,30 @@ export function emptyDueAgentLines(): DueAgentChargeLine[] {
   }));
 }
 
+function emptyAdditionalDueCarrierLines(): DueCarrierChargeLine[] {
+  return Array.from({ length: 5 }, () => ({
+    id: uuid(), label: '', rate: 0, cwGwBasis: 'CW', charges: 0, chargesPkr: 0, editableLabel: true,
+  }));
+}
+
 export function emptyChargesTab(): ChargesTab {
   return {
     dueCarrierLines: emptyDueCarrierLines(),
+    additionalDueCarrierLines: emptyAdditionalDueCarrierLines(),
     totalDueCarrier: 0,
     totalDueCarrierPkr: 0,
     dueAgentLines: emptyDueAgentLines(),
     totalDueAgent: 0,
     totalDueAgentPkr: 0,
     ccScanningPayable: 'N',
+  };
+}
+
+/** Adds Due Carrier fields introduced after older jobs may already have been saved. */
+export function ensureChargesTabFields(charges: ChargesTab): ChargesTab {
+  return {
+    ...charges,
+    additionalDueCarrierLines: charges.additionalDueCarrierLines ?? emptyAdditionalDueCarrierLines(),
   };
 }
 
@@ -227,7 +242,9 @@ export function createEmptyJob(kind: JobKind, branch = 'KHI'): Job {
       hsCode: '',
       flightNo1: '',
       flightNo2: '',
+      flightDate2: '',
       flightDate: '',
+      formEType: '',
       formENo: '',
       formEDate: '',
       shipperInvoiceNo: '',
