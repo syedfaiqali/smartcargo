@@ -26,7 +26,7 @@ import Box from '@mui/material/Box';
 import { Job } from '../../../domain/job';
 import { SectionCard, SectionCardRow, SectionCardField } from '../../../components/SectionCard';
 import { navyTrustColors, navyTrustHeadingFontFamily } from '../../../theme/navyTrustTheme';
-import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo, chargeableRepo } from '../../../data/masterDataService';
+import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo, chargeableRepo, commodityRepo } from '../../../data/masterDataService';
 import { jobRepo } from '../../../data/jobService';
 import { getLocalInvoiceLinksForJob } from '../../../data/localInvoiceService';
 import { seaImportQuotationRepo } from '../../../data/seaImportQuotationService';
@@ -49,6 +49,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const foreignAgents = foreignAgentRepo.list();
   const airports = airportRepo.list();
   const currencies = currencyRepo.list();
+  const commodities = commodityRepo.list();
   const quotations = seaImportQuotationRepo.list();
   const clearingAgents = agentRepo.find((a) => a.kind === 'CLEARING');
   const deliveryAgents = agentRepo.find((a) => a.kind === 'DELIVERY');
@@ -56,9 +57,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const masterJobs = job.kind === 'HAWB' ? jobRepo.find((j) => j.kind === 'MAWB') : [];
   const linkedInvoices = getLocalInvoiceLinksForJob(job.jobNo);
   const calculationRows = [
-    { label: 'Freight', foreign: job.totals.freight, pkr: job.totals.freightPkr },
-    { label: 'Due Carrier', foreign: job.totals.dueCarrier, pkr: job.totals.dueCarrierPkr },
-    { label: 'Due Agent', foreign: job.totals.dueAgent, pkr: job.totals.dueAgentPkr },
+    { label: 'Total Due Carrier', foreign: job.totals.dueCarrier, pkr: job.totals.dueCarrierPkr },
+    { label: 'Total Due Agent', foreign: job.totals.dueAgent, pkr: job.totals.dueAgentPkr },
+    { label: 'Total Freight Amount', foreign: job.totals.freight, pkr: job.totals.freightPkr },
     { label: 'Total AWB Amount', foreign: job.totals.totalAwbAmount, pkr: job.totals.totalAwbAmountPkr, total: true },
     { label: 'Total K.B. Amount', foreign: job.totals.totalKbAmount, pkr: job.totals.totalKbAmount },
     { label: 'Commission', foreign: job.totals.commission, pkr: job.totals.commission },
@@ -789,7 +790,14 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                       <TextField variant="standard" value={line.cl} disabled={!editable} onChange={(e) => updateChargeLine(line.id, { cl: e.target.value })} />
                     </TableCell>
                     <TableCell sx={{ minWidth: 70 }}>
-                      <TextField variant="standard" value={line.comdty} disabled={!editable} onChange={(e) => updateChargeLine(line.id, { comdty: e.target.value })} />
+                      <TextField select variant="standard" value={line.comdty} disabled={!editable} onChange={(e) => updateChargeLine(line.id, { comdty: e.target.value })}>
+                        <MenuItem value="">(none)</MenuItem>
+                        {commodities.map((commodity) => (
+                          <MenuItem key={commodity.code} value={commodity.code}>
+                            {commodity.code} — {commodity.description}
+                          </MenuItem>
+                        ))}
+                      </TextField>
                     </TableCell>
                     <TableCell sx={{ minWidth: 110 }}>
                       <TextField
@@ -847,9 +855,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
           <Box sx={{ bgcolor: '#0f1c33', borderRadius: '14px', p: 2.5, mb: 2, color: '#e6ebf5' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1.15fr 0.9fr 0.9fr', alignItems: 'center', columnGap: 1, mb: 1.5 }}>
-              <Typography sx={{ fontFamily: navyTrustHeadingFontFamily, fontSize: 13.5, fontWeight: 700, color: '#fff' }}>Shipment financials</Typography>
+              <Typography sx={{ fontFamily: navyTrustHeadingFontFamily, fontSize: 13.5, fontWeight: 700, color: '#fff' }}>Calculation totals</Typography>
               <Typography align="right" sx={{ fontSize: 11.5, fontWeight: 800, color: '#ff8b9a' }}>PKR</Typography>
-              <Typography align="right" sx={{ fontSize: 11.5, fontWeight: 800, color: '#a5e66d' }}>PKR</Typography>
+              <Typography align="right" sx={{ fontSize: 11.5, fontWeight: 800, color: '#a5e66d' }}>{job.currency}</Typography>
             </Box>
             {calculationRows.map((row, index) => (
               <Box

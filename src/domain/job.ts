@@ -76,6 +76,7 @@ export interface KbFreightLine {
   pcs: number;
   cl: string;
   commodity: string;
+  newCommodity: string;
   grossWeight: number;
   chargeWeight: number;
   rate: number;
@@ -89,8 +90,10 @@ export interface KbFreightLine {
   freightDifference: number;
   lessCommission: YesNo;
   kbFreight: number;
+  kbFreightPkr: number;
   kbRatePercent: number;
   kbAmount: number;
+  kbAmountPkr: number;
 }
 
 export interface KbOtherChargeLine {
@@ -104,7 +107,9 @@ export interface KbTab {
   lines: KbFreightLine[];
   otherCharges: KbOtherChargeLine[];
   totalOtherChargesPayable: number;
+  totalOtherChargesPayablePkr: number;
   netPayable: number;
+  netPayablePkr: number;
   kbAdjustment: YesNo;
   kbAdjustmentDate: IsoDate | '';
   interLineRevenue: number;
