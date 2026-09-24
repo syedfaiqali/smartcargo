@@ -1,6 +1,8 @@
 import { ForeignAgentInvoice, ForeignAgentInvoiceVariant } from '../domain/foreignAgentInvoice';
+import { CreditNoteRef, LinkedInvoiceRef } from '../domain/job';
 import { Repository } from './repository';
 import { jobRepo } from './jobService';
+import { getLocalInvoiceLinksForJob } from './localInvoiceService';
 import { VARIANT_CONFIG } from '../features/foreignAgentInvoice/variantConfig';
 
 export const foreignAgentInvoiceRepo = new Repository<ForeignAgentInvoice>('foreignAgentInvoices');
@@ -27,6 +29,89 @@ export function lookupMasterJobForAgentInvoice(jobNo: string) {
 
 export function getHouseJobsForMasterInvoice(masterJobNo: string) {
   return jobRepo.find((j) => j.kind === 'HAWB' && j.parentJobNo === masterJobNo);
+}
+
+export interface ForeignAgentInvoiceLink extends LinkedInvoiceRef {
+  invoiceId: string;
+  variant: 'INVOICE_TO' | 'INVOICE_RECEIVED';
+}
+
+/** Returns foreign-agent invoice rows displayed on the related MAWB job. */
+export function getForeignAgentInvoiceLinksForJob(jobNo: string): ForeignAgentInvoiceLink[] {
+  return foreignAgentInvoiceRepo
+    .find((invoice) =>
+      (invoice.variant === 'INVOICE_TO' || invoice.variant === 'INVOICE_RECEIVED')
+      && invoice.mawbJobNo === jobNo,
+    )
+    .map((invoice) => {
+      const variant = invoice.variant === 'INVOICE_TO' ? 'INVOICE_TO' : 'INVOICE_RECEIVED';
+      return {
+        invoiceId: invoice.id,
+        variant,
+        no: invoice.documentNo,
+        date: invoice.documentDate,
+        year: invoice.mawbJobYear,
+        type: variant === 'INVOICE_TO' ? 'AE-FAG-INV' : 'AE-FAG-DRN',
+        name: invoice.fAgentName,
+        curr: invoice.currencyCode,
+        fAmount: invoice.totalSelling,
+        pkrAmount: invoice.totalInvoiceAmount,
+        final: invoice.status.final,
+      };
+    });
+}
+
+/** Rebuilds the MAWB Local/International Invoices grid after an agent invoice changes. */
+export function syncForeignAgentInvoiceLinks(invoice: ForeignAgentInvoice, previous?: ForeignAgentInvoice): void {
+  const jobNos = new Set([invoice.mawbJobNo, previous?.mawbJobNo ?? ''].filter(Boolean));
+  jobNos.forEach((jobNo) => {
+    const job = jobRepo.find((item) => item.kind === 'MAWB' && item.jobNo === jobNo)[0];
+    if (!job) return;
+    jobRepo.save({
+      ...job,
+      linkedInvoices: [...getLocalInvoiceLinksForJob(jobNo), ...getForeignAgentInvoiceLinksForJob(jobNo)],
+    });
+  });
+}
+
+/** Returns the C/N rows displayed on the related MAWB job. */
+export function getCreditNoteLinksForJob(jobNo: string): CreditNoteRef[] {
+  return foreignAgentInvoiceRepo
+    .find((invoice) =>
+      (invoice.variant === 'CREDIT_NOTE_TO' || invoice.variant === 'CREDIT_NOTE_RECEIVED')
+      && invoice.mawbJobNo === jobNo,
+    )
+    .flatMap((invoice) => {
+      const allocations = invoice.allocationLines.length
+        ? invoice.allocationLines
+        : [{ hawbNo: '' }];
+
+      return allocations.map((allocation) => ({
+        invoiceId: invoice.id,
+        variant: invoice.variant === 'CREDIT_NOTE_TO' ? 'CREDIT_NOTE_TO' : 'CREDIT_NOTE_RECEIVED',
+        hawbNo: allocation.hawbNo,
+        runNo: invoice.runNo,
+        cnNo: invoice.documentNo,
+        manualCn: false,
+      }));
+    });
+}
+
+/**
+ * Rebuilds the C/N Details grid for the MAWB referenced by a foreign-agent
+ * credit note. This mirrors the Local Invoice and HAWB linkage behaviour.
+ */
+export function syncCreditNoteLinks(invoice: ForeignAgentInvoice, previous?: ForeignAgentInvoice): void {
+  const jobNos = new Set([
+    invoice.mawbJobNo,
+    previous?.mawbJobNo ?? '',
+  ].filter(Boolean));
+
+  jobNos.forEach((jobNo) => {
+    const job = jobRepo.find((item) => item.kind === 'MAWB' && item.jobNo === jobNo)[0];
+    if (!job) return;
+    jobRepo.save({ ...job, creditNoteDetails: getCreditNoteLinksForJob(jobNo) });
+  });
 }
 
 export interface AgentInvoiceFilter {

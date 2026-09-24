@@ -29,6 +29,7 @@ import { navyTrustColors, navyTrustHeadingFontFamily } from '../../../theme/navy
 import { airportRepo, currencyRepo, ownerRepo, partyRepo, foreignAgentRepo, agentRepo, spoRepo, chargeableRepo, commodityRepo } from '../../../data/masterDataService';
 import { jobRepo } from '../../../data/jobService';
 import { getLocalInvoiceLinksForJob } from '../../../data/localInvoiceService';
+import { getCreditNoteLinksForJob, getForeignAgentInvoiceLinksForJob } from '../../../data/foreignAgentInvoiceService';
 import { seaImportQuotationRepo } from '../../../data/seaImportQuotationService';
 import { recomputeChargeLineTotal, recomputeJobTotals } from '../jobCalculations';
 import { useNavigate } from 'react-router-dom';
@@ -44,6 +45,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const [dimensionCalculatorOpen, setDimensionCalculatorOpen] = useState(false);
   const [dimensionTargetLineId, setDimensionTargetLineId] = useState<string | null>(null);
   const owners = ownerRepo.list();
+  const creditNoteDetails = job.kind === 'MAWB' ? getCreditNoteLinksForJob(job.jobNo) : job.creditNoteDetails;
   const chargeableCodes = chargeableRepo.list();
   const parties = partyRepo.list();
   const foreignAgents = foreignAgentRepo.list();
@@ -55,7 +57,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const deliveryAgents = agentRepo.find((a) => a.kind === 'DELIVERY');
   const spoCodes = spoRepo.list();
   const masterJobs = job.kind === 'HAWB' ? jobRepo.find((j) => j.kind === 'MAWB') : [];
-  const linkedInvoices = getLocalInvoiceLinksForJob(job.jobNo);
+  const linkedInvoices = [
+    ...getLocalInvoiceLinksForJob(job.jobNo),
+    ...(job.kind === 'MAWB' ? getForeignAgentInvoiceLinksForJob(job.jobNo) : []),
+  ];
   const calculationRows = [
     { label: 'Total Due Carrier', foreign: job.totals.dueCarrier, pkr: job.totals.dueCarrierPkr },
     { label: 'Total Due Agent', foreign: job.totals.dueAgent, pkr: job.totals.dueAgentPkr },
@@ -947,7 +952,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               {linkedInvoices.map((inv, i) => (
                 <TableRow key={i}>
                   <TableCell>
-                    <Link component="button" type="button" onClick={() => navigate('/freight/air-export/local-invoices', { state: { invoiceId: inv.invoiceId } })} sx={{ fontWeight: 700, textAlign: 'left' }}>
+                    <Link component="button" type="button" onClick={() => navigate('variant' in inv && inv.variant === 'INVOICE_TO' ? '/freight/air-export/invoices-to-foreign-agents' : 'variant' in inv ? '/freight/air-export/invoices-received-from-foreign-agents' : '/freight/air-export/local-invoices', { state: { invoiceId: inv.invoiceId } })} sx={{ fontWeight: 700, textAlign: 'left' }}>
                       {inv.no}
                     </Link>
                   </TableCell>
@@ -974,8 +979,16 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               <TableBody>
                 {job.houseAwbs.map((h, i) => (
                   <TableRow key={i}>
-                    <TableCell>{h.jobNo}</TableCell>
-                    <TableCell>{h.hawbNo}</TableCell>
+                    <TableCell>
+                      <Link component="button" type="button" onClick={() => navigate('/freight/air-export/job-hawb', { state: { jobNo: h.jobNo } })} sx={{ fontWeight: 700, textAlign: 'left' }}>
+                        {h.jobNo}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link component="button" type="button" onClick={() => navigate('/freight/air-export/job-hawb', { state: { jobNo: h.jobNo } })} sx={{ fontWeight: 700, textAlign: 'left' }}>
+                        {h.hawbNo}
+                      </Link>
+                    </TableCell>
                     <TableCell>{h.runNo}</TableCell>
                   </TableRow>
                 ))}
@@ -983,7 +996,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </LinkedGrid>
           )}
 
-          <LinkedGrid title="C/N Details" empty={job.creditNoteDetails.length === 0}>
+          <LinkedGrid title="C/N Details" empty={creditNoteDetails.length === 0}>
             <TableHead>
               <TableRow>
                 <TableCell>HAWB No.</TableCell>
@@ -993,11 +1006,15 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {job.creditNoteDetails.map((creditNote, index) => (
+              {creditNoteDetails.map((creditNote, index) => (
                 <TableRow key={index}>
                   <TableCell>{creditNote.hawbNo}</TableCell>
                   <TableCell>{creditNote.runNo}</TableCell>
-                  <TableCell>{creditNote.cnNo}</TableCell>
+                  <TableCell>
+                    <Link component="button" type="button" onClick={() => navigate(creditNote.variant === 'CREDIT_NOTE_RECEIVED' ? '/freight/air-export/credit-notes-received-from-foreign-agents' : '/freight/air-export/credit-notes-to-foreign-agents', { state: { invoiceId: creditNote.invoiceId } })} sx={{ fontWeight: 700, textAlign: 'left' }}>
+                      {creditNote.cnNo}
+                    </Link>
+                  </TableCell>
                   <TableCell>{creditNote.manualCn ? 'Y' : 'N'}</TableCell>
                 </TableRow>
               ))}

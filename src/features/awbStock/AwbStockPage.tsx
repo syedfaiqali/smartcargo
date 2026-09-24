@@ -19,6 +19,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
+import Checkbox from '@mui/material/Checkbox';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
@@ -33,7 +34,7 @@ import { PageShell } from '../../layout/PageShell';
 import { ToolbarAction } from '../../components/TransactionToolbar';
 import { FormRow, FormField } from '../../components/FormGrid';
 import { themeColors } from '../../theme/themeColors';
-import { airlineRepo, ownerRepo } from '../../data/masterDataService';
+import { airlineRepo, airportRepo, ownerRepo } from '../../data/masterDataService';
 import {
   awbStockRepo,
   calculateAwbCheckDigit,
@@ -49,6 +50,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export function AwbStockPage() {
   const airlines = airlineRepo.list();
+  const airportDestinations = airportRepo.list();
   const owners = ownerRepo.list();
 
   const [mode, setMode] = useState<'idle' | 'single-new'>('idle');
@@ -75,6 +77,7 @@ export function AwbStockPage() {
   const [rows, setRows] = useState<AwbStock[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // range popup state
   const [rangeAirline, setRangeAirline] = useState(airlines[0]?.code ?? '');
@@ -112,6 +115,13 @@ export function AwbStockPage() {
     }));
     setPage(0);
   }, [filterAirline, filterEnd, filterOwner, filterStart, filterUsed]);
+
+  useEffect(() => {
+    setSelectedIds((selected) => {
+      const visibleSelections = selected.filter((id) => rows.some((row) => row.id === id));
+      return visibleSelections.length === selected.length ? selected : visibleSelections;
+    });
+  }, [rows]);
 
   const handleAction = (action: ToolbarAction) => {
     if (action === 'new') {
@@ -247,6 +257,28 @@ export function AwbStockPage() {
 
   const handleDeleteRow = (id: string) => {
     awbStockRepo.remove(id);
+    setSelectedIds((selected) => selected.filter((selectedId) => selectedId !== id));
+    handleShowDetail();
+  };
+
+  const toggleRowSelection = (id: string) => {
+    setSelectedIds((selected) => selected.includes(id)
+      ? selected.filter((selectedId) => selectedId !== id)
+      : [...selected, id]);
+  };
+
+  const togglePageSelection = (checked: boolean) => {
+    const pageIds = paginatedRows.map((row) => row.id);
+    setSelectedIds((selected) => checked
+      ? [...new Set([...selected, ...pageIds])]
+      : selected.filter((id) => !pageIds.includes(id)));
+  };
+
+  const handleDeleteSelected = () => {
+    if (!selectedIds.length) return;
+    selectedIds.forEach((id) => awbStockRepo.remove(id));
+    setMessage({ severity: 'success', text: `${selectedIds.length} AWB record(s) deleted.` });
+    setSelectedIds([]);
     handleShowDetail();
   };
 
@@ -567,19 +599,38 @@ export function AwbStockPage() {
           </TextField>
         </Box>
 
+        {selectedIds.length > 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, px: 1.5, py: 1, borderBottom: `1px solid ${themeColors.border}` }}>
+            <Typography variant="body2">{selectedIds.length} selected</Typography>
+            <Button size="small" color="error" variant="contained" startIcon={<DeleteOutlineIcon />} onClick={handleDeleteSelected}>
+              Delete selected
+            </Button>
+          </Box>
+        )}
+
         <TableContainer>
           <Table size="small" sx={{ tableLayout: 'fixed' }}>
             <colgroup>
+              <col style={{ width: '4%' }} />
               <col style={{ width: '10%' }} />
-              <col style={{ width: '20%' }} />
-              <col style={{ width: '15%' }} />
-              <col style={{ width: '15%' }} />
+              <col style={{ width: '19%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '14%' }} />
               <col style={{ width: '12.5%' }} />
               <col style={{ width: '12.5%' }} />
-              <col style={{ width: '15%' }} />
+              <col style={{ width: '14%' }} />
             </colgroup>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    checked={paginatedRows.length > 0 && paginatedRows.every((row) => selectedIds.includes(row.id))}
+                    indeterminate={paginatedRows.some((row) => selectedIds.includes(row.id)) && !paginatedRows.every((row) => selectedIds.includes(row.id))}
+                    onChange={(_, checked) => togglePageSelection(checked)}
+                    inputProps={{ 'aria-label': 'Select all records on this page' }}
+                  />
+                </TableCell>
                 <TableCell>Action</TableCell>
                 <TableCell>AWB No.</TableCell>
                 <TableCell>Airline</TableCell>
@@ -592,7 +643,7 @@ export function AwbStockPage() {
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ border: 0 }}>
+                  <TableCell colSpan={8} align="center" sx={{ border: 0 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, py: 5 }}>
                       <InsertDriveFileOutlinedIcon sx={{ fontSize: 32, color: themeColors.border }} />
                       <Typography variant="body2" sx={{ color: themeColors.textSecondary }}>
@@ -604,6 +655,14 @@ export function AwbStockPage() {
               ) : (
                 paginatedRows.map((row) => (
                   <TableRow key={row.id} hover>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        checked={selectedIds.includes(row.id)}
+                        onChange={() => toggleRowSelection(row.id)}
+                        inputProps={{ 'aria-label': `Select AWB ${row.awbNo}` }}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Tooltip title="View">
                         <IconButton size="small" color="primary" onClick={() => handleViewRow(row)}>
@@ -742,7 +801,7 @@ export function AwbStockPage() {
           <FormRow>
             <FormField xs={12} sm={12} md={12}>
               <TextField select label="Give Airline Code" fullWidth value={rangeAirline} onChange={(e) => setRangeAirline(e.target.value)}>
-                {airlines.map((a) => (
+                {airportDestinations.map((a) => (
                   <MenuItem key={a.code} value={a.code}>
                     {a.code} — {a.name}
                   </MenuItem>

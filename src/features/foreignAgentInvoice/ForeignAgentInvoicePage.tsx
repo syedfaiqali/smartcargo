@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Alert from '@mui/material/Alert';
@@ -10,7 +11,7 @@ import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { ForeignAgentInvoice, ForeignAgentInvoiceVariant } from '../../domain/foreignAgentInvoice';
 import { createEmptyForeignAgentInvoice } from '../../domain/foreignAgentInvoiceFactory';
-import { foreignAgentInvoiceRepo, nextDocumentNo, voidAgentInvoice } from '../../data/foreignAgentInvoiceService';
+import { foreignAgentInvoiceRepo, nextDocumentNo, syncCreditNoteLinks, syncForeignAgentInvoiceLinks, voidAgentInvoice } from '../../data/foreignAgentInvoiceService';
 import { recomputeAgentInvoiceTotals } from './agentInvoiceCalculations';
 import { VARIANT_CONFIG } from './variantConfig';
 import { EntryTab } from './tabs/EntryTab';
@@ -24,12 +25,25 @@ interface ForeignAgentInvoicePageProps {
 
 export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentInvoicePageProps) {
   const config = VARIANT_CONFIG[variant];
+  const location = useLocation();
   const [tab, setTab] = useState(0);
   const [showList, setShowList] = useState(true);
   const [isPrintingView, setIsPrintingView] = useState(false);
   const [invoice, setInvoice] = useState<ForeignAgentInvoice | null>(null);
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
+
+  useEffect(() => {
+    const invoiceId = (location.state as { invoiceId?: string } | null)?.invoiceId;
+    if (!invoiceId) return;
+    const linkedInvoice = foreignAgentInvoiceRepo.get(invoiceId);
+    if (!linkedInvoice || linkedInvoice.variant !== variant) return;
+    setInvoice(linkedInvoice);
+    setEditable(false);
+    setTab(0);
+    setShowList(false);
+    setIsPrintingView(false);
+  }, [location.key, location.state, variant]);
 
   const loadInvoice = (inv: ForeignAgentInvoice) => {
     setInvoice(inv);
@@ -40,7 +54,7 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
   };
 
   const editInvoiceFromList = (inv: ForeignAgentInvoice) => { if (inv.status.final) { setMessage({ severity: 'warning', text: 'This record is FINAL and cannot be edited.' }); return; } setInvoice(inv); setEditable(true); setTab(0); setShowList(false); setIsPrintingView(false); };
-  const deleteInvoiceFromList = (inv: ForeignAgentInvoice) => { foreignAgentInvoiceRepo.remove(inv.id); setMessage({ severity: 'success', text: `${config.entryDocLabel} ${inv.documentNo} deleted.` }); };
+  const deleteInvoiceFromList = (inv: ForeignAgentInvoice) => { foreignAgentInvoiceRepo.remove(inv.id); syncCreditNoteLinks(inv); syncForeignAgentInvoiceLinks(inv); setMessage({ severity: 'success', text: `${config.entryDocLabel} ${inv.documentNo} deleted.` }); };
   const printInvoiceFromList = (inv: ForeignAgentInvoice) => { setInvoice(inv); setEditable(false); setTab(0); setShowList(false); setIsPrintingView(true); };
 
   const handleAction = (action: ToolbarAction) => {
@@ -74,6 +88,8 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
       case 'delete': {
         if (!invoice) return;
         foreignAgentInvoiceRepo.remove(invoice.id);
+        syncCreditNoteLinks(invoice);
+        syncForeignAgentInvoiceLinks(invoice);
         setInvoice(null);
         setMessage({ severity: 'success', text: 'Record deleted.' });
         break;
@@ -84,7 +100,10 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
           setMessage({ severity: 'error', text: 'F/Agent Code is required before finalizing.' });
           return;
         }
+        const previous = foreignAgentInvoiceRepo.get(invoice.id);
         const saved = foreignAgentInvoiceRepo.save({ ...invoice, status: { ...invoice.status, final: true } });
+        syncCreditNoteLinks(saved, previous);
+        syncForeignAgentInvoiceLinks(saved, previous);
         setInvoice(saved);
         setEditable(false);
         setMessage({ severity: 'success', text: `${config.entryDocLabel} ${saved.documentNo} finalized.` });
@@ -94,6 +113,8 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
         if (!invoice) return;
         const updated = voidAgentInvoice(invoice.id);
         if (updated) {
+          syncCreditNoteLinks(updated, invoice);
+          syncForeignAgentInvoiceLinks(updated, invoice);
           setInvoice(updated);
           setMessage({ severity: 'success', text: `${config.entryDocLabel} ${updated.documentNo} voided.` });
         }
@@ -116,7 +137,10 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
       setMessage({ severity: 'error', text: 'F/Agent Code is required to save.' });
       return;
     }
+    const previous = foreignAgentInvoiceRepo.get(invoice.id);
     const saved = foreignAgentInvoiceRepo.save(recomputeAgentInvoiceTotals(invoice));
+    syncCreditNoteLinks(saved, previous);
+    syncForeignAgentInvoiceLinks(saved, previous);
     setInvoice(saved);
     setMessage({ severity: 'success', text: `${config.entryDocLabel} ${saved.documentNo} saved.` });
   };

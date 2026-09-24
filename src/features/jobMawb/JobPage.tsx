@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
@@ -56,6 +57,7 @@ interface JobPageProps {
 
 export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
   useJobScreenFonts();
+  const location = useLocation();
   const [tab, setTab] = useState(0);
   const [job, setJob] = useState<Job | null>(null);
   const [editable, setEditable] = useState(false);
@@ -76,6 +78,13 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
     setIsPrintingView(false);
     setTab(0);
   };
+
+  useEffect(() => {
+    const jobNo = (location.state as { jobNo?: string } | null)?.jobNo;
+    if (!jobNo) return;
+    const linkedJob = jobRepo.find((item) => item.kind === kind && item.jobNo === jobNo)[0];
+    if (linkedJob) loadJob(linkedJob);
+  }, [kind, location.key, location.state]);
 
   const editJobFromList = (j: Job) => {
     if (j.status.final) {

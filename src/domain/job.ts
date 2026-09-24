@@ -262,6 +262,8 @@ export interface HouseAwbRef {
 }
 
 export interface CreditNoteRef {
+  invoiceId?: string;
+  variant?: 'CREDIT_NOTE_TO' | 'CREDIT_NOTE_RECEIVED';
   hawbNo: string;
   runNo: string;
   cnNo: string;
