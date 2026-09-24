@@ -40,6 +40,7 @@ interface EditableCodeTableProps<T extends AuditFields> {
   addLabel?: string;
   newEntryMode?: 'inline' | 'dialog';
   showAddButton?: boolean;
+  onEditRecord?: (item: T) => void;
   fields: CodeField<T>[];
   repo: Repository<T>;
   emptyItem: Omit<T, 'id' | 'createdAt' | 'updatedAt'>;
@@ -52,6 +53,7 @@ export function EditableCodeTable<T extends AuditFields>({
   addLabel = 'Add',
   newEntryMode = 'inline',
   showAddButton = true,
+  onEditRecord,
   fields,
   repo,
   emptyItem,
@@ -329,7 +331,7 @@ export function EditableCodeTable<T extends AuditFields>({
                         </Stack>
                       ) : (
                         <Stack direction="row" spacing={0.25} justifyContent="flex-end">
-                          <IconButton size="small" onClick={() => startEdit(row)}>
+                          <IconButton size="small" onClick={() => onEditRecord ? onEditRecord(row) : startEdit(row)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
                           <IconButton size="small" color="error" onClick={() => handleDelete(row.id)}>
