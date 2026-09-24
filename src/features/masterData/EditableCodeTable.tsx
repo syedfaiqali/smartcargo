@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -13,6 +13,11 @@ import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
+import TablePagination from '@mui/material/TablePagination';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
@@ -32,6 +37,9 @@ export interface CodeField<T> {
 
 interface EditableCodeTableProps<T extends AuditFields> {
   title: string;
+  addLabel?: string;
+  newEntryMode?: 'inline' | 'dialog';
+  showAddButton?: boolean;
   fields: CodeField<T>[];
   repo: Repository<T>;
   emptyItem: Omit<T, 'id' | 'createdAt' | 'updatedAt'>;
@@ -41,6 +49,9 @@ interface EditableCodeTableProps<T extends AuditFields> {
 
 export function EditableCodeTable<T extends AuditFields>({
   title,
+  addLabel = 'Add',
+  newEntryMode = 'inline',
+  showAddButton = true,
   fields,
   repo,
   emptyItem,
@@ -54,6 +65,25 @@ export function EditableCodeTable<T extends AuditFields>({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const filteredRows = useMemo(() => rows.filter((row) => fields.every((field) => {
+    const query = filters[String(field.key)]?.trim().toLowerCase();
+    return !query || String(row[field.key] ?? '').toLowerCase().includes(query);
+  })), [fields, filters, rows]);
+  const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const setFilter = (key: string, value: string) => {
+    setFilters((current) => ({ ...current, [key]: value }));
+    setPage(0);
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+    setPage(0);
+  };
 
   const toRecord = (item: T) => {
     const rec: Record<string, string> = {};
@@ -159,11 +189,11 @@ export function EditableCodeTable<T extends AuditFields>({
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
             {title}
           </Typography>
-          {!adding && (
-            <Button size="small" startIcon={<AddIcon fontSize="small" />} onClick={startAdd}>
-              Add
-            </Button>
-          )}
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography variant="caption" color="text.secondary">{filteredRows.length} record(s)</Typography>
+            {Object.values(filters).some(Boolean) && <Button size="small" onClick={clearFilters}>Clear filters</Button>}
+            {showAddButton && !adding && <Button size="small" variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={startAdd}>{addLabel}</Button>}
+          </Stack>
         </Box>
 
         {error && (
@@ -182,9 +212,24 @@ export function EditableCodeTable<T extends AuditFields>({
                 Action
               </TableCell>
             </TableRow>
+            <TableRow>
+              {fields.map((field) => (
+                <TableCell key={`${String(field.key)}-filter`}>
+                  {field.type === 'select' ? (
+                    <TextField select size="small" value={filters[String(field.key)] ?? ''} onChange={(e) => setFilter(String(field.key), e.target.value)} fullWidth SelectProps={{ displayEmpty: true }}>
+                      <MenuItem value="">All</MenuItem>
+                      {(field.options ?? []).map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                    </TextField>
+                  ) : (
+                    <TextField size="small" value={filters[String(field.key)] ?? ''} onChange={(e) => setFilter(String(field.key), e.target.value)} placeholder={`Filter ${field.label}`} fullWidth />
+                  )}
+                </TableCell>
+              ))}
+              <TableCell />
+            </TableRow>
           </TableHead>
           <TableBody>
-            {adding && (
+            {adding && newEntryMode === 'inline' && (
               <TableRow>
                 {fields.map((f) => (
                   <TableCell key={String(f.key)}>
@@ -226,7 +271,7 @@ export function EditableCodeTable<T extends AuditFields>({
                 </TableCell>
               </TableRow>
             )}
-            {rows.length === 0 && !adding ? (
+            {filteredRows.length === 0 && !adding ? (
               <TableRow>
                 <TableCell colSpan={fields.length + 1} align="center">
                   <Typography variant="body2" sx={{ color: themeColors.textSecondary, py: 2 }}>
@@ -235,7 +280,7 @@ export function EditableCodeTable<T extends AuditFields>({
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map((row) => {
+              paginatedRows.map((row) => {
                 const isEditing = editingId === row.id;
                 return (
                   <TableRow key={row.id} hover>
@@ -299,7 +344,38 @@ export function EditableCodeTable<T extends AuditFields>({
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={filteredRows.length}
+          page={page}
+          onPageChange={(_, nextPage) => setPage(nextPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+          rowsPerPageOptions={[10, 25, 50, 100]}
+          labelRowsPerPage="Rows per page"
+        />
       </Paper>
+
+      <Dialog open={adding && newEntryMode === 'dialog'} onClose={cancelAdd} maxWidth="md" fullWidth>
+        <DialogTitle>{addLabel} {title.slice(0, -1)}</DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, pt: 0.5 }}>
+            {fields.map((field) => (
+              field.type === 'select' ? (
+                <TextField key={String(field.key)} select label={field.label} value={draft[String(field.key)] ?? ''} onChange={(e) => setDraft({ ...draft, [String(field.key)]: e.target.value })} fullWidth>
+                  {(field.options ?? []).map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                </TextField>
+              ) : (
+                <TextField key={String(field.key)} label={field.label} type={field.type === 'number' ? 'number' : 'text'} value={draft[String(field.key)] ?? ''} onChange={(e) => setDraft({ ...draft, [String(field.key)]: e.target.value })} fullWidth />
+              )
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelAdd}>Cancel</Button>
+          <Button variant="contained" onClick={saveAdd}>Save</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

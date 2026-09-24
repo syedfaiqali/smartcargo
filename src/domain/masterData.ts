@@ -3,6 +3,41 @@ import { AuditFields } from './common';
 export interface AirlineCode extends AuditFields {
   code: string;
   name: string;
+  flightName: string;
+  standardAwb: 'Y' | 'N';
+  airlineCass: 'Y' | 'N' | '';
+  address?: string;
+  attention?: string;
+  phoneNo?: string;
+  faxNo?: string;
+  email?: string;
+  website?: string;
+  gsaName?: string;
+  gsaIataCode?: string;
+  uaiCode?: string;
+  aisCharges?: number;
+  awbFee?: number;
+  exchangeRate?: number;
+  printSecuritySurcharge?: string;
+  printFuelSurcharge?: string;
+  printScanningCharges?: string;
+  printCaaCharges?: string;
+  commissionPercent?: number;
+  whtPercent?: number;
+  logoName?: string;
+  airportOfDeparture?: string;
+  effectiveFrom?: string;
+  chargesCurrency?: string;
+  dueCarrierCharges?: AirlineDueCarrierCharge[];
+}
+
+export interface AirlineDueCarrierCharge {
+  id: string;
+  label: string;
+  rate: number;
+  cwGw: 'CW' | 'GW';
+  fixAmount: number;
+  ppCc: 'PP' | 'CC' | 'BOTH';
 }
 
 export interface OwnerCode extends AuditFields {

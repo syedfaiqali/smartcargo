@@ -61,17 +61,41 @@ export const jobTypeRepo = new Repository<JobType>('jobTypes');
 export const jobStatusRepo = new Repository<JobStatusCode>('jobStatusCodes');
 export const termsRepo = new Repository<TermsAndConditions>('termsAndConditions');
 
+const legacyAirlineCodes = [
+  ['EK', 'Emirates'], ['999', 'AIR CHINA'], ['997', 'BIMAN BANGLADESH - BG'], ['996', 'Air Europan'],
+  ['960', 'SALAM AIR'], ['932', 'VIRGIN ATLANTIC CARGO'], ['910', 'OMAN AIR'], ['860', 'YG CARRIER ( CHINA )'],
+  ['784', 'CHINA SOUTHERN AIRLINES'], ['761', 'DAS AIR'], ['745', 'AIRBERLIN'], ['729', 'AVIANCA AIR'],
+  ['724', 'SWISS WORLD CARGO'], ['706', 'KENYAN AIR - KQ'], ['703', 'FLYNAS AIR'], ['635', 'YEMEN AIRWAYS - YE'],
+  ['624', 'PEGASUS AIR (LEISURE CARGO PVT LTD)'], ['618', 'SINGAPORE AIRLINES'], ['612', 'SWE FLY'], ['607', 'EITHAD AIRWAYS'],
+  ['603', 'AIR LANKA - UL'], ['555', 'AERO FLOT'], ['537', 'Mahan AIR'], ['514', 'AIR ARABIA'],
+  ['512', 'ROYAL JORDANIAN - RJ'], ['501', 'SILKWAY WEST AIRLINE 501'], ['319', 'FITS AIR'], ['250', 'UZBEKISTAN AIRWAYS'],
+  ['235', 'TURKISH AIRLINES - TK'], ['232', 'MALAYSIAN AIRLINE - MH'], ['229', 'KUWAIT AIRWAYS - KU'], ['217', 'THAI AIRLINES - TG'],
+  ['214', "PAKISTAN INT'L AIRLINES CORP"], ['200', 'SUDAN AIR'], ['180', 'KOREAN AIR - KE'], ['176', 'EMIRATES - EK'],
+  ['172', 'CARGOLUX'], ['168', 'AIR ZIMBABWE CORPORATION'], ['160', 'CATHAY PACIFIC AIRWAYS LIMITED'], ['157', 'QATAR AIRWAYS'],
+  ['155', 'DHL AIR'], ['141', 'FLY DUBAI'], ['131', 'JORDAN AIRLINES - JL'], ['129', 'MARTIN AIR'],
+  ['125', 'BRITISH AIRWAYS-BA'], ['121', 'Saudi Airline'], ['115', 'JUGOSLOVENSKI AEROTRANSPORT-JU'], ['111', 'Saudi Airline'],
+  ['108', 'Iceland Airline'], ['096', 'IRAN AIR - IR'], ['092', 'SERENE AIRLINE 092'], ['085', 'SWISS AIR - SR'],
+  ['084', 'AIR BLUE'], ['079', 'PHILIPPINE AIRLINE - PR'], ['077', 'EGYPT AIR - MS'], ['076', 'MIDDLE EAST AIRLINE'],
+  ['074', 'KLM ROYAL DUTCH AIRLINES - KL'], ['072', 'GULF AIR'], ['071', 'ETHOPIAN AIRLINES'], ['070', 'SYRIAN ARAB AIRLINES - RB'],
+  ['065', 'SAUDI ARABIAN AIRLINE'], ['064', 'CZECH AIRLINES'], ['057', 'AIR FRANCE - AF'], ['055', 'ALITALIA AIR'],
+  ['049', 'AIR ARABIA ABU DHABI AIRLINE 049'], ['020', 'LUFTHANSA CARGO'], ['016', 'UNITED AIRWAYS'], ['014', 'AIR CANADA CARGO'],
+  ['006', 'DELTA CARGO'], ['005', 'CONTINENTAL AIRLINES'], ['001', 'AMERICAN AIRLINE'],
+] as const;
+
+const legacyCassAirlineCodes = new Set(['EK', '910', '603', '235', '214', '176', '157']);
+const toLegacyAirline = ([code, name]: readonly [string, string]) => withAudit({
+  code,
+  name,
+  flightName: code === '996' ? 'UX' : '',
+  standardAwb: 'Y' as const,
+  airlineCass: legacyCassAirlineCodes.has(code) ? 'Y' as const : 'N' as const,
+});
+
 function seedIfEmpty() {
   if (isSeeded('masterData')) return;
 
   airlineRepo.replaceAll(
-    [
-      { code: 'PK', name: 'Pakistan International Airlines' },
-      { code: 'EK', name: 'Emirates' },
-      { code: 'QR', name: 'Qatar Airways' },
-      { code: 'TK', name: 'Turkish Airlines' },
-      { code: 'CX', name: 'Cathay Pacific' },
-    ].map(withAudit)
+    legacyAirlineCodes.map(toLegacyAirline)
   );
 
   ownerRepo.replaceAll(
@@ -267,3 +291,15 @@ function seedIfEmpty() {
 }
 
 seedIfEmpty();
+
+// Replace the earlier placeholder airline list once for existing browser data.
+if (!isSeeded('legacyAirlineCodesV1')) {
+  airlineRepo.replaceAll(legacyAirlineCodes.map(toLegacyAirline));
+  markSeeded('legacyAirlineCodesV1');
+}
+
+// Adds the legacy grid fields to browser data created before those columns existed.
+if (!isSeeded('legacyAirlineCodesV2')) {
+  airlineRepo.replaceAll(legacyAirlineCodes.map(toLegacyAirline));
+  markSeeded('legacyAirlineCodesV2');
+}
