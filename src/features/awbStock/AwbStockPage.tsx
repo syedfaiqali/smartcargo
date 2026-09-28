@@ -34,7 +34,7 @@ import { PageShell } from '../../layout/PageShell';
 import { ToolbarAction } from '../../components/TransactionToolbar';
 import { FormRow, FormField } from '../../components/FormGrid';
 import { themeColors } from '../../theme/themeColors';
-import { airlineRepo, airportRepo, ownerRepo } from '../../data/masterDataService';
+import { airlineRepo, ownerRepo } from '../../data/masterDataService';
 import {
   awbStockRepo,
   calculateAwbCheckDigit,
@@ -50,7 +50,6 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export function AwbStockPage() {
   const airlines = airlineRepo.list();
-  const airportDestinations = airportRepo.list();
   const owners = ownerRepo.list();
 
   const [mode, setMode] = useState<'idle' | 'single-new'>('idle');
@@ -801,7 +800,7 @@ export function AwbStockPage() {
           <FormRow>
             <FormField xs={12} sm={12} md={12}>
               <TextField select label="Give Airline Code" fullWidth value={rangeAirline} onChange={(e) => setRangeAirline(e.target.value)}>
-                {airportDestinations.map((a) => (
+                {airlines.map((a) => (
                   <MenuItem key={a.code} value={a.code}>
                     {a.code} — {a.name}
                   </MenuItem>
