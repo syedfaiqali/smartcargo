@@ -17,6 +17,7 @@ import { Job } from '../../../domain/job';
 import { SectionCard } from '../../../components/SectionCard';
 import { navyTrustColors, navyTrustFontFamily } from '../../../theme/navyTrustTheme';
 import { printAirWaybill } from '../airWaybillReport';
+import { printUndertakingLetter } from '../undertakingLetterReport';
 
 interface PrintingTabProps {
   job: Job;
@@ -73,7 +74,15 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
             <TextField label="AWB No." fullWidth value={job.mawbNo} disabled />
           </Grid>
           <Grid item xs={12} md={3} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => { if (p.documentType === 'AIR_WAYBILL') printAirWaybill(job); }} sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}>
+            <Button
+              variant="outlined"
+              startIcon={<PictureAsPdfIcon />}
+              onClick={() => {
+                if (p.documentType === 'AIR_WAYBILL') printAirWaybill(job);
+                if (p.documentType === 'UNDER_TAKING_LETTER') printUndertakingLetter(job);
+              }}
+              sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}
+            >
               PDF
             </Button>
             <Button variant="outlined" startIcon={<GridOnIcon />} sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}>
