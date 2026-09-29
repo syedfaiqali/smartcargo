@@ -12,6 +12,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import EditIcon from '@mui/icons-material/Edit';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { Job, JobKind } from '../../domain/job';
@@ -79,6 +80,17 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
     setTab(0);
   };
 
+  const reopenForEditing = (target: Job) => {
+    if (target.status.void) {
+      setMessage({ severity: 'warning', text: 'A voided job cannot be reopened for editing.' });
+      return;
+    }
+    const reopened = jobRepo.save({ ...target, status: { ...target.status, final: false } });
+    loadJob(reopened);
+    setEditable(true);
+    setMessage({ severity: 'success', text: `Job ${reopened.jobNo} reopened for editing.` });
+  };
+
   useEffect(() => {
     const jobNo = (location.state as { jobNo?: string } | null)?.jobNo;
     if (!jobNo) return;
@@ -88,7 +100,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
 
   const editJobFromList = (j: Job) => {
     if (j.status.final) {
-      setMessage({ severity: 'warning', text: 'This job is FINAL and cannot be edited.' });
+      reopenForEditing(j);
       return;
     }
     loadJob(j);
@@ -132,7 +144,7 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
           return;
         }
         if (job.status.final) {
-          setMessage({ severity: 'warning', text: 'This job is FINAL and cannot be edited.' });
+          reopenForEditing(job);
           return;
         }
         setEditable(true);
@@ -311,6 +323,16 @@ export function JobPage({ kind, breadcrumbs, title }: JobPageProps) {
               sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.dangerBorder, bgcolor: navyTrustColors.dangerBg }}
             >
               Void
+            </Button>
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<EditIcon fontSize="small" />}
+              disabled={!job.status.final || job.status.void}
+              onClick={() => reopenForEditing(job)}
+              sx={{ fontFamily: navyTrustFontFamily }}
+            >
+              Un-final & Edit
             </Button>
             <Button
               variant="contained"

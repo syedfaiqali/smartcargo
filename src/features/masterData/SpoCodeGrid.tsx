@@ -1,0 +1,144 @@
+import { useMemo, useState } from 'react';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import TablePagination from '@mui/material/TablePagination';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { SpoCode } from '../../domain/masterData';
+import { spoRepo } from '../../data/masterDataService';
+import { controlCodeRepo } from '../../data/financeSetupService';
+import { themeColors } from '../../theme/themeColors';
+
+interface SpoCodeGridProps {
+  version: number;
+  onChange: () => void;
+  onEdit: (item: SpoCode) => void;
+  onView: (item: SpoCode) => void;
+}
+
+export function SpoCodeGrid({ version, onChange, onEdit, onView }: SpoCodeGridProps) {
+  const rows = spoRepo.list();
+  const controlCodes = controlCodeRepo.list();
+  const financeName = (code: string) => controlCodes.find((c) => c.code === code)?.name ?? '';
+
+  const [codeFilter, setCodeFilter] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const filteredRows = useMemo(() => {
+    const q = codeFilter.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) => row.code.toLowerCase().includes(q));
+  }, [rows, codeFilter]);
+
+  const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const handleDelete = (id: string) => {
+    spoRepo.remove(id);
+    onChange();
+  };
+
+  return (
+    <Paper variant="outlined" sx={{ overflow: 'hidden' }} key={version}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 1.5,
+          py: 1,
+          borderBottom: `1px solid ${themeColors.border}`,
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          SPO Codes
+        </Typography>
+        <Typography variant="caption" color="text.secondary">{filteredRows.length} record(s)</Typography>
+      </Box>
+
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell align="center" rowSpan={2} sx={{ width: 90, fontWeight: 700 }}>Action</TableCell>
+            <TableCell align="center" colSpan={2} sx={{ fontWeight: 700, borderLeft: `1px solid ${themeColors.border}` }}>SPO</TableCell>
+            <TableCell align="center" colSpan={2} sx={{ fontWeight: 700, borderLeft: `1px solid ${themeColors.border}` }}>Finance</TableCell>
+            <TableCell align="center" rowSpan={2} sx={{ fontWeight: 700, borderLeft: `1px solid ${themeColors.border}` }}>Mobile No.</TableCell>
+            <TableCell align="center" rowSpan={2} sx={{ fontWeight: 700 }}>Email</TableCell>
+            <TableCell align="center" rowSpan={2} sx={{ fontWeight: 700 }}>Share %</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell sx={{ fontWeight: 700, borderLeft: `1px solid ${themeColors.border}` }}>Code</TableCell>
+            <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+            <TableCell sx={{ fontWeight: 700, borderLeft: `1px solid ${themeColors.border}` }}>Code</TableCell>
+            <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell />
+            <TableCell sx={{ borderLeft: `1px solid ${themeColors.border}` }}>
+              <TextField size="small" value={codeFilter} onChange={(e) => { setCodeFilter(e.target.value); setPage(0); }} placeholder="Filter Code" fullWidth />
+            </TableCell>
+            <TableCell colSpan={4} />
+            <TableCell />
+            <TableCell />
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {filteredRows.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} align="center">
+                <Typography variant="body2" sx={{ color: themeColors.textSecondary, py: 2 }}>
+                  No records yet — use Add to create one.
+                </Typography>
+              </TableCell>
+            </TableRow>
+          ) : (
+            paginatedRows.map((row) => (
+              <TableRow key={row.id} hover selected>
+                <TableCell align="center">
+                  <Stack direction="row" spacing={0.25} justifyContent="center">
+                    <IconButton size="small" onClick={() => onView(row)}>
+                      <VisibilityOutlinedIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => onEdit(row)}>
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" color="error" onClick={() => handleDelete(row.id)}>
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                </TableCell>
+                <TableCell sx={{ borderLeft: `1px solid ${themeColors.border}` }}>{row.code}</TableCell>
+                <TableCell>{row.description}</TableCell>
+                <TableCell sx={{ borderLeft: `1px solid ${themeColors.border}` }}>{row.financeCode}</TableCell>
+                <TableCell>{financeName(row.financeCode)}</TableCell>
+                <TableCell>{row.mobileNo}</TableCell>
+                <TableCell>{row.email}</TableCell>
+                <TableCell>{row.sharePercent?.toFixed(2)}</TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+      <TablePagination
+        component="div"
+        count={filteredRows.length}
+        page={page}
+        onPageChange={(_, nextPage) => setPage(nextPage)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+        rowsPerPageOptions={[10, 25, 50, 100]}
+        labelRowsPerPage="Rows per page"
+      />
+    </Paper>
+  );
+}
