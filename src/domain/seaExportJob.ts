@@ -1,4 +1,4 @@
-import { AuditFields, IsoDate, RecordStatus, YesNo } from './common';
+import { AuditFields, IsoDate, RecordStatus, YesNo } from "./common";
 
 /** 12.1 Container summary row shown on the Entry tab (detail maintained on Container tab). */
 export interface SeaContainerRef {
@@ -8,16 +8,16 @@ export interface SeaContainerRef {
   sealNo: string;
   isoCode: string;
   vehicleNo: string;
-  vehicleDate: IsoDate | '';
-  vehicleEta: IsoDate | '';
-  vehicleAta: IsoDate | '';
+  vehicleDate: IsoDate | "";
+  vehicleEta: IsoDate | "";
+  vehicleAta: IsoDate | "";
   // 12.3 Container tab detail fields not shown in the Entry-tab summary grid
   serialNo: number;
   containerTypes: string;
   vehicleType: string;
-  polEta: IsoDate | '';
-  polAta: IsoDate | '';
-  pcd: IsoDate | '';
+  polEta: IsoDate | "";
+  polAta: IsoDate | "";
+  pcd: IsoDate | "";
   transporterName: string;
   driverName: string;
   mobileNo: string;
@@ -54,8 +54,12 @@ export interface SeaJobHistoryRef {
 export interface TransshipmentPoint {
   id: string;
   destinationCode: string;
-  eta: IsoDate | '';
-  etd: IsoDate | '';
+  eta: IsoDate | "";
+  etaTime: string;
+  etaChecked: boolean;
+  etd: IsoDate | "";
+  etdTime: string;
+  etdChecked: boolean;
   vessel: string;
   voyage: string;
 }
@@ -81,7 +85,8 @@ export interface SeaAddress {
   address: string;
 }
 
-export type SeaJobStatus = 'FINAL' | 'UN_FINAL' | 'VOID' | 'UN_VOID' | 'CLOSED' | 'UN_CLOSED';
+export type SeaJobStatus =
+  "FINAL" | "UN_FINAL" | "VOID" | "UN_VOID" | "CLOSED" | "UN_CLOSED";
 
 /**
  * Jobs Entry and Documents Printing (Sea-Export) — docs/screens-phase.md Part 2 / Section 12.
@@ -98,6 +103,8 @@ export interface SeaExportJob extends AuditFields {
   consolNo: string;
   consolYN: YesNo;
   nomination: YesNo;
+  creditLimit: number;
+  attachmentName: string;
   partyCode: string;
   partyName: string;
   subAgentParty: string;
@@ -113,9 +120,9 @@ export interface SeaExportJob extends AuditFields {
   terminal: string;
   clearingAgent: string;
   jobStatus: string;
-  jobStatusDate: IsoDate | '';
+  jobStatusDate: IsoDate | "";
   bookingNo: string;
-
+  quotRefNo: string;
   consolTotal: {
     cbm: number;
     grossWeight: number;
@@ -126,17 +133,19 @@ export interface SeaExportJob extends AuditFields {
   };
   lastConsolNo: string;
 
-  lclFcl: 'LCL' | 'FCL';
-  mPpCc: 'PP' | 'CC';
-  cyCfs: 'CY' | 'CFS';
-  hPpCc: 'PP' | 'CC';
-  cyCfsCutOff: IsoDate | '';
+  lclFcl: "LCL" | "FCL";
+  mPpCc: "PP" | "CC";
+  cyCfs: "CY" | "CFS";
+  hPpCc: "PP" | "CC";
+  cyCfsCutOff: IsoDate | "";
   roNo: string;
-
+  gdDate: IsoDate | "";
+  shipmentdate: IsoDate | "";
   noOfPackages: number;
   unit: string;
   noOfPcsQty: number;
   unitQty: string;
+  gdNo: string;
   currencyCode: string;
   exchangeRate: number;
 
@@ -150,46 +159,51 @@ export interface SeaExportJob extends AuditFields {
   hsCode: string;
   stackCode: string;
   runNo: string;
+  vehicleNo: string;
+  vehicleType: string;
 
   shipperInvoice: {
     invNo: string;
-    date: IsoDate | '';
+    date: IsoDate | "";
     currencyCode: string;
     amount: number;
     poNo: string;
   };
 
-  ccDate: IsoDate | '';
-  formEDate: IsoDate | '';
+  ccDate: IsoDate | "";
+  ccPlace: string;
+  ccDateTime: string;
+  selectFromE: string;
+  formEDate: IsoDate | "";
   formEInsNo2: string;
-  formEInsNo2Date: IsoDate | '';
+  formEInsNo2Date: IsoDate | "";
   formEInsNo3: string;
-  formEInsNo3Date: IsoDate | '';
-  shipReceivedDate: IsoDate | '';
+  formEInsNo3Date: IsoDate | "";
+  shipReceivedDate: IsoDate | "";
 
-  cuttOffDate: IsoDate | '';
-  siFileCuttOff: IsoDate | '';
-  handOverToSl: IsoDate | '';
+  cuttOffDate: IsoDate | "";
+  siFileCuttOff: IsoDate | "";
+  handOverToSl: IsoDate | "";
   handOverToSlTime: string;
-  docReceived: IsoDate | '';
-  siFiled: IsoDate | '';
-  docDespatchDate: IsoDate | '';
+  docReceived: IsoDate | "";
+  siFiled: IsoDate | "";
+  docDespatchDate: IsoDate | "";
 
   sbNo: string;
   sbPlace: string;
-  sbDate: IsoDate | '';
+  sbDate: IsoDate | "";
   mrNo: string;
-  mrDate: IsoDate | '';
+  mrDate: IsoDate | "";
   egm: string;
 
   mblNo: string;
-  mblDate: IsoDate | '';
+  mblDate: IsoDate | "";
   mblReceived: YesNo;
   hblType: string;
   hblNo: string;
-  hblDate: IsoDate | '';
-  sailingDate: IsoDate | '';
-  pickupStuffing: IsoDate | '';
+  hblDate: IsoDate | "";
+  sailingDate: IsoDate | "";
+  pickupStuffing: IsoDate | "";
 
   containers: SeaContainerRef[];
 
@@ -201,9 +215,9 @@ export interface SeaExportJob extends AuditFields {
   ddShip: YesNo;
 
   shipmentDelivered: YesNo;
-  deliveredDate: IsoDate | '';
-  releaseMessageDate: IsoDate | '';
-  preAlertDate: IsoDate | '';
+  deliveredDate: IsoDate | "";
+  releaseMessageDate: IsoDate | "";
+  preAlertDate: IsoDate | "";
   shipmentContainerized: YesNo;
 
   nonPrintableRemarks: string;
@@ -211,11 +225,11 @@ export interface SeaExportJob extends AuditFields {
   consolGrid: SeaConsolRef[];
   jobHistory: SeaJobHistoryRef[];
 
-  polEta: IsoDate | '';
+  polEta: IsoDate | "";
   polEtaTime: string;
-  polEtd: IsoDate | '';
+  polEtd: IsoDate | "";
   polEtdTime: string;
-  etaAtDest: IsoDate | '';
+  etaAtDest: IsoDate | "";
   etaAtDestTime: string;
   vessel: string;
   voyage: string;
@@ -238,7 +252,7 @@ export interface SeaExportJob extends AuditFields {
     alsoNotify: string;
     deliveryAgent: string;
     formENo: string;
-    formEDate: IsoDate | '';
+    formEDate: IsoDate | "";
     vessel: string;
     voyage: string;
     placeOfReceipt: string;
@@ -249,8 +263,8 @@ export interface SeaExportJob extends AuditFields {
     noOfOrigBLs: number;
     countryOfOrigin: string;
     placeOfIssue: string;
-    hblDate: IsoDate | '';
-    fobCif: 'FOB' | 'CIF';
+    hblDate: IsoDate | "";
+    fobCif: "FOB" | "CIF";
     cbm: number;
     grossWeight: number;
     volWeight: number;
@@ -282,7 +296,7 @@ export interface SeaExportJob extends AuditFields {
   // --- 12.7 Consol Tab (fields specific to this job's own consol record) ---
   consol: {
     consolNo: string;
-    lclFcl: 'LCL' | 'FCL';
+    lclFcl: "LCL" | "FCL";
     foreignAgent: string;
     shippingLine: string;
     sLineAgent: string;
@@ -291,7 +305,7 @@ export interface SeaExportJob extends AuditFields {
     wharf: string;
     terminal: string;
     mblNo: string;
-    mblDate: IsoDate | '';
+    mblDate: IsoDate | "";
     vessel: string;
     voyage: string;
     rotationNo: string;
@@ -299,12 +313,12 @@ export interface SeaExportJob extends AuditFields {
     size: string;
     containerTypes: string;
     sealNo: string;
-    pickupStuffing: IsoDate | '';
-    cutOffDate: IsoDate | '';
-    sailingDate: IsoDate | '';
-    polEta: IsoDate | '';
-    polEtd: IsoDate | '';
-    etaAtDest: IsoDate | '';
+    pickupStuffing: IsoDate | "";
+    cutOffDate: IsoDate | "";
+    sailingDate: IsoDate | "";
+    polEta: IsoDate | "";
+    polEtd: IsoDate | "";
+    etaAtDest: IsoDate | "";
   };
 
   // --- 12.8 Instruction Letter Tab ---
@@ -320,7 +334,7 @@ export interface SeaExportJob extends AuditFields {
     alsoNotify: string;
     deliveryAgent: string;
     formENo: string;
-    formEDate: IsoDate | '';
+    formEDate: IsoDate | "";
     vessel: string;
     voyage: string;
     placeOfReceipt: string;
@@ -344,7 +358,7 @@ export interface SeaExportJob extends AuditFields {
   // --- 12.6 Printing Tab ---
   printing: {
     documentType: string;
-    printOn: 'LETTER_PAD' | 'PLAIN_PAPER';
+    printOn: "LETTER_PAD" | "PLAIN_PAPER";
     todaysDate: IsoDate;
     attention: string;
     note: string;

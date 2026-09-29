@@ -1,4 +1,10 @@
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Grid from "@mui/material/Grid";
 import { useState } from "react";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
@@ -9,6 +15,8 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import AttachFileOutlinedIcon from "@mui/icons-material/AttachFileOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import {
   FormRow,
   FormField,
@@ -16,6 +24,7 @@ import {
 } from "../../../components/FormGrid";
 import { NumberField } from "../../../components/NumberField";
 import { DateField } from "../../../components/DateField";
+import { TimeField } from "../../../components/TimeField";
 import { WorkflowSection } from "../../../components/WorkflowSection";
 import { SeaExportJob } from "../../../domain/seaExportJob";
 import {
@@ -28,6 +37,7 @@ import {
   shippingLineRepo,
   spoRepo,
 } from "../../../data/masterDataService";
+import { Checkbox } from "@mui/material";
 
 interface EntryTabProps {
   job: SeaExportJob;
@@ -44,6 +54,8 @@ const yn = (v: string) => (
 
 export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const [openSection, setOpenSection] = useState(1);
+  const [selectedContainerIds, setSelectedContainerIds] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const parties = partyRepo.list();
   const foreignAgents = foreignAgentRepo.list();
   const shippingLines = shippingLineRepo.list();
@@ -73,7 +85,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           onToggle={() => setOpenSection(openSection === 1 ? 0 : 1)}
         >
           <FormRow>
-            <FormField md={4}>
+            <FormField md={2}>
               <TextField
                 label="Branch"
                 fullWidth
@@ -82,10 +94,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(e) => set("branch", e.target.value)}
               />
             </FormField>
-            <FormField md={4}>
+            <FormField md={2}>
               <TextField label="Job No." fullWidth value={job.jobNo} disabled />
             </FormField>
-            <FormField md={4}>
+            <FormField md={1}>
               <DateField
                 label="Date"
                 value={job.date}
@@ -159,105 +171,202 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 {yn(job.nomination)}
               </TextField>
             </FormField>
+            <FormField md={4}>
+              <TextField
+                select
+                label="Quot. Ref No."
+                fullWidth
+                value={job.quotRefNo}
+                disabled={!editable}
+                onChange={(e) => set("quotRefNo", e.target.value)}
+              >
+                {yn(job.quotRefNo)}
+              </TextField>
+            </FormField>
           </FormRow>
-
           <SectionHeader>Parties</SectionHeader>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                select
-                label="Party Code"
-                required
-                fullWidth
-                value={job.partyCode}
-                disabled={!editable}
-                onChange={(e) => setPartyCode(e.target.value)}
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={8}>
+              <FormRow>
+                <FormField md={6}>
+                  <NumberField
+                    label="Credit Limit"
+                    fullWidth
+                    value={job.creditLimit}
+                    disabled={!editable}
+                    onChange={(e) => set("creditLimit", Number(e.target.value))}
+                  />
+                </FormField>
+                <FormField md={6}>
+                  <TextField
+                    select
+                    label="Party Code"
+                    required
+                    fullWidth
+                    value={job.partyCode}
+                    disabled={!editable}
+                    onChange={(e) => setPartyCode(e.target.value)}
+                  >
+                    {parties.map((p) => (
+                      <MenuItem key={p.code} value={p.code}>
+                        {p.code} — {p.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </FormField>
+              </FormRow>
+              <FormRow>
+                <FormField md={6}>
+                  <TextField
+                    label="Sub Agent's Party"
+                    fullWidth
+                    value={job.subAgentParty}
+                    disabled={!editable}
+                    onChange={(e) => set("subAgentParty", e.target.value)}
+                  />
+                </FormField>
+                <FormField md={6}>
+                  <TextField
+                    label="Commodity"
+                    fullWidth
+                    value={job.commodity}
+                    disabled={!editable}
+                    onChange={(e) => set("commodity", e.target.value)}
+                  />
+                </FormField>
+                <FormField md={6}>
+                  <TextField
+                    select
+                    label="Foreign Agent"
+                    fullWidth
+                    value={job.foreignAgent}
+                    disabled={!editable}
+                    onChange={(e) => set("foreignAgent", e.target.value)}
+                  >
+                    {foreignAgents.map((a) => (
+                      <MenuItem key={a.code} value={a.code}>
+                        {a.code} — {a.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </FormField>
+                <FormField md={6}>
+                  <TextField
+                    select
+                    label="Shipping Line"
+                    fullWidth
+                    value={job.shippingLine}
+                    disabled={!editable}
+                    onChange={(e) => set("shippingLine", e.target.value)}
+                  >
+                    {shippingLines.map((s) => (
+                      <MenuItem key={s.code} value={s.code}>
+                        {s.code} — {s.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </FormField>
+                <FormField md={6}>
+                  <TextField
+                    label="S/Line Agent"
+                    fullWidth
+                    value={job.sLineAgent}
+                    disabled={!editable}
+                    onChange={(e) => set("sLineAgent", e.target.value)}
+                  />
+                </FormField>
+                <FormField md={6}>
+                  <TextField
+                    select
+                    label="Delivery Agent"
+                    fullWidth
+                    value={job.deliveryAgent}
+                    disabled={!editable}
+                    onChange={(e) => set("deliveryAgent", e.target.value)}
+                  >
+                    {deliveryAgents.map((a) => (
+                      <MenuItem key={a.code} value={a.code}>
+                        {a.code} — {a.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </FormField>
+              </FormRow>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  height: "100%",
+                  minHeight: 200,
+                  p: 2,
+                  borderStyle: "dashed",
+                  borderColor: "primary.light",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                }}
               >
-                {parties.map((p) => (
-                  <MenuItem key={p.code} value={p.code}>
-                    {p.code} — {p.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Sub Agent's Party"
-                fullWidth
-                value={job.subAgentParty}
-                disabled={!editable}
-                onChange={(e) => set("subAgentParty", e.target.value)}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Commodity"
-                fullWidth
-                value={job.commodity}
-                disabled={!editable}
-                onChange={(e) => set("commodity", e.target.value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                select
-                label="Foreign Agent"
-                fullWidth
-                value={job.foreignAgent}
-                disabled={!editable}
-                onChange={(e) => set("foreignAgent", e.target.value)}
-              >
-                {foreignAgents.map((a) => (
-                  <MenuItem key={a.code} value={a.code}>
-                    {a.code} — {a.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                select
-                label="Shipping Line"
-                fullWidth
-                value={job.shippingLine}
-                disabled={!editable}
-                onChange={(e) => set("shippingLine", e.target.value)}
-              >
-                {shippingLines.map((s) => (
-                  <MenuItem key={s.code} value={s.code}>
-                    {s.code} — {s.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="S/Line Agent"
-                fullWidth
-                value={job.sLineAgent}
-                disabled={!editable}
-                onChange={(e) => set("sLineAgent", e.target.value)}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                select
-                label="Delivery Agent"
-                fullWidth
-                value={job.deliveryAgent}
-                disabled={!editable}
-                onChange={(e) => set("deliveryAgent", e.target.value)}
-              >
-                {deliveryAgents.map((a) => (
-                  <MenuItem key={a.code} value={a.code}>
-                    {a.code} — {a.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
+                <AttachFileOutlinedIcon
+                  color="primary"
+                  sx={{ fontSize: 36, mb: 1 }}
+                />
+                <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                  Attachment
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mb: 1.5 }}
+                >
+                  Attach quotation, party documents, or supporting files.
+                </Typography>
+                <Button
+                  component="label"
+                  variant="outlined"
+                  size="small"
+                  disabled={!editable}
+                  startIcon={<AttachFileOutlinedIcon />}
+                >
+                  Choose File
+                  <input
+                    hidden
+                    type="file"
+                    onChange={(event) =>
+                      set("attachmentName", event.target.files?.[0]?.name ?? "")
+                    }
+                  />
+                </Button>
+                {job.attachmentName && (
+                  <Box
+                    sx={{
+                      mt: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      maxWidth: "100%",
+                    }}
+                  >
+                    <Typography variant="caption" noWrap>
+                      {job.attachmentName}
+                    </Typography>
+                    <Button
+                      size="small"
+                      color="error"
+                      disabled={!editable}
+                      onClick={() => set("attachmentName", "")}
+                      startIcon={<DeleteOutlineIcon />}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
+          </Grid>
+
           <SectionHeader>Routing</SectionHeader>
           <FormRow>
             <FormField md={4}>
@@ -348,11 +457,19 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
             <FormField md={4}>
               <TextField
-                label="Status"
+                label="Shipment Status"
                 fullWidth
                 value={job.jobStatus}
                 disabled={!editable}
                 onChange={(e) => set("jobStatus", e.target.value)}
+              />
+            </FormField>
+            <FormField md={4}>
+              <DateField
+                label="Shipment Date"
+                value={job.shipmentdate}
+                disabled={!editable}
+                onChange={(value) => set("shipmentdate", value)}
               />
             </FormField>
             <FormField md={4}>
@@ -362,6 +479,24 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 value={job.bookingNo}
                 disabled={!editable}
                 onChange={(e) => set("bookingNo", e.target.value)}
+              />
+            </FormField>
+            <FormField md={4}>
+              <TextField
+                label="GD No."
+                fullWidth
+                value={job.gdNo}
+                disabled={!editable}
+                onChange={(e) => set("gdNo", e.target.value)}
+              />
+            </FormField>
+            <FormField md={4}>
+              <DateField
+                label="GD Date"
+                fullWidth
+                value={job.gdDate}
+                disabled={!editable}
+                onChange={(value) => set("gdDate", value)}
               />
             </FormField>
           </FormRow>
@@ -451,6 +586,29 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           onToggle={() => setOpenSection(openSection === 2 ? 0 : 2)}
         >
           <SectionHeader>Cargo Quantity &amp; Currency</SectionHeader>
+          <FormRow>
+            <FormField md={12}><Typography variant="caption" sx={{ fontWeight: 700 }}>Consol Total</Typography></FormField>
+            <FormField md={2}><NumberField label="CBM" fullWidth value={job.consolTotal.cbm} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, cbm: Number(e.target.value) })} /></FormField>
+            <FormField md={2}><NumberField label="Gross Weight" fullWidth value={job.consolTotal.grossWeight} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, grossWeight: Number(e.target.value) })} /></FormField>
+            <FormField md={2}><NumberField label="Net Weight" fullWidth value={job.consolTotal.netWeight} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, netWeight: Number(e.target.value) })} /></FormField>
+            <FormField md={2}><NumberField label="Packages" fullWidth value={job.consolTotal.noOfPackages} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, noOfPackages: Number(e.target.value) })} /></FormField>
+            <FormField md={2}><TextField label="UOM" fullWidth value={job.consolTotal.uom} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, uom: e.target.value })} /></FormField>
+            <FormField md={2}><NumberField label="Shipments" fullWidth value={job.consolTotal.noOfShipments} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, noOfShipments: Number(e.target.value) })} /></FormField>
+          </FormRow>
+          <FormRow>
+            <FormField md={4}>
+              <TextField
+                fullWidth
+                label="Destination"
+                value={job.Destination}
+                disabled={!editable}
+                // onChange={(e) =>
+                //   update({ destinationCode: e.target.value })
+                // }
+              />
+            </FormField>
+            <FormField md={4}>
+              <TextField label="Last Consol No." fullWidth value={job.lastConsolNo} disabled={!editable} onChange={(e) => set("lastConsolNo", e.target.value)} /></FormField></FormRow>
           <FormRow>
             <FormField md={4}>
               <TextField
@@ -574,7 +732,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
           </FormRow>
           <FormRow>
-            <FormField md={3}>
+            <FormField md={2}>
               <TextField
                 label="IncoTerm"
                 fullWidth
@@ -694,7 +852,16 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
           <SectionHeader>Document Milestones</SectionHeader>
           <FormRow>
-            <FormField md={6}>
+            <FormField md={3}>
+              <TextField
+                label="CC Place"
+                fullWidth
+                value={job.ccPlace}
+                disabled={!editable}
+                onChange={(e) => set("ccPlace", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
               <DateField
                 label="CC Date"
                 value={job.ccDate}
@@ -702,12 +869,57 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("ccDate", value)}
               />
             </FormField>
-            <FormField md={6}>
+            <FormField md={3}>
+              <TimeField
+                label="CC Time"
+                value={job.ccDateTime}
+                disabled={!editable}
+                onChange={(value) => set("ccDateTime", value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <DateField
+                label="Doc. Received"
+                value={job.docReceived}
+                disabled={!editable}
+                onChange={(value) => set("docReceived", value)}
+              />
+            </FormField>
+          </FormRow>
+          <FormRow><FormField md={6}><TextField label="Vehicle No." fullWidth value={job.vehicleNo} disabled={!editable} onChange={(e) => set("vehicleNo", e.target.value)} /></FormField><FormField md={6}><TextField label="Vehicle Type" fullWidth value={job.vehicleType} disabled={!editable} onChange={(e) => set("vehicleType", e.target.value)} /></FormField></FormRow>
+          <FormRow>
+            <FormField md={3}>
+              <TextField
+                label="Select From E"
+                fullWidth
+                value={job.selectFromE}
+                disabled={!editable}
+                onChange={(e) => set("selectFromE", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label=""
+                fullWidth
+                value={job.selectFromE}
+                disabled={!editable}
+                onChange={(e) => set("selectFromE", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
               <DateField
                 label="Form 'E' Date"
                 value={job.formEDate}
                 disabled={!editable}
                 onChange={(value) => set("formEDate", value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <DateField
+                label="Cutt Off Date"
+                value={job.cuttOffDate}
+                disabled={!editable}
+                onChange={(value) => set("cuttOffDate", value)}
               />
             </FormField>
           </FormRow>
@@ -721,12 +933,20 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(e) => set("formEInsNo2", e.target.value)}
               />
             </FormField>
-            <FormField md={6}>
+            <FormField md={3}>
               <DateField
                 label="Date"
                 value={job.formEInsNo2Date}
                 disabled={!editable}
                 onChange={(value) => set("formEInsNo2Date", value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <DateField
+                label="SI File Cutt Off"
+                value={job.siFileCuttOff}
+                disabled={!editable}
+                onChange={(value) => set("siFileCuttOff", value)}
               />
             </FormField>
           </FormRow>
@@ -740,7 +960,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(e) => set("formEInsNo3", e.target.value)}
               />
             </FormField>
-            <FormField md={6}>
+            <FormField md={3}>
               <DateField
                 label="Date"
                 value={job.formEInsNo3Date}
@@ -748,53 +968,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("formEInsNo3Date", value)}
               />
             </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <DateField
-                label="Ship Received Date"
-                value={job.shipReceivedDate}
-                disabled={!editable}
-                onChange={(value) => set("shipReceivedDate", value)}
-              />
-            </FormField>
-            <FormField md={6}>
-              <DateField
-                label="Cutt Off Date"
-                value={job.cuttOffDate}
-                disabled={!editable}
-                onChange={(value) => set("cuttOffDate", value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <DateField
-                label="SI File Cutt Off"
-                value={job.siFileCuttOff}
-                disabled={!editable}
-                onChange={(value) => set("siFileCuttOff", value)}
-              />
-            </FormField>
-            <FormField md={6}>
-              <DateField
-                label="Hand Over to S/L"
-                value={job.handOverToSl}
-                disabled={!editable}
-                onChange={(value) => set("handOverToSl", value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <DateField
-                label="Doc. Received"
-                value={job.docReceived}
-                disabled={!editable}
-                onChange={(value) => set("docReceived", value)}
-              />
-            </FormField>
-            <FormField md={6}>
+            <FormField md={3}>
               <DateField
                 label="SI Filed"
                 value={job.siFiled}
@@ -804,7 +978,31 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
           </FormRow>
           <FormRow>
-            <FormField md={6}>
+            <FormField md={3}>
+              <DateField
+                label="Ship Received Date"
+                value={job.shipReceivedDate}
+                disabled={!editable}
+                onChange={(value) => set("shipReceivedDate", value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <DateField
+                label="Hand Over to S/L"
+                value={job.handOverToSl}
+                disabled={!editable}
+                onChange={(value) => set("handOverToSl", value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TimeField
+                label="Time"
+                value={job.handOverToSlTime}
+                disabled={!editable}
+                onChange={(value) => set("handOverToSlTime", value)}
+              />
+            </FormField>
+            <FormField md={3}>
               <DateField
                 label="Doc. Despatch Date"
                 value={job.docDespatchDate}
@@ -874,7 +1072,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
           <SectionHeader>Bill of Lading</SectionHeader>
           <FormRow>
-            <FormField md={6}>
+            <FormField md={4}>
               <TextField
                 label="MBL No."
                 fullWidth
@@ -883,7 +1081,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(e) => set("mblNo", e.target.value)}
               />
             </FormField>
-            <FormField md={6}>
+            <FormField md={4}>
               <DateField
                 label="MBL Date"
                 value={job.mblDate}
@@ -891,9 +1089,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("mblDate", value)}
               />
             </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
+            <FormField md={4}>
               <TextField
                 select
                 label="MBL Received"
@@ -907,7 +1103,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 {yn(job.mblReceived)}
               </TextField>
             </FormField>
-            <FormField md={6}>
+          </FormRow>
+          <FormRow>
+            <FormField md={4}>
               <TextField
                 label="HBL Type"
                 fullWidth
@@ -916,9 +1114,25 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(e) => set("hblType", e.target.value)}
               />
             </FormField>
+            <FormField md={4}>
+              <DateField
+                label="Sailing Date"
+                value={job.sailingDate}
+                disabled={!editable}
+                onChange={(value) => set("sailingDate", value)}
+              />
+            </FormField>
+            <FormField md={4}>
+              <DateField
+                label="PickUp/Stuffing"
+                value={job.pickupStuffing}
+                disabled={!editable}
+                onChange={(value) => set("pickupStuffing", value)}
+              />
+            </FormField>
           </FormRow>
           <FormRow>
-            <FormField md={6}>
+            <FormField md={4}>
               <TextField
                 label="HBL No."
                 fullWidth
@@ -927,30 +1141,12 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(e) => set("hblNo", e.target.value)}
               />
             </FormField>
-            <FormField md={6}>
+            <FormField md={4}>
               <DateField
                 label="HBL Date"
                 value={job.hblDate}
                 disabled={!editable}
                 onChange={(value) => set("hblDate", value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <DateField
-                label="Sailing Date"
-                value={job.sailingDate}
-                disabled={!editable}
-                onChange={(value) => set("sailingDate", value)}
-              />
-            </FormField>
-            <FormField md={6}>
-              <DateField
-                label="PickUp/Stuffing"
-                value={job.pickupStuffing}
-                disabled={!editable}
-                onChange={(value) => set("pickupStuffing", value)}
               />
             </FormField>
           </FormRow>
@@ -1053,7 +1249,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
           <SectionHeader>Shipment Milestones</SectionHeader>
           <FormRow>
-            <FormField md={6}>
+            <FormField md={3}>
               <TextField
                 select
                 label="Shipment Delivered"
@@ -1067,7 +1263,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 {yn(job.shipmentDelivered)}
               </TextField>
             </FormField>
-            <FormField md={6}>
+            <FormField md={3}>
               <DateField
                 label="Delivered Date"
                 value={job.deliveredDate}
@@ -1075,9 +1271,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("deliveredDate", value)}
               />
             </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
+            <FormField md={3}>
               <DateField
                 label="Release Message Date"
                 value={job.releaseMessageDate}
@@ -1085,7 +1279,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("releaseMessageDate", value)}
               />
             </FormField>
-            <FormField md={6}>
+            <FormField md={3}>
               <DateField
                 label="Pre-Alert Date"
                 value={job.preAlertDate}
@@ -1095,7 +1289,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
           </FormRow>
           <FormRow>
-            <FormField md={12}>
+            <FormField md={3}>
               <TextField
                 select
                 label="Shipment Containerized"
@@ -1109,9 +1303,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 {yn(job.shipmentContainerized)}
               </TextField>
             </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
+            <FormField md={9}>
               <TextField
                 label="Non-Printable Remarks"
                 fullWidth
@@ -1126,7 +1318,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
 
           <SectionHeader>Voyage Schedule</SectionHeader>
           <FormRow>
-            <FormField md={6}>
+            <FormField md={4}>
               <DateField
                 label="POL ETA"
                 value={job.polEta}
@@ -1134,7 +1326,23 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("polEta", value)}
               />
             </FormField>
-            <FormField md={6}>
+            <FormField md={4}>
+              <TimeField
+                label="Pol ETA Time"
+                value={job.polEtaTime}
+                disabled={!editable}
+                onChange={(value) => set("polEtaTime", value)}
+              />
+            </FormField>
+            <FormField md={4}>
+              <Checkbox
+                // label="CC Time"
+                value={job.polEtaCheckbox}
+                disabled={!editable}
+                onChange={(value) => set("polEtaCheckbox", value)}
+              />
+            </FormField>
+            <FormField md={4}>
               <DateField
                 label="POL ETD"
                 value={job.polEtd}
@@ -1142,9 +1350,16 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("polEtd", value)}
               />
             </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
+            <FormField md={4}>
+              <TimeField
+                label="Pol ETD Time"
+                value={job.polEtdTime}
+                disabled={!editable}
+                onChange={(value) => set("polEtdTime", value)}
+              />
+            </FormField>
+            <FormField md={4}></FormField>
+            <FormField md={4}>
               <DateField
                 label="ETA At Dest"
                 value={job.etaAtDest}
@@ -1152,18 +1367,23 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("etaAtDest", value)}
               />
             </FormField>
-            <FormField md={6}>
-              <TextField
-                label="Rotation No."
-                fullWidth
-                value={job.rotationNo}
+            <FormField md={4}>
+              <TimeField
+                label="POL ETD Time"
+                value={job.polEtdTime}
                 disabled={!editable}
-                onChange={(e) => set("rotationNo", e.target.value)}
+                onChange={(value) => set("polEtdTime", value)}
               />
             </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
+            <FormField md={4}>
+              <Checkbox
+                // label="CC Time"
+                value={job.polEtaCheckbox}
+                disabled={!editable}
+                onChange={(value) => set("polEtaCheckbox", value)}
+              />
+            </FormField>
+            <FormField md={4}>
               <TextField
                 label="Vessel"
                 fullWidth
@@ -1172,13 +1392,22 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(e) => set("vessel", e.target.value)}
               />
             </FormField>
-            <FormField md={6}>
+            <FormField md={4}>
               <TextField
                 label="Voyage"
                 fullWidth
                 value={job.voyage}
                 disabled={!editable}
                 onChange={(e) => set("voyage", e.target.value)}
+              />
+            </FormField>
+            <FormField md={4}>
+              <TextField
+                label="Rotation No."
+                fullWidth
+                value={job.rotationNo}
+                disabled={!editable}
+                onChange={(e) => set("rotationNo", e.target.value)}
               />
             </FormField>
           </FormRow>
@@ -1189,7 +1418,86 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           >
             Transshipment Points
           </Typography>
-          <Paper variant="outlined" sx={{ overflowX: "auto", mb: 2 }}>
+          <Box
+            sx={{
+              border: "1px solid",
+              borderColor: "primary.light",
+              borderRadius: 1,
+              overflow: "hidden",
+              mb: 2,
+            }}
+          >
+            {job.transshipmentPoints.map((tp, i) => {
+              const update = (patch: Partial<typeof tp>) => {
+                const points = [...job.transshipmentPoints];
+                points[i] = { ...tp, ...patch };
+                set("transshipmentPoints", points);
+              };
+              return (
+                <Box
+                  key={tp.id}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      md: "72px 2fr 1.35fr 38px 1.35fr 38px 1.5fr 1fr",
+                    },
+                    gap: 1,
+                    alignItems: "center",
+                    p: 1,
+                    borderBottom:
+                      i === job.transshipmentPoints.length - 1
+                        ? 0
+                        : "1px solid",
+                    borderColor: "divider",
+                    bgcolor: i % 2 ? "#f8fafc" : "#eef5fb",
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 700 }}>
+                    T/Ship {i + 1}
+                  </Typography>
+                  <TextField
+                    size="small"
+                    label="Destination"
+                    value={tp.destinationCode}
+                    disabled={!editable}
+                    onChange={(e) =>
+                      update({ destinationCode: e.target.value })
+                    }
+                  />
+                  <DateField
+                    label="ETA"
+                    value={tp.eta}
+                    disabled={!editable}
+                    onChange={(value) => update({ eta: value })}
+                  />
+                  <Checkbox size="small" checked={tp.etaChecked ?? false} disabled={!editable} onChange={(event) => update({ etaChecked: event.target.checked })} />
+                  <DateField
+                    label="ETD"
+                    value={tp.etd}
+                    disabled={!editable}
+                    onChange={(value) => update({ etd: value })}
+                  />
+                  <Checkbox size="small" checked={tp.etdChecked ?? false} disabled={!editable} onChange={(event) => update({ etdChecked: event.target.checked })} />
+                  <TextField
+                    size="small"
+                    label="Vessel"
+                    value={tp.vessel}
+                    disabled={!editable}
+                    onChange={(e) => update({ vessel: e.target.value })}
+                  />
+                  <TextField
+                    size="small"
+                    label="Voyage"
+                    value={tp.voyage}
+                    disabled={!editable}
+                    onChange={(e) => update({ voyage: e.target.value })}
+                  />
+                </Box>
+              );
+            })}
+          </Box>
+          <Paper variant="outlined" sx={{ display: "none" }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -1273,26 +1581,25 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </Table>
           </Paper>
 
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 700, display: "block" }}
-          >
-            Container Summary
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>Container Summary</Typography>
+            <Box sx={{ display: "flex", gap: 1 }}><Button size="small" color="error" variant="outlined" disabled={!editable || selectedContainerIds.length === 0} onClick={() => setDeleteDialogOpen(true)}>Delete Selected</Button><Button size="small" variant="contained" disabled={!editable} onClick={() => set("containers", [...job.containers, { id: crypto.randomUUID(), containerNo: "", sizeType: "", sealNo: "", isoCode: "", vehicleNo: "", vehicleDate: "", vehicleEta: "", vehicleAta: "", serialNo: job.containers.length + 1, containerTypes: "", vehicleType: "", polEta: "", polAta: "", pcd: "", transporterName: "", driverName: "", mobileNo: "", charges: 0, fromPol: "", toPod: "", noOfPkgs: 0, unit: "", cbm: 0, grossWeight: 0, netWeight: 0 }])}>+ Add Container</Button></Box>
+          </Box>
           <Paper variant="outlined" sx={{ overflowX: "auto", mb: 2 }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Container No.</TableCell>
+                  <TableCell><Checkbox size="small" checked={job.containers.length > 0 && selectedContainerIds.length === job.containers.length} onChange={(event) => setSelectedContainerIds(event.target.checked ? job.containers.map((item) => item.id) : [])} /></TableCell><TableCell>Action</TableCell><TableCell>Container No.</TableCell>
                   <TableCell>Size/Type</TableCell>
                   <TableCell>Seal No.</TableCell>
                   <TableCell>ISO Code</TableCell>
+                  <TableCell>Vehicle No.</TableCell><TableCell>Vehicle Date</TableCell><TableCell>Vehicle ETA</TableCell><TableCell>Vehicle ATA</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {job.containers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4}>
+                    <TableCell colSpan={10}>
                       <Typography variant="caption" color="text.secondary">
                         No containers — add on the Container tab.
                       </Typography>
@@ -1301,16 +1608,27 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 ) : (
                   job.containers.map((c) => (
                     <TableRow key={c.id}>
-                      <TableCell>{c.containerNo}</TableCell>
-                      <TableCell>{c.sizeType}</TableCell>
-                      <TableCell>{c.sealNo}</TableCell>
-                      <TableCell>{c.isoCode}</TableCell>
+                      <TableCell><Checkbox size="small" checked={selectedContainerIds.includes(c.id)} onChange={(event) => setSelectedContainerIds(event.target.checked ? [...selectedContainerIds, c.id] : selectedContainerIds.filter((id) => id !== c.id))} /></TableCell><TableCell><Button size="small" color="error" disabled={!editable} onClick={() => set("containers", job.containers.filter((item) => item.id !== c.id))}>×</Button></TableCell>
+                      <TableCell><TextField size="small" value={c.containerNo} disabled={!editable} onChange={(e) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, containerNo: e.target.value } : item))} /></TableCell>
+                      <TableCell><TextField size="small" value={c.sizeType} disabled={!editable} onChange={(e) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, sizeType: e.target.value } : item))} /></TableCell>
+                      <TableCell><TextField size="small" value={c.sealNo} disabled={!editable} onChange={(e) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, sealNo: e.target.value } : item))} /></TableCell>
+                      <TableCell><TextField size="small" value={c.isoCode} disabled={!editable} onChange={(e) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, isoCode: e.target.value } : item))} /></TableCell>
+                      <TableCell><TextField size="small" value={c.vehicleNo} disabled={!editable} onChange={(e) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, vehicleNo: e.target.value } : item))} /></TableCell>
+                      <TableCell><DateField label="" value={c.vehicleDate} disabled={!editable} onChange={(value) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, vehicleDate: value } : item))} /></TableCell>
+                      <TableCell><DateField label="" value={c.vehicleEta} disabled={!editable} onChange={(value) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, vehicleEta: value } : item))} /></TableCell>
+                      <TableCell><DateField label="" value={c.vehicleAta} disabled={!editable} onChange={(value) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, vehicleAta: value } : item))} /></TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
           </Paper>
+
+          <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+            <DialogTitle>Delete selected containers?</DialogTitle>
+            <DialogContent>Are you sure you want to delete {selectedContainerIds.length} selected container row(s)?</DialogContent>
+            <DialogActions><Button onClick={() => setDeleteDialogOpen(false)}>No</Button><Button color="error" variant="contained" onClick={() => { set("containers", job.containers.filter((item) => !selectedContainerIds.includes(item.id))); setSelectedContainerIds([]); setDeleteDialogOpen(false); }}>Yes, Delete</Button></DialogActions>
+          </Dialog>
 
           <Typography
             variant="caption"
