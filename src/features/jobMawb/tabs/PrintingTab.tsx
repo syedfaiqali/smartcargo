@@ -18,6 +18,7 @@ import { SectionCard } from '../../../components/SectionCard';
 import { navyTrustColors, navyTrustFontFamily } from '../../../theme/navyTrustTheme';
 import { printAirWaybill } from '../airWaybillReport';
 import { printUndertakingLetter } from '../undertakingLetterReport';
+import { printCargoManifest } from '../cargoManifestReport';
 
 interface PrintingTabProps {
   job: Job;
@@ -80,6 +81,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
               onClick={() => {
                 if (p.documentType === 'AIR_WAYBILL') printAirWaybill(job);
                 if (p.documentType === 'UNDER_TAKING_LETTER') printUndertakingLetter(job);
+                if (p.documentType === 'CARGO_MANIFEST') printCargoManifest(job);
               }}
               sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}
             >
