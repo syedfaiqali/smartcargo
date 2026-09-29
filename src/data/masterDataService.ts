@@ -346,3 +346,18 @@ if (!isSeeded('sectorCodesV2')) {
   if (isOriginalPlaceholderList) sectorRepo.replaceAll(sectorCodes.map(withAudit));
   markSeeded('sectorCodesV2');
 }
+
+// Add the Share %/Finance/contact fields to saved SPO Codes while retaining all existing entries.
+if (!isSeeded('spoCodesV2')) {
+  spoRepo.replaceAll(spoRepo.list().map((spo) => ({
+    ...spo,
+    sharePercent: spo.sharePercent ?? 0,
+    splitedSharePercent: spo.splitedSharePercent ?? 0,
+    financeCode: spo.financeCode ?? '',
+    designation: spo.designation ?? '',
+    mobileNo: spo.mobileNo ?? '',
+    email: spo.email ?? '',
+    active: spo.active ?? 'Y',
+  })));
+  markSeeded('spoCodesV2');
+}
