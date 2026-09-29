@@ -111,6 +111,12 @@ const sectorCodes = [
   { code: '6', name: 'MIDDLE EAST' },
 ];
 
+// ISO 3166-1 alpha-2 country codes. DisplayNames keeps names current in the browser.
+const countryNames = new Intl.DisplayNames(['en'], { type: 'region' });
+const countryCodes = 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'
+  .split(' ')
+  .map((code) => ({ code, name: countryNames.of(code) ?? code }));
+
 function seedIfEmpty() {
   if (isSeeded('masterData')) return;
 
@@ -213,15 +219,7 @@ function seedIfEmpty() {
   );
 
   countryRepo.replaceAll(
-    [
-      { code: 'PK', name: 'Pakistan' },
-      { code: 'AE', name: 'United Arab Emirates' },
-      { code: 'QA', name: 'Qatar' },
-      { code: 'TR', name: 'Turkey' },
-      { code: 'HK', name: 'Hong Kong' },
-      { code: 'CN', name: 'China' },
-      { code: 'SG', name: 'Singapore' },
-    ].map(withAudit)
+    countryCodes.map(withAudit)
   );
 
   commodityRepo.replaceAll(
@@ -347,17 +345,23 @@ if (!isSeeded('sectorCodesV2')) {
   markSeeded('sectorCodesV2');
 }
 
-// Add the Share %/Finance/contact fields to saved SPO Codes while retaining all existing entries.
-if (!isSeeded('spoCodesV2')) {
-  spoRepo.replaceAll(spoRepo.list().map((spo) => ({
-    ...spo,
-    sharePercent: spo.sharePercent ?? 0,
-    splitedSharePercent: spo.splitedSharePercent ?? 0,
-    financeCode: spo.financeCode ?? '',
-    designation: spo.designation ?? '',
-    mobileNo: spo.mobileNo ?? '',
-    email: spo.email ?? '',
-    active: spo.active ?? 'Y',
-  })));
-  markSeeded('spoCodesV2');
+// Upgrade the initial seven-record Country Code sample to the complete ISO list.
+if (!isSeeded('countryCodesV2')) {
+  const currentCountries = countryRepo.list();
+  const sampleCodes = ['PK', 'AE', 'QA', 'TR', 'HK', 'CN', 'SG'];
+  const isOriginalSample = currentCountries.length === sampleCodes.length
+    && currentCountries.every((country) => sampleCodes.includes(country.code));
+
+  if (isOriginalSample) countryRepo.replaceAll(countryCodes.map(withAudit));
+  markSeeded('countryCodesV2');
+}
+
+// Merge missing ISO country records into every existing browser list without removing custom records.
+if (!isSeeded('countryCodesV3')) {
+  const currentCountries = countryRepo.list();
+  const existingCodes = new Set(currentCountries.map((country) => country.code));
+  const missingCountries = countryCodes.filter((country) => !existingCodes.has(country.code));
+
+  if (missingCountries.length) countryRepo.replaceAll([...currentCountries, ...missingCountries.map(withAudit)]);
+  markSeeded('countryCodesV3');
 }

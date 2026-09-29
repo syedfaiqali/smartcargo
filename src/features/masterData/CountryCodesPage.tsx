@@ -10,11 +10,13 @@ export function CountryCodesPage() {
       <EditableCodeTable
         title="Country Codes"
         fields={[
-          { key: 'code', label: 'Code' },
-          { key: 'name', label: 'Name' },
+          { key: 'code', label: 'Country Code' },
+          { key: 'name', label: 'Country Name' },
         ]}
         repo={countryRepo}
         emptyItem={{ code: '', name: '' }}
+        showFilters={false}
+        globalSearch
         version={version}
         onChange={() => setVersion((v) => v + 1)}
       />

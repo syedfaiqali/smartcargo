@@ -43,6 +43,7 @@ interface EditableCodeTableProps<T extends AuditFields> {
   newEntryMode?: 'inline' | 'dialog';
   showAddButton?: boolean;
   showFilters?: boolean;
+  globalSearch?: boolean;
   addFields?: CodeField<T>[];
   onEditRecord?: (item: T) => void;
   fields: CodeField<T>[];
@@ -58,6 +59,7 @@ export function EditableCodeTable<T extends AuditFields>({
   newEntryMode = 'inline',
   showAddButton = true,
   showFilters = true,
+  globalSearch = false,
   addFields,
   onEditRecord,
   fields,
@@ -76,13 +78,18 @@ export function EditableCodeTable<T extends AuditFields>({
   const [editDraft, setEditDraft] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const filteredRows = useMemo(() => rows.filter((row) => fields.every((field) => {
-    const query = filters[String(field.key)]?.trim().toLowerCase();
-    return !query || String(row[field.key] ?? '').toLowerCase().includes(query);
-  })), [fields, filters, rows]);
+  const filteredRows = useMemo(() => rows.filter((row) => {
+    const query = search.trim().toLowerCase();
+    const matchesSearch = !query || fields.some((field) => String(row[field.key] ?? '').toLowerCase().includes(query));
+    return matchesSearch && fields.every((field) => {
+      const fieldQuery = filters[String(field.key)]?.trim().toLowerCase();
+      return !fieldQuery || String(row[field.key] ?? '').toLowerCase().includes(fieldQuery);
+    });
+  }), [fields, filters, rows, search]);
   const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const setFilter = (key: string, value: string) => {
@@ -92,6 +99,7 @@ export function EditableCodeTable<T extends AuditFields>({
 
   const clearFilters = () => {
     setFilters({});
+    setSearch('');
     setPage(0);
   };
 
@@ -201,7 +209,8 @@ export function EditableCodeTable<T extends AuditFields>({
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="caption" color="text.secondary">{filteredRows.length} record(s)</Typography>
-            {Object.values(filters).some(Boolean) && <Button size="small" onClick={clearFilters}>Clear filters</Button>}
+            {globalSearch && <TextField size="small" placeholder="Search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} sx={{ minWidth: 200 }} />}
+            {(Object.values(filters).some(Boolean) || search) && <Button size="small" onClick={clearFilters}>Clear filters</Button>}
             {showAddButton && !adding && <Button size="small" variant="contained" startIcon={<AddIcon fontSize="small" />} onClick={startAdd}>{addLabel}</Button>}
           </Stack>
         </Box>
