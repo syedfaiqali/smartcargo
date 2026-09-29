@@ -161,6 +161,8 @@ export interface SignatoryCode extends AuditFields {
 export interface JobType extends AuditFields {
   code: string;
   description: string;
+  incomeCode: string;
+  incomeDescription: string;
 }
 
 export interface JobStatusCode extends AuditFields {

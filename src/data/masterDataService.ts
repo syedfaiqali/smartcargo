@@ -91,6 +91,26 @@ const toLegacyAirline = ([code, name]: readonly [string, string]) => withAudit({
   airlineCass: legacyCassAirlineCodes.has(code) ? 'Y' as const : 'N' as const,
 });
 
+const jobTypes = [
+  { code: 'FREIGHT', description: 'Freight', incomeCode: '', incomeDescription: '' },
+  { code: 'CLEARANCE', description: 'Clearance', incomeCode: '', incomeDescription: '' },
+  { code: 'FREIGHT-CLEARANCE', description: 'Freight+Clearance', incomeCode: '', incomeDescription: '' },
+  { code: 'ROAD-TRANSPORT', description: 'Road Transport', incomeCode: '', incomeDescription: '' },
+  { code: 'VALUE-SERVICES', description: 'Value Services', incomeCode: '', incomeDescription: '' },
+  { code: 'CUSTOM-CLEARANCE', description: 'Custom Clearance', incomeCode: '', incomeDescription: '' },
+  { code: 'NOMINATION', description: 'Nomination', incomeCode: '', incomeDescription: '' },
+  { code: 'EX-WORKS', description: 'EX-WORKS', incomeCode: '', incomeDescription: '' },
+];
+
+const sectorCodes = [
+  { code: '1', name: 'USA / CANADA' },
+  { code: '2', name: 'EUROPE' },
+  { code: '3', name: 'FAR EAST' },
+  { code: '4', name: 'AFRICA' },
+  { code: '5', name: 'ASIA' },
+  { code: '6', name: 'MIDDLE EAST' },
+];
+
 function seedIfEmpty() {
   if (isSeeded('masterData')) return;
 
@@ -189,12 +209,7 @@ function seedIfEmpty() {
   );
 
   sectorRepo.replaceAll(
-    [
-      { code: 'ME', name: 'Middle East' },
-      { code: 'FE', name: 'Far East' },
-      { code: 'EU', name: 'Europe' },
-      { code: 'NA', name: 'North America' },
-    ].map(withAudit)
+    sectorCodes.map(withAudit)
   );
 
   countryRepo.replaceAll(
@@ -265,11 +280,7 @@ function seedIfEmpty() {
   );
 
   jobTypeRepo.replaceAll(
-    [
-      { code: 'DIRECT', description: 'Direct Shipment' },
-      { code: 'CONSOL', description: 'Consolidated Shipment' },
-      { code: 'TRANSSHIP', description: 'Transshipment' },
-    ].map(withAudit)
+    jobTypes.map(withAudit)
   );
 
   jobStatusRepo.replaceAll(
@@ -302,4 +313,36 @@ if (!isSeeded('legacyAirlineCodesV1')) {
 if (!isSeeded('legacyAirlineCodesV2')) {
   airlineRepo.replaceAll(legacyAirlineCodes.map(toLegacyAirline));
   markSeeded('legacyAirlineCodesV2');
+}
+
+// Update the original placeholder job types without overwriting user-maintained lists.
+if (!isSeeded('jobTypesV2')) {
+  const currentJobTypes = jobTypeRepo.list();
+  const placeholderCodes = ['DIRECT', 'CONSOL', 'TRANSSHIP'];
+  const isOriginalPlaceholderList = currentJobTypes.length === placeholderCodes.length
+    && currentJobTypes.every((jobType) => placeholderCodes.includes(jobType.code));
+
+  if (isOriginalPlaceholderList) jobTypeRepo.replaceAll(jobTypes.map(withAudit));
+  markSeeded('jobTypesV2');
+}
+
+// Add the Income fields to saved Job Types while retaining all existing entries.
+if (!isSeeded('jobTypesV3')) {
+  jobTypeRepo.replaceAll(jobTypeRepo.list().map((jobType) => ({
+    ...jobType,
+    incomeCode: jobType.incomeCode ?? '',
+    incomeDescription: jobType.incomeDescription ?? '',
+  })));
+  markSeeded('jobTypesV3');
+}
+
+// Replace only the original placeholder sectors; user-maintained lists are retained.
+if (!isSeeded('sectorCodesV2')) {
+  const currentSectors = sectorRepo.list();
+  const placeholderCodes = ['ME', 'FE', 'EU', 'NA'];
+  const isOriginalPlaceholderList = currentSectors.length === placeholderCodes.length
+    && currentSectors.every((sector) => placeholderCodes.includes(sector.code));
+
+  if (isOriginalPlaceholderList) sectorRepo.replaceAll(sectorCodes.map(withAudit));
+  markSeeded('sectorCodesV2');
 }
