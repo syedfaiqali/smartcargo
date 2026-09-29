@@ -30,6 +30,8 @@ import { themeColors } from '../../theme/themeColors';
 export interface CodeField<T> {
   key: keyof T;
   label: string;
+  group?: string;
+  placeholder?: string;
   type?: 'text' | 'number' | 'select';
   options?: { value: string; label: string }[];
   width?: number;
@@ -40,6 +42,8 @@ interface EditableCodeTableProps<T extends AuditFields> {
   addLabel?: string;
   newEntryMode?: 'inline' | 'dialog';
   showAddButton?: boolean;
+  showFilters?: boolean;
+  addFields?: CodeField<T>[];
   onEditRecord?: (item: T) => void;
   fields: CodeField<T>[];
   repo: Repository<T>;
@@ -53,6 +57,8 @@ export function EditableCodeTable<T extends AuditFields>({
   addLabel = 'Add',
   newEntryMode = 'inline',
   showAddButton = true,
+  showFilters = true,
+  addFields,
   onEditRecord,
   fields,
   repo,
@@ -61,6 +67,8 @@ export function EditableCodeTable<T extends AuditFields>({
   onChange,
 }: EditableCodeTableProps<T>) {
   const rows = repo.list();
+  const fieldGroups = [...new Set(fields.map((field) => field.group).filter((group): group is string => Boolean(group)))];
+  const hasFieldGroups = fieldGroups.length > 0;
 
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -207,14 +215,28 @@ export function EditableCodeTable<T extends AuditFields>({
         <Table size="small" key={version}>
           <TableHead>
             <TableRow>
-              {fields.map((f) => (
-                <TableCell key={String(f.key)}>{f.label}</TableCell>
+              {hasFieldGroups ? fields.filter((field) => !field.group).map((field) => (
+                <TableCell key={String(field.key)} rowSpan={2}>{field.label}</TableCell>
+              )) : fields.map((field) => (
+                <TableCell key={String(field.key)}>{field.label}</TableCell>
               ))}
-              <TableCell align="right" sx={{ width: 90 }}>
+              {fieldGroups.map((group) => (
+                <TableCell key={group} colSpan={fields.filter((field) => field.group === group).length} align="center">
+                  {group}
+                </TableCell>
+              ))}
+              <TableCell align="right" sx={{ width: 90 }} rowSpan={hasFieldGroups ? 2 : undefined}>
                 Action
               </TableCell>
             </TableRow>
-            <TableRow>
+            {hasFieldGroups && (
+              <TableRow>
+                {fields.filter((field) => field.group).map((field) => (
+                  <TableCell key={String(field.key)}>{field.label}</TableCell>
+                ))}
+              </TableRow>
+            )}
+            {showFilters && <TableRow>
               {fields.map((field) => (
                 <TableCell key={`${String(field.key)}-filter`}>
                   {field.type === 'select' ? (
@@ -228,7 +250,7 @@ export function EditableCodeTable<T extends AuditFields>({
                 </TableCell>
               ))}
               <TableCell />
-            </TableRow>
+            </TableRow>}
           </TableHead>
           <TableBody>
             {adding && newEntryMode === 'inline' && (
@@ -362,13 +384,13 @@ export function EditableCodeTable<T extends AuditFields>({
         <DialogTitle>{addLabel} {title.slice(0, -1)}</DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, pt: 0.5 }}>
-            {fields.map((field) => (
+            {(addFields ?? fields).map((field) => (
               field.type === 'select' ? (
                 <TextField key={String(field.key)} select label={field.label} value={draft[String(field.key)] ?? ''} onChange={(e) => setDraft({ ...draft, [String(field.key)]: e.target.value })} fullWidth>
                   {(field.options ?? []).map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
                 </TextField>
               ) : (
-                <TextField key={String(field.key)} label={field.label} type={field.type === 'number' ? 'number' : 'text'} value={draft[String(field.key)] ?? ''} onChange={(e) => setDraft({ ...draft, [String(field.key)]: e.target.value })} fullWidth />
+                <TextField key={String(field.key)} label={field.label} placeholder={field.placeholder} type={field.type === 'number' ? 'number' : 'text'} value={draft[String(field.key)] ?? ''} onChange={(e) => setDraft({ ...draft, [String(field.key)]: e.target.value })} fullWidth />
               )
             ))}
           </Box>
