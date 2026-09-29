@@ -102,6 +102,15 @@ const jobTypes = [
   { code: 'EX-WORKS', description: 'EX-WORKS', incomeCode: '', incomeDescription: '' },
 ];
 
+const sectorCodes = [
+  { code: '1', name: 'USA / CANADA' },
+  { code: '2', name: 'EUROPE' },
+  { code: '3', name: 'FAR EAST' },
+  { code: '4', name: 'AFRICA' },
+  { code: '5', name: 'ASIA' },
+  { code: '6', name: 'MIDDLE EAST' },
+];
+
 function seedIfEmpty() {
   if (isSeeded('masterData')) return;
 
@@ -200,12 +209,7 @@ function seedIfEmpty() {
   );
 
   sectorRepo.replaceAll(
-    [
-      { code: 'ME', name: 'Middle East' },
-      { code: 'FE', name: 'Far East' },
-      { code: 'EU', name: 'Europe' },
-      { code: 'NA', name: 'North America' },
-    ].map(withAudit)
+    sectorCodes.map(withAudit)
   );
 
   countryRepo.replaceAll(
@@ -330,4 +334,15 @@ if (!isSeeded('jobTypesV3')) {
     incomeDescription: jobType.incomeDescription ?? '',
   })));
   markSeeded('jobTypesV3');
+}
+
+// Replace only the original placeholder sectors; user-maintained lists are retained.
+if (!isSeeded('sectorCodesV2')) {
+  const currentSectors = sectorRepo.list();
+  const placeholderCodes = ['ME', 'FE', 'EU', 'NA'];
+  const isOriginalPlaceholderList = currentSectors.length === placeholderCodes.length
+    && currentSectors.every((sector) => placeholderCodes.includes(sector.code));
+
+  if (isOriginalPlaceholderList) sectorRepo.replaceAll(sectorCodes.map(withAudit));
+  markSeeded('sectorCodesV2');
 }
