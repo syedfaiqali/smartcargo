@@ -225,7 +225,7 @@ export interface JobRouting {
   /** Date for Flight No. 2; `flightDate` remains the date for Flight No. 1. */
   flightDate2: IsoDate | '';
   flightDate: IsoDate | '';
-  formEType: '' | 'FORM_E_NO' | 'FIN_INST_NO';
+  formEType: '' | 'FORM_E_NO' | 'FIN_INST_NO' | 'PERMISSION_NO';
   formENo: string;
   formEDate: IsoDate | '';
   shipperInvoiceNo: string;

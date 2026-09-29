@@ -525,16 +525,17 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   disabled={!editable}
                   SelectProps={{ displayEmpty: true }}
                   inputProps={{ 'aria-label': 'Form E field type' }}
-                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, formEType: e.target.value as 'FORM_E_NO' | 'FIN_INST_NO' | '' } })}
+                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, formEType: e.target.value as 'FORM_E_NO' | 'FIN_INST_NO' | 'PERMISSION_NO' | '' } })}
                 >
                   <MenuItem value="">(select field)</MenuItem>
                   <MenuItem value="FORM_E_NO">Form E No.</MenuItem>
-                  <MenuItem value="FIN_INST_NO">Fin.Inst.No.</MenuItem>
+                  <MenuItem value="FIN_INST_NO">GD No.</MenuItem>
+                  <MenuItem value="PERMISSION_NO">Permission No.</MenuItem>
                 </TextField>
               </SectionCardField>
               <SectionCardField md={4}>
                 <TextField
-                  label={job.routing.formEType === 'FIN_INST_NO' ? 'Fin.Inst.No.' : job.routing.formEType === 'FORM_E_NO' ? 'Form E No.' : ''}
+                  label={job.routing.formEType === 'FIN_INST_NO' ? 'GD No.' : job.routing.formEType === 'PERMISSION_NO' ? 'Permission No.' : job.routing.formEType === 'FORM_E_NO' ? 'Form E No.' : ''}
                   fullWidth
                   value={job.routing.formENo}
                   disabled={!editable || !job.routing.formEType}
