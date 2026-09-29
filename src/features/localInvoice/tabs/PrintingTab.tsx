@@ -14,6 +14,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { LocalInvoice } from '../../../domain/localInvoice';
 import { SectionCard } from '../../../components/SectionCard';
 import { navyTrustColors, navyTrustFontFamily } from '../../../theme/navyTrustTheme';
+import { printLocalInvoice } from '../localInvoiceReport';
 
 interface PrintingTabProps {
   invoice: LocalInvoice;
@@ -52,7 +53,7 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
             <TextField label="Branch" fullWidth value={invoice.branch} disabled />
           </Grid>
           <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button variant="outlined" startIcon={<PictureAsPdfIcon />} sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}>
+            <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => printLocalInvoice(invoice)} sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}>
               PDF
             </Button>
           </Grid>
