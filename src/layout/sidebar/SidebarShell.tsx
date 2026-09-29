@@ -215,7 +215,7 @@ export function SidebarShell() {
         ref={flyoutRef}
         sx={{
           position: 'fixed',
-          top: 0,
+          top: 8,
           left: isMobile ? 0 : SIDEBAR_WIDTH,
           right: isMobile ? 0 : undefined,
           bottom: isMobile ? 0 : undefined,

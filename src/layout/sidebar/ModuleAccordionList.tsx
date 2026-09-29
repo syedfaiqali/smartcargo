@@ -61,6 +61,11 @@ export function ModuleAccordionList({
                   : { moduleKey: mod.key, groupLabel }
               );
             }}
+            onGroupHover={(groupLabel, anchorTop) => {
+              if (openFlyout?.moduleKey !== mod.key || openFlyout.groupLabel !== groupLabel) {
+                onSetOpenFlyout({ moduleKey: mod.key, groupLabel, anchorTop });
+              }
+            }}
             isPinned={isPinned}
             togglePin={togglePin}
             activePath={activePath}
