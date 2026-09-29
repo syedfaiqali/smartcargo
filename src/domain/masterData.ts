@@ -119,6 +119,7 @@ export interface SectorCode extends AuditFields {
 export interface CountryCode extends AuditFields {
   code: string;
   name: string;
+  sectorCode: string;
 }
 
 export interface CommodityCode extends AuditFields {
