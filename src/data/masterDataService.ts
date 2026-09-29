@@ -17,6 +17,7 @@ import {
   OwnerCode,
   PartyCode,
   PayableTypeCode,
+  PAYABLE_TYPE_DEPTS,
   SeaPortCode,
   SectorCode,
   ShippingLineCode,
@@ -35,6 +36,14 @@ const withAudit = <T extends object>(item: T) => ({
   createdAt: nowIso(),
   updatedAt: nowIso(),
 });
+
+const emptyPayableTypeDeptRows = () => PAYABLE_TYPE_DEPTS.map(({ dept }) => ({
+  dept,
+  otherExpenseCode: '',
+  otherExpenseAmount: 0,
+  otherIncomeCode: '',
+  otherIncomeAmount: 0,
+}));
 
 export const airlineRepo = new Repository<AirlineCode>('airlineCodes');
 export const ownerRepo = new Repository<OwnerCode>('ownerCodes');
@@ -126,8 +135,8 @@ function seedIfEmpty() {
 
   ownerRepo.replaceAll(
     [
-      { code: 'KHI-OWN', name: 'Karachi Branch Owner' },
-      { code: 'LHE-OWN', name: 'Lahore Branch Owner' },
+      { code: 'KHI-OWN', name: 'Karachi Branch Owner', station: '', phoneFaxNo: '', email: '', website: '', iataCode: '', accountNo: '', commissionPercent: 0, whtPercent: 0, logoName: '' },
+      { code: 'LHE-OWN', name: 'Lahore Branch Owner', station: '', phoneFaxNo: '', email: '', website: '', iataCode: '', accountNo: '', commissionPercent: 0, whtPercent: 0, logoName: '' },
     ].map(withAudit)
   );
 
@@ -148,11 +157,11 @@ function seedIfEmpty() {
 
   airportRepo.replaceAll(
     [
-      { code: 'KHI', name: 'Jinnah International Airport', country: 'Pakistan' },
-      { code: 'DXB', name: 'Dubai International Airport', country: 'UAE' },
-      { code: 'DOH', name: 'Hamad International Airport', country: 'Qatar' },
-      { code: 'IST', name: 'Istanbul Airport', country: 'Turkey' },
-      { code: 'HKG', name: 'Hong Kong International Airport', country: 'Hong Kong' },
+      { code: 'KHI', name: 'Jinnah International Airport', countryCode: 'PK', sectorCode: '' },
+      { code: 'DXB', name: 'Dubai International Airport', countryCode: 'AE', sectorCode: '' },
+      { code: 'DOH', name: 'Hamad International Airport', countryCode: 'QA', sectorCode: '' },
+      { code: 'IST', name: 'Istanbul Airport', countryCode: 'TR', sectorCode: '' },
+      { code: 'HKG', name: 'Hong Kong International Airport', countryCode: 'HK', sectorCode: '' },
     ].map(withAudit)
   );
 
@@ -174,8 +183,8 @@ function seedIfEmpty() {
 
   agentRepo.replaceAll(
     [
-      { code: 'CA-01', name: 'Speedway Clearing Agency', kind: 'CLEARING' as const },
-      { code: 'DA-01', name: 'CityLink Delivery Services', kind: 'DELIVERY' as const },
+      { code: 'CA-01', name: 'Speedway Clearing Agency', kind: 'CLEARING' as const, address: '', countryCode: '', phoneNo: '', faxNo: '', contactPerson: '', email: '', website: '' },
+      { code: 'DA-01', name: 'CityLink Delivery Services', kind: 'DELIVERY' as const, address: '', countryCode: '', phoneNo: '', faxNo: '', contactPerson: '', email: '', website: '' },
     ].map(withAudit)
   );
 
@@ -188,19 +197,19 @@ function seedIfEmpty() {
 
   payableTypeRepo.replaceAll(
     [
-      { code: 'TRUCKING', description: 'Trucking / Local Transport' },
-      { code: 'TERMINAL', description: 'Terminal Handling' },
-      { code: 'CUSTOMS', description: 'Customs Agent Fees' },
-      { code: 'MISC', description: 'Miscellaneous Vendor Charges' },
+      { code: 'TRUCKING', description: 'Trucking / Local Transport', vendorCode: '', deptRows: emptyPayableTypeDeptRows() },
+      { code: 'TERMINAL', description: 'Terminal Handling', vendorCode: '', deptRows: emptyPayableTypeDeptRows() },
+      { code: 'CUSTOMS', description: 'Customs Agent Fees', vendorCode: '', deptRows: emptyPayableTypeDeptRows() },
+      { code: 'MISC', description: 'Miscellaneous Vendor Charges', vendorCode: '', deptRows: emptyPayableTypeDeptRows() },
     ].map(withAudit)
   );
 
   shippingLineRepo.replaceAll(
     [
-      { code: 'MSC', name: 'Mediterranean Shipping Company' },
-      { code: 'MAERSK', name: 'Maersk Line' },
-      { code: 'CMA', name: 'CMA CGM' },
-      { code: 'OOCL', name: 'Orient Overseas Container Line' },
+      { code: 'MSC', name: 'Mediterranean Shipping Company', address: '', email: '', website: '', phoneNo: '', faxNo: '', contactPerson: '', ntnNo: '' },
+      { code: 'MAERSK', name: 'Maersk Line', address: '', email: '', website: '', phoneNo: '', faxNo: '', contactPerson: '', ntnNo: '' },
+      { code: 'CMA', name: 'CMA CGM', address: '', email: '', website: '', phoneNo: '', faxNo: '', contactPerson: '', ntnNo: '' },
+      { code: 'OOCL', name: 'Orient Overseas Container Line', address: '', email: '', website: '', phoneNo: '', faxNo: '', contactPerson: '', ntnNo: '' },
     ].map(withAudit)
   );
 
@@ -224,56 +233,56 @@ function seedIfEmpty() {
 
   commodityRepo.replaceAll(
     [
-      { code: 'TEXT', description: 'Textiles / Garments' },
-      { code: 'RICE', description: 'Rice' },
-      { code: 'LEATH', description: 'Leather Goods' },
-      { code: 'GEN', description: 'General Cargo' },
+      { code: 'TEXT', description: 'Textiles / Garments', commodityType: 'Dry Cargo' as const, hsCode: '' },
+      { code: 'RICE', description: 'Rice', commodityType: 'Dry Cargo' as const, hsCode: '' },
+      { code: 'LEATH', description: 'Leather Goods', commodityType: 'Dry Cargo' as const, hsCode: '' },
+      { code: 'GEN', description: 'General Cargo', commodityType: 'Dry Cargo' as const, hsCode: '' },
     ].map(withAudit)
   );
 
   containerTypeRepo.replaceAll(
     [
-      { code: '20GP', description: "20' General Purpose" },
-      { code: '40GP', description: "40' General Purpose" },
-      { code: '40HC', description: "40' High Cube" },
-      { code: 'LCL', description: 'Less than Container Load' },
+      { code: '20GP', size: '20', containerType: 'General Purpose', teus: 1 },
+      { code: '40GP', size: '40', containerType: 'General Purpose', teus: 2 },
+      { code: '40HC', size: '40', containerType: 'High Cube', teus: 2 },
+      { code: 'LCL', size: '', containerType: 'Less than Container Load', teus: 0 },
     ].map(withAudit)
   );
 
   subAgentPartyRepo.replaceAll(
     [
-      { code: 'SUB-01', name: 'Al Madina Cargo Services', address: 'Lahore' },
-      { code: 'SUB-02', name: 'Ocean Link Agencies', address: 'Karachi' },
+      { code: 'SUB-01', name: 'Al Madina Cargo Services', address: 'Lahore', phoneNo: '', faxNo: '', contactPerson: '', exportRegNo: '', saleTaxNo: '', ntnNo: '', zipCode: '', cityCode: '', countryCode: '', email: '', website: '' },
+      { code: 'SUB-02', name: 'Ocean Link Agencies', address: 'Karachi', phoneNo: '', faxNo: '', contactPerson: '', exportRegNo: '', saleTaxNo: '', ntnNo: '', zipCode: '', cityCode: '', countryCode: '', email: '', website: '' },
     ].map(withAudit)
   );
 
   associateRepo.replaceAll(
     [
-      { code: 'ASC-01', name: 'Continental Freight Associates' },
-      { code: 'ASC-02', name: 'Silk Route Logistics' },
+      { code: 'ASC-01', name: 'Continental Freight Associates', address: '', countryCode: '', phoneNo: '', faxNo: '', contactPerson: '', email: '', website: '' },
+      { code: 'ASC-02', name: 'Silk Route Logistics', address: '', countryCode: '', phoneNo: '', faxNo: '', contactPerson: '', email: '', website: '' },
     ].map(withAudit)
   );
 
   chargeableRepo.replaceAll(
     [
-      { code: 'PP', description: 'Prepaid' },
-      { code: 'CC', description: 'Collect' },
+      { code: 'PP', name: 'Prepaid', description: 'FREIGHT PREPAID', ppCc: 'PP' as const },
+      { code: 'CC', name: 'Collect', description: 'FREIGHT COLLECT', ppCc: 'CC' as const },
     ].map(withAudit)
   );
 
   invoiceChargeRepo.replaceAll(
     [
-      { code: 'FRT', description: 'Freight Charges' },
-      { code: 'THC', description: 'Terminal Handling Charges' },
-      { code: 'DOC', description: 'Documentation Fee' },
-      { code: 'CUS', description: 'Customs Clearance' },
+      { code: 'FRT', description: 'Freight Charges', awbAbbreviation: 'FRT', financeCode: '' },
+      { code: 'THC', description: 'Terminal Handling Charges', awbAbbreviation: 'THC', financeCode: '' },
+      { code: 'DOC', description: 'Documentation Fee', awbAbbreviation: 'DOC', financeCode: '' },
+      { code: 'CUS', description: 'Customs Clearance', awbAbbreviation: 'CUS', financeCode: '' },
     ].map(withAudit)
   );
 
   signatoryRepo.replaceAll(
     [
-      { code: 'SIG-01', name: 'Ahmed Raza', designation: 'Branch Manager' },
-      { code: 'SIG-02', name: 'Bilal Khan', designation: 'Operations Head' },
+      { code: 'SIG-01', name: 'Ahmed Raza', designation: 'Branch Manager', fatherName: '', cnicNo: '', email: '', signatureImageName: '' },
+      { code: 'SIG-02', name: 'Bilal Khan', designation: 'Operations Head', fatherName: '', cnicNo: '', email: '', signatureImageName: '' },
     ].map(withAudit)
   );
 
@@ -356,6 +365,16 @@ if (!isSeeded('countryCodesV2')) {
   markSeeded('countryCodesV2');
 }
 
+// Add the Commodity Type / H.S Code fields to saved Commodity Codes while retaining all existing entries.
+if (!isSeeded('commodityCodesV2')) {
+  commodityRepo.replaceAll(commodityRepo.list().map((commodity) => ({
+    ...commodity,
+    commodityType: commodity.commodityType ?? '',
+    hsCode: commodity.hsCode ?? '',
+  })));
+  markSeeded('commodityCodesV2');
+}
+
 // Merge missing ISO country records into every existing browser list without removing custom records.
 if (!isSeeded('countryCodesV3')) {
   const currentCountries = countryRepo.list();
@@ -370,4 +389,157 @@ if (!isSeeded('countryCodesV3')) {
 if (!isSeeded('countryCodesV4')) {
   countryRepo.replaceAll(countryRepo.list().map((country) => ({ ...country, sectorCode: country.sectorCode ?? '' })));
   markSeeded('countryCodesV4');
+}
+
+// Split the old single "description" field on Container Types into Size / Container Type / No. of TEUs.
+if (!isSeeded('containerTypesV2')) {
+  containerTypeRepo.replaceAll(containerTypeRepo.list().map((container) => {
+    const legacy = container as unknown as { description?: string };
+    return {
+      ...container,
+      size: container.size ?? '',
+      containerType: container.containerType ?? legacy.description ?? '',
+      teus: container.teus ?? 0,
+    };
+  }));
+  markSeeded('containerTypesV2');
+}
+
+// Add the contact/address fields to saved Shipping Line Codes while retaining all existing entries.
+if (!isSeeded('shippingLineCodesV2')) {
+  shippingLineRepo.replaceAll(shippingLineRepo.list().map((line) => ({
+    ...line,
+    address: line.address ?? '',
+    email: line.email ?? '',
+    website: line.website ?? '',
+    phoneNo: line.phoneNo ?? '',
+    faxNo: line.faxNo ?? '',
+    contactPerson: line.contactPerson ?? '',
+    ntnNo: line.ntnNo ?? '',
+  })));
+  markSeeded('shippingLineCodesV2');
+}
+
+// Add the contact/registration/location fields to saved Sub-Agent Parties while retaining all existing entries.
+if (!isSeeded('subAgentPartiesV2')) {
+  subAgentPartyRepo.replaceAll(subAgentPartyRepo.list().map((party) => ({
+    ...party,
+    phoneNo: party.phoneNo ?? '',
+    faxNo: party.faxNo ?? '',
+    contactPerson: party.contactPerson ?? '',
+    exportRegNo: party.exportRegNo ?? '',
+    saleTaxNo: party.saleTaxNo ?? '',
+    ntnNo: party.ntnNo ?? '',
+    zipCode: party.zipCode ?? '',
+    cityCode: party.cityCode ?? '',
+    countryCode: party.countryCode ?? '',
+    email: party.email ?? '',
+    website: party.website ?? '',
+  })));
+  markSeeded('subAgentPartiesV2');
+}
+
+// Add the station/contact/commission/logo fields to saved Owner Codes while retaining all existing entries.
+if (!isSeeded('ownerCodesV2')) {
+  ownerRepo.replaceAll(ownerRepo.list().map((owner) => ({
+    ...owner,
+    station: owner.station ?? '',
+    phoneFaxNo: owner.phoneFaxNo ?? '',
+    email: owner.email ?? '',
+    website: owner.website ?? '',
+    iataCode: owner.iataCode ?? '',
+    accountNo: owner.accountNo ?? '',
+    commissionPercent: owner.commissionPercent ?? 0,
+    whtPercent: owner.whtPercent ?? 0,
+    logoName: owner.logoName ?? '',
+  })));
+  markSeeded('ownerCodesV2');
+}
+
+// Add the address/country/contact fields to saved Associate Codes while retaining all existing entries.
+if (!isSeeded('associateCodesV2')) {
+  associateRepo.replaceAll(associateRepo.list().map((associate) => ({
+    ...associate,
+    address: associate.address ?? '',
+    countryCode: associate.countryCode ?? '',
+    phoneNo: associate.phoneNo ?? '',
+    faxNo: associate.faxNo ?? '',
+    contactPerson: associate.contactPerson ?? '',
+    email: associate.email ?? '',
+    website: associate.website ?? '',
+  })));
+  markSeeded('associateCodesV2');
+}
+
+// Add the Name / PP-CC fields to saved Chargeable Codes while retaining all existing entries.
+if (!isSeeded('chargeableCodesV2')) {
+  chargeableRepo.replaceAll(chargeableRepo.list().map((chargeable) => ({
+    ...chargeable,
+    name: chargeable.name ?? chargeable.description ?? '',
+    ppCc: chargeable.ppCc ?? (chargeable.code === 'CC' ? 'CC' : 'PP'),
+  })));
+  markSeeded('chargeableCodesV2');
+}
+
+// Add the AWB abbreviation / Finance Code fields to saved Invoice Charge Codes while retaining all existing entries.
+if (!isSeeded('invoiceChargeCodesV2')) {
+  invoiceChargeRepo.replaceAll(invoiceChargeRepo.list().map((chargeCode) => ({
+    ...chargeCode,
+    awbAbbreviation: chargeCode.awbAbbreviation ?? '',
+    financeCode: chargeCode.financeCode ?? '',
+  })));
+  markSeeded('invoiceChargeCodesV2');
+}
+
+// Add the Father Name / CNIC / Email / signature image fields to saved Signatory Codes while retaining all existing entries.
+if (!isSeeded('signatoryCodesV2')) {
+  signatoryRepo.replaceAll(signatoryRepo.list().map((signatory) => ({
+    ...signatory,
+    fatherName: signatory.fatherName ?? '',
+    cnicNo: signatory.cnicNo ?? '',
+    email: signatory.email ?? '',
+    signatureImageName: signatory.signatureImageName ?? '',
+  })));
+  markSeeded('signatoryCodesV2');
+}
+
+// Add the address/country/contact fields to saved Clearing/Delivery Agent Codes while retaining all existing entries.
+if (!isSeeded('agentCodesV2')) {
+  agentRepo.replaceAll(agentRepo.list().map((agent) => ({
+    ...agent,
+    address: agent.address ?? '',
+    countryCode: agent.countryCode ?? '',
+    phoneNo: agent.phoneNo ?? '',
+    faxNo: agent.faxNo ?? '',
+    contactPerson: agent.contactPerson ?? '',
+    email: agent.email ?? '',
+    website: agent.website ?? '',
+  })));
+  markSeeded('agentCodesV2');
+}
+
+// Add the Vendor Code / department expense-income matrix fields to saved Payable Type Codes while retaining all existing entries.
+if (!isSeeded('payableTypeCodesV2')) {
+  payableTypeRepo.replaceAll(payableTypeRepo.list().map((payableType) => ({
+    ...payableType,
+    vendorCode: payableType.vendorCode ?? '',
+    deptRows: payableType.deptRows?.length ? payableType.deptRows : emptyPayableTypeDeptRows(),
+  })));
+  markSeeded('payableTypeCodesV2');
+}
+
+// Replace the old free-text "country" field on Airport/Destination Codes with a linked Country Code, and add Sector Code.
+if (!isSeeded('airportCodesV2')) {
+  const legacyCountryNameToCode: Record<string, string> = {
+    Pakistan: 'PK', UAE: 'AE', Qatar: 'QA', Turkey: 'TR', 'Hong Kong': 'HK',
+  };
+  airportRepo.replaceAll(airportRepo.list().map((airport) => {
+    const legacy = airport as unknown as { country?: string };
+    return {
+      ...airport,
+      countryCode: airport.countryCode ?? (legacy.country ? legacyCountryNameToCode[legacy.country] ?? '' : ''),
+      sectorCode: airport.sectorCode ?? '',
+    };
+  }));
+  markSeeded('airportCodesV2');
 }
