@@ -132,8 +132,8 @@ function seedIfEmpty() {
 
   spoRepo.replaceAll(
     [
-      { code: 'SPO-01', description: 'Sales Person A' },
-      { code: 'SPO-02', description: 'Sales Person B' },
+      { code: 'SPO-01', description: 'Sales Person A', sharePercent: 1, splitedSharePercent: 0, financeCode: '', designation: '', mobileNo: '', email: '', active: 'Y' as const },
+      { code: 'SPO-02', description: 'Sales Person B', sharePercent: 1, splitedSharePercent: 0, financeCode: '', designation: '', mobileNo: '', email: '', active: 'Y' as const },
     ].map(withAudit)
   );
 

@@ -66,7 +66,15 @@ export interface AirportCode extends AuditFields {
 
 export interface SpoCode extends AuditFields {
   code: string;
+  /** SPO Name — kept as `description` so existing SPO-code dropdowns across job/invoice entry forms keep working unchanged. */
   description: string;
+  sharePercent: number;
+  splitedSharePercent: number;
+  financeCode: string;
+  designation: string;
+  mobileNo: string;
+  email: string;
+  active: 'Y' | 'N';
 }
 
 export interface CurrencyCode extends AuditFields {
