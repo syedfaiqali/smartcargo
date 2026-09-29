@@ -2,9 +2,26 @@ import { jsPDF } from 'jspdf';
 import { Job } from '../../domain/job';
 
 const date = (value: string) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-GB') : '';
+const headerUrl = `${process.env.PUBLIC_URL}/masum-logistics-header.png`;
+let headerImage: string | undefined;
+
+async function loadHeaderImage() {
+  if (headerImage) return headerImage;
+  const response = await fetch(headerUrl);
+  if (!response.ok) throw new Error('The undertaking letter header could not be loaded.');
+  const blob = await response.blob();
+  headerImage = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+  return headerImage;
+}
 
 /** Native undertaking letter used by Air Export MAWB printing. */
-export function printUndertakingLetter(job: Job) {
+export async function printUndertakingLetter(job: Job) {
+  const header = await loadHeaderImage();
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const firstLine = job.chargeLines[0];
   const mawb = job.mawbNo.replace(/[^A-Za-z0-9-]/g, '');
@@ -14,10 +31,10 @@ export function printUndertakingLetter(job: Job) {
   const wrapped = (value: string, x: number, y: number, width: number, size = 9.5, style: 'normal' | 'bold' = 'normal') => doc.setFont('helvetica', style).setFontSize(size).text(doc.splitTextToSize(value, width), x, y, { lineHeightFactor: 1.08 });
 
   doc.setLineWidth(.55); doc.line(1, 1, 209, 1);
-  doc.setFillColor(228, 240, 249); doc.circle(18, 18, 13, 'F'); doc.setDrawColor(48, 86, 135); doc.setLineWidth(.7); doc.circle(18, 18, 12); text('M', 18, 23, 22, 'bold', 'center');
-  doc.setTextColor(45, 85, 143); text('MASUM LOGISTICS', 34, 19, 19, 'bold'); doc.setTextColor(0, 0, 0);
+  // Header artwork is the supplied brand treatment; the rest of the report
+  // remains live vector text for sharp printing.
+  doc.addImage(header, 'PNG', 2, -17, 205, 68.5, undefined, 'FAST');
   text('Off : 815, 8th Floor Park Avenue Building, P.E.C.H.S Block-6 , Shahrah-e-Faisal', 34, 27, 6.8); text('Karachi, Pakistan  Tel : +92-21-34521335  Email : info@masumlogistics.com.pk', 34, 32, 6.8);
-  text('WCA', 166, 17, 8, 'bold', 'center'); text('IATA', 186, 17, 9, 'bold', 'center'); text('ACN', 186, 27, 9, 'bold', 'center');
   text('UNDERTAKING', 105, 40, 14, 'bold', 'center'); doc.setLineWidth(.3); doc.line(74, 42, 136, 42); text('To  Whom  It  May  Concern', 105, 51, 12, 'bold', 'center'); doc.line(60, 53, 150, 53);
   text('We hereby undertake that our following shipment of', 21, 62, 8.5);
   const labels: Array<[string, string, number]> = [
