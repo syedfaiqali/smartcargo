@@ -29,6 +29,22 @@ export const themeColors = {
   sidebarScrollbarThumb: 'rgba(255,255,255,0.16)',
   sidebarScrollbarThumbHover: 'rgba(255,255,255,0.28)',
 
+  // Sidebar flyout panel (click-to-open submenu overlay).
+  sidebarFlyoutBg: '#101f3d',
+  sidebarFlyoutBorder: 'rgba(255,255,255,0.10)',
+  sidebarFlyoutShadow: '0 16px 40px rgba(0,0,0,0.35)',
+
+  // Favorite star control.
+  sidebarStarGold: '#d4a017',
+  sidebarStarGoldMuted: 'rgba(212,160,23,0.4)',
+
+  // Accent — active borders, focus rings, highlighted search matches.
+  sidebarAccent: '#4f8cff',
+
+  // Quick access (pinned items) section.
+  sidebarQuickAccessBg: 'rgba(255,255,255,0.04)',
+  sidebarQuickAccessHover: 'rgba(255,255,255,0.08)',
+
   // Page background & surfaces.
   pageBackground: '#f4f6f9',
   surface: '#ffffff',
