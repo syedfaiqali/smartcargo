@@ -20,6 +20,12 @@ import { printAirWaybill } from '../airWaybillReport';
 import { printUndertakingLetter } from '../undertakingLetterReport';
 import { printCargoManifest } from '../cargoManifestReport';
 import { printLabelSheet } from '../labelPrintingReport';
+import { printExtraSheet } from '../extraSheetReport';
+import { printShipmentPreAlert } from '../shipmentPreAlertReport';
+import { printOuterReport } from '../outerReport';
+import { printSecurityCertificate } from '../securityCertificateReport';
+import { printAirwaybillBackSide } from '../airwaybillBackSideReport';
+import { printMawbAcceptanceStatement } from '../mawbAcceptanceStatementReport';
 
 interface PrintingTabProps {
   job: Job;
@@ -84,6 +90,12 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
                 if (p.documentType === 'UNDER_TAKING_LETTER') printUndertakingLetter(job);
                 if (p.documentType === 'CARGO_MANIFEST') printCargoManifest(job);
                 if (p.documentType === 'LABEL_PRINTING') printLabelSheet(job);
+                if (p.documentType === 'EXTRA_SHEET_PRINTING') printExtraSheet(job);
+                if (p.documentType === 'SHIPMENT_PRE_ALERT') printShipmentPreAlert(job);
+                if (p.documentType === 'OUTER') printOuterReport(job);
+                if (p.documentType === 'SECURITY_CERTIFICATE') printSecurityCertificate(job);
+                if (p.documentType === 'AWB_BACK_SIDE') printAirwaybillBackSide(job);
+                if (p.documentType === 'MAWB_ACCEPTANCE_STATEMENT') printMawbAcceptanceStatement(job);
               }}
               sx={{ fontFamily: navyTrustFontFamily, borderColor: navyTrustColors.border }}
             >
