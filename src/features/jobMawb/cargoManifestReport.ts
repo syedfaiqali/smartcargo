@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { Job } from '../../domain/job';
 
-const headerUrl = `${process.env.PUBLIC_URL}/masum-logistics-header.png`;
+const headerUrl = `${import.meta.env.BASE_URL}masum-logistics-header.png`;
 let headerImage: string | undefined;
 const date = (value: string) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-GB') : '';
 
