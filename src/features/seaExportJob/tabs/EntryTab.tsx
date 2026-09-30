@@ -85,7 +85,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           onToggle={() => setOpenSection(openSection === 1 ? 0 : 1)}
         >
           <FormRow>
-            <FormField md={2}>
+            <FormField md={4}>
               <TextField
                 label="Branch"
                 fullWidth
@@ -94,10 +94,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(e) => set("branch", e.target.value)}
               />
             </FormField>
-            <FormField md={2}>
+            <FormField md={4}>
               <TextField label="Job No." fullWidth value={job.jobNo} disabled />
             </FormField>
-            <FormField md={1}>
+            <FormField md={4}>
               <DateField
                 label="Date"
                 value={job.date}
@@ -218,12 +218,20 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               <FormRow>
                 <FormField md={6}>
                   <TextField
+                    select
                     label="Sub Agent's Party"
+                    required
                     fullWidth
                     value={job.subAgentParty}
                     disabled={!editable}
                     onChange={(e) => set("subAgentParty", e.target.value)}
-                  />
+                  >
+                    {parties.map((p) => (
+                      <MenuItem key={p.code} value={p.code}>
+                        {p.code} — {p.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </FormField>
                 <FormField md={6}>
                   <TextField
@@ -268,12 +276,20 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 </FormField>
                 <FormField md={6}>
                   <TextField
+                    select
                     label="S/Line Agent"
+                    required
                     fullWidth
                     value={job.sLineAgent}
                     disabled={!editable}
                     onChange={(e) => set("sLineAgent", e.target.value)}
-                  />
+                  >
+                    {parties.map((p) => (
+                      <MenuItem key={p.code} value={p.code}>
+                        {p.code} — {p.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </FormField>
                 <FormField md={6}>
                   <TextField
@@ -423,21 +439,37 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           <FormRow>
             <FormField md={4}>
               <TextField
+                select
                 label="Wharf"
+                required
                 fullWidth
                 value={job.wharf}
                 disabled={!editable}
                 onChange={(e) => set("wharf", e.target.value)}
-              />
+              >
+                {parties.map((p) => (
+                  <MenuItem key={p.code} value={p.code}>
+                    {p.code} — {p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </FormField>
             <FormField md={4}>
               <TextField
+                select
                 label="Terminal"
+                required
                 fullWidth
                 value={job.terminal}
                 disabled={!editable}
                 onChange={(e) => set("terminal", e.target.value)}
-              />
+              >
+                {parties.map((p) => (
+                  <MenuItem key={p.code} value={p.code}>
+                    {p.code} — {p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </FormField>
             <FormField md={4}>
               <TextField
@@ -457,12 +489,20 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
             <FormField md={4}>
               <TextField
+                select
                 label="Shipment Status"
+                required
                 fullWidth
                 value={job.jobStatus}
                 disabled={!editable}
                 onChange={(e) => set("jobStatus", e.target.value)}
-              />
+              >
+                {parties.map((p) => (
+                  <MenuItem key={p.code} value={p.code}>
+                    {p.code} — {p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </FormField>
             <FormField md={4}>
               <DateField
@@ -501,81 +541,6 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
           </FormRow>
 
-          <SectionHeader>Shipment Mode</SectionHeader>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                select
-                label="LCL/FCL *"
-                required
-                fullWidth
-                value={job.lclFcl}
-                disabled={!editable}
-                onChange={(e) => set("lclFcl", e.target.value as "LCL" | "FCL")}
-              >
-                <MenuItem value="LCL">LCL</MenuItem>
-                <MenuItem value="FCL">FCL</MenuItem>
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                select
-                label="M.PP/CC"
-                fullWidth
-                value={job.mPpCc}
-                disabled={!editable}
-                onChange={(e) => set("mPpCc", e.target.value as "PP" | "CC")}
-              >
-                <MenuItem value="PP">PP</MenuItem>
-                <MenuItem value="CC">CC</MenuItem>
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                select
-                label="CY/CFS"
-                fullWidth
-                value={job.cyCfs}
-                disabled={!editable}
-                onChange={(e) => set("cyCfs", e.target.value as "CY" | "CFS")}
-              >
-                <MenuItem value="CY">CY</MenuItem>
-                <MenuItem value="CFS">CFS</MenuItem>
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                select
-                label="H.PP/CC"
-                fullWidth
-                value={job.hPpCc}
-                disabled={!editable}
-                onChange={(e) => set("hPpCc", e.target.value as "PP" | "CC")}
-              >
-                <MenuItem value="PP">PP</MenuItem>
-                <MenuItem value="CC">CC</MenuItem>
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <DateField
-                label="CY/CFS Cutt Off"
-                value={job.cyCfsCutOff}
-                disabled={!editable}
-                onChange={(value) => set("cyCfsCutOff", value)}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="RO No."
-                fullWidth
-                value={job.roNo}
-                disabled={!editable}
-                onChange={(e) => set("roNo", e.target.value)}
-              />
-            </FormField>
-          </FormRow>
         </WorkflowSection>
 
         {/* MIDDLE COLUMN — measurements, docs, milestones */}
@@ -585,281 +550,25 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           open={openSection === 2}
           onToggle={() => setOpenSection(openSection === 2 ? 0 : 2)}
         >
-          <SectionHeader>Cargo Quantity &amp; Currency</SectionHeader>
-          <FormRow>
-            <FormField md={12}><Typography variant="caption" sx={{ fontWeight: 700 }}>Consol Total</Typography></FormField>
-            <FormField md={2}><NumberField label="CBM" fullWidth value={job.consolTotal.cbm} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, cbm: Number(e.target.value) })} /></FormField>
-            <FormField md={2}><NumberField label="Gross Weight" fullWidth value={job.consolTotal.grossWeight} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, grossWeight: Number(e.target.value) })} /></FormField>
-            <FormField md={2}><NumberField label="Net Weight" fullWidth value={job.consolTotal.netWeight} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, netWeight: Number(e.target.value) })} /></FormField>
-            <FormField md={2}><NumberField label="Packages" fullWidth value={job.consolTotal.noOfPackages} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, noOfPackages: Number(e.target.value) })} /></FormField>
-            <FormField md={2}><TextField label="UOM" fullWidth value={job.consolTotal.uom} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, uom: e.target.value })} /></FormField>
-            <FormField md={2}><NumberField label="Shipments" fullWidth value={job.consolTotal.noOfShipments} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, noOfShipments: Number(e.target.value) })} /></FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                fullWidth
-                label="Destination"
-                value={job.Destination}
-                disabled={!editable}
-                // onChange={(e) =>
-                //   update({ destinationCode: e.target.value })
-                // }
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Last Consol No." fullWidth value={job.lastConsolNo} disabled={!editable} onChange={(e) => set("lastConsolNo", e.target.value)} /></FormField></FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                label="No. of Packages"
-                type="number"
-                fullWidth
-                value={job.noOfPackages}
-                disabled={!editable}
-                onChange={(e) => set("noOfPackages", Number(e.target.value))}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Unit"
-                fullWidth
-                value={job.unit}
-                disabled={!editable}
-                onChange={(e) => set("unit", e.target.value)}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="No. of Pcs (QTY)"
-                type="number"
-                fullWidth
-                value={job.noOfPcsQty}
-                disabled={!editable}
-                onChange={(e) => set("noOfPcsQty", Number(e.target.value))}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Unit (QTY)"
-                fullWidth
-                value={job.unitQty}
-                disabled={!editable}
-                onChange={(e) => set("unitQty", e.target.value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                select
-                label="Currency Code"
-                fullWidth
-                value={job.currencyCode}
-                disabled={!editable}
-                onChange={(e) => set("currencyCode", e.target.value)}
-              >
-                {currencies.map((c) => (
-                  <MenuItem key={c.code} value={c.code}>
-                    {c.code}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Exchange Rate"
-                type="number"
-                fullWidth
-                value={job.exchangeRate}
-                disabled={!editable}
-                onChange={(e) => set("exchangeRate", Number(e.target.value))}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                label="Grs Weight"
-                type="number"
-                fullWidth
-                value={job.grossWeight}
-                disabled={!editable}
-                onChange={(e) => set("grossWeight", Number(e.target.value))}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Net Weight"
-                type="number"
-                fullWidth
-                value={job.netWeight}
-                disabled={!editable}
-                onChange={(e) => set("netWeight", Number(e.target.value))}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Vol.Weight"
-                type="number"
-                fullWidth
-                value={job.volWeight}
-                disabled={!editable}
-                onChange={(e) => set("volWeight", Number(e.target.value))}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                label="CBM"
-                type="number"
-                fullWidth
-                value={job.cbm}
-                disabled={!editable}
-                onChange={(e) => set("cbm", Number(e.target.value))}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="CBM Rate"
-                type="number"
-                fullWidth
-                value={job.cbmRate}
-                disabled={!editable}
-                onChange={(e) => set("cbmRate", Number(e.target.value))}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={2}>
-              <TextField
-                label="IncoTerm"
-                fullWidth
-                value={job.incoTerm}
-                disabled={!editable}
-                onChange={(e) => set("incoTerm", e.target.value)}
-              />
-            </FormField>
-            <FormField md={3}>
-              <TextField
-                label="HS Code"
-                fullWidth
-                value={job.hsCode}
-                disabled={!editable}
-                onChange={(e) => set("hsCode", e.target.value)}
-              />
-            </FormField>
-            <FormField md={3}>
-              <TextField
-                label="Stack Code"
-                fullWidth
-                value={job.stackCode}
-                disabled={!editable}
-                onChange={(e) => set("stackCode", e.target.value)}
-              />
-            </FormField>
-            <FormField md={3}>
-              <TextField
-                label="Run No."
-                fullWidth
-                value={job.runNo}
-                disabled={!editable}
-                onChange={(e) => set("runNo", e.target.value)}
-              />
-            </FormField>
-          </FormRow>
-
-          <SectionHeader>Shipper Invoice</SectionHeader>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                label="Inv. No."
-                fullWidth
-                value={job.shipperInvoice.invNo}
-                disabled={!editable}
-                onChange={(e) =>
-                  set("shipperInvoice", {
-                    ...job.shipperInvoice,
-                    invNo: e.target.value,
-                  })
-                }
-              />
-            </FormField>
-            <FormField md={4}>
-              <DateField
-                label="Date"
-                value={job.shipperInvoice.date}
-                disabled={!editable}
-                onChange={(value) =>
-                  set("shipperInvoice", { ...job.shipperInvoice, date: value })
-                }
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                select
-                label="Currency Code"
-                fullWidth
-                value={job.shipperInvoice.currencyCode}
-                disabled={!editable}
-                onChange={(e) =>
-                  set("shipperInvoice", {
-                    ...job.shipperInvoice,
-                    currencyCode: e.target.value,
-                  })
-                }
-              >
-                {currencies.map((c) => (
-                  <MenuItem key={c.code} value={c.code}>
-                    {c.code}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="Amount"
-                type="number"
-                fullWidth
-                value={job.shipperInvoice.amount}
-                disabled={!editable}
-                onChange={(e) =>
-                  set("shipperInvoice", {
-                    ...job.shipperInvoice,
-                    amount: Number(e.target.value),
-                  })
-                }
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField
-                label="P.O. No."
-                fullWidth
-                value={job.shipperInvoice.poNo}
-                disabled={!editable}
-                onChange={(e) =>
-                  set("shipperInvoice", {
-                    ...job.shipperInvoice,
-                    poNo: e.target.value,
-                  })
-                }
-              />
-            </FormField>
-          </FormRow>
 
           <SectionHeader>Document Milestones</SectionHeader>
           <FormRow>
             <FormField md={3}>
               <TextField
+                select
                 label="CC Place"
+                required
                 fullWidth
                 value={job.ccPlace}
                 disabled={!editable}
                 onChange={(e) => set("ccPlace", e.target.value)}
-              />
+              >
+                {parties.map((p) => (
+                  <MenuItem key={p.code} value={p.code}>
+                    {p.code} — {p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </FormField>
             <FormField md={3}>
               <DateField
@@ -886,16 +595,23 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               />
             </FormField>
           </FormRow>
-          <FormRow><FormField md={6}><TextField label="Vehicle No." fullWidth value={job.vehicleNo} disabled={!editable} onChange={(e) => set("vehicleNo", e.target.value)} /></FormField><FormField md={6}><TextField label="Vehicle Type" fullWidth value={job.vehicleType} disabled={!editable} onChange={(e) => set("vehicleType", e.target.value)} /></FormField></FormRow>
           <FormRow>
             <FormField md={3}>
               <TextField
+                select
                 label="Select From E"
+                required
                 fullWidth
                 value={job.selectFromE}
                 disabled={!editable}
                 onChange={(e) => set("selectFromE", e.target.value)}
-              />
+              >
+                {parties.map((p) => (
+                  <MenuItem key={p.code} value={p.code}>
+                    {p.code} — {p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </FormField>
             <FormField md={3}>
               <TextField
@@ -977,6 +693,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               />
             </FormField>
           </FormRow>
+          {/* <FormRow>
+            
+          </FormRow> */}
           <FormRow>
             <FormField md={3}>
               <DateField
@@ -1025,12 +744,20 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
             <FormField md={4}>
               <TextField
+                select
                 label="S/B Place"
+                required
                 fullWidth
                 value={job.sbPlace}
                 disabled={!editable}
                 onChange={(e) => set("sbPlace", e.target.value)}
-              />
+              >
+                {parties.map((p) => (
+                  <MenuItem key={p.code} value={p.code}>
+                    {p.code} — {p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </FormField>
             <FormField md={4}>
               <DateField
@@ -1107,12 +834,20 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           <FormRow>
             <FormField md={4}>
               <TextField
+                select
                 label="HBL Type"
+                required
                 fullWidth
                 value={job.hblType}
                 disabled={!editable}
                 onChange={(e) => set("hblType", e.target.value)}
-              />
+              >
+                {parties.map((p) => (
+                  <MenuItem key={p.code} value={p.code}>
+                    {p.code} — {p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </FormField>
             <FormField md={4}>
               <DateField
@@ -1147,6 +882,376 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 value={job.hblDate}
                 disabled={!editable}
                 onChange={(value) => set("hblDate", value)}
+              />
+            </FormField>
+          </FormRow>
+          <SectionHeader>Cargo Quantity &amp; Currency</SectionHeader>
+          <FormRow>
+            <FormField md={12}><Typography variant="caption" sx={{ fontWeight: 700 }}>Consol Total</Typography></FormField>
+            <FormField md={3}>
+              <NumberField
+                label="CBM"
+                fullWidth
+                value={job.consolTotal.cbm}
+                disabled={!editable}
+                onChange={(e) => set("consolTotal", { ...job.consolTotal, cbm: Number(e.target.value) })}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="No. of Packages"
+                type="number"
+                fullWidth
+                value={job.noOfPackages}
+                disabled={!editable}
+                onChange={(e) => set("noOfPackages", Number(e.target.value))}
+              />
+            </FormField>
+            <FormField md={3}>
+              <NumberField
+                label="Gross Weight"
+                fullWidth value={job.consolTotal.grossWeight} disabled={!editable}
+                onChange={(e) => set("consolTotal", { ...job.consolTotal, grossWeight: Number(e.target.value) })} />
+            </FormField>
+            <FormField md={3}>
+              <TextField label="UOM" fullWidth value={job.consolTotal.uom} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, uom: e.target.value })} />
+            </FormField>
+          </FormRow>
+          <FormRow>
+            <FormField md={3}><NumberField label="Net Weight" fullWidth value={job.consolTotal.netWeight} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, netWeight: Number(e.target.value) })} /></FormField>
+            <FormField md={3}><NumberField label="No. of Shipments" fullWidth value={job.consolTotal.noOfShipments} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, noOfShipments: Number(e.target.value) })} /></FormField>
+            <FormField md={3}>
+              <TextField
+                fullWidth
+                label="Destination"
+                value={job.Destination}
+                disabled={!editable}
+              // onChange={(e) =>
+              //   update({ destinationCode: e.target.value })
+              // }
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField label="Last Consol No." fullWidth value={job.lastConsolNo} disabled={!editable} onChange={(e) => set("lastConsolNo", e.target.value)} /></FormField></FormRow>
+          <SectionHeader>Shipment Mode</SectionHeader>
+          <FormRow>
+            <FormField md={3}>
+              <TextField
+                select
+                label="LCL/FCL"
+                required
+                fullWidth
+                value={job.lclFcl}
+                disabled={!editable}
+                onChange={(e) => set("lclFcl", e.target.value as "LCL" | "FCL")}
+              >
+                <MenuItem value="LCL">LCL</MenuItem>
+                <MenuItem value="FCL">FCL</MenuItem>
+              </TextField>
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                select
+                label="M.PP/CC"
+                fullWidth
+                value={job.mPpCc}
+                disabled={!editable}
+                onChange={(e) => set("mPpCc", e.target.value as "PP" | "CC")}
+              >
+                <MenuItem value="PP">PP</MenuItem>
+                <MenuItem value="CC">CC</MenuItem>
+              </TextField>
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                select
+                label="CY/CFS"
+                fullWidth
+                value={job.cyCfs}
+                disabled={!editable}
+                onChange={(e) => set("cyCfs", e.target.value as "CY" | "CFS")}
+              >
+                <MenuItem value="CY">CY</MenuItem>
+                <MenuItem value="CFS">CFS</MenuItem>
+              </TextField>
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                select
+                label="H.PP/CC"
+                fullWidth
+                value={job.hPpCc}
+                disabled={!editable}
+                onChange={(e) => set("hPpCc", e.target.value as "PP" | "CC")}
+              >
+                <MenuItem value="PP">PP</MenuItem>
+                <MenuItem value="CC">CC</MenuItem>
+              </TextField>
+            </FormField>
+          </FormRow>
+          <FormRow>
+            <FormField md={3}>
+              <DateField
+                label="CY/CFS Cutt Off"
+                value={job.cyCfsCutOff}
+                disabled={!editable}
+                onChange={(value) => set("cyCfsCutOff", value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="RO No."
+                fullWidth
+                value={job.roNo}
+                disabled={!editable}
+                onChange={(e) => set("roNo", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <NumberField label="No. of Packages" fullWidth value={job.consolTotal.noOfPackages} disabled={!editable} onChange={(e) => set("consolTotal", { ...job.consolTotal, noOfPackages: Number(e.target.value) })} />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Unit"
+                fullWidth
+                value={job.unit}
+                disabled={!editable}
+                onChange={(e) => set("unit", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="No. of Pcs (QTY)"
+                type="number"
+                fullWidth
+                value={job.noOfPcsQty}
+                disabled={!editable}
+                onChange={(e) => set("noOfPcsQty", Number(e.target.value))}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Unit (QTY)"
+                fullWidth
+                value={job.unitQty}
+                disabled={!editable}
+                onChange={(e) => set("unitQty", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                select
+                label="Currency Code"
+                fullWidth
+                value={job.currencyCode}
+                disabled={!editable}
+                onChange={(e) => set("currencyCode", e.target.value)}
+              >
+                {currencies.map((c) => (
+                  <MenuItem key={c.code} value={c.code}>
+                    {c.code}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Exchange Rate"
+                type="number"
+                fullWidth
+                value={job.exchangeRate}
+                disabled={!editable}
+                onChange={(e) => set("exchangeRate", Number(e.target.value))}
+              />
+            </FormField>
+          </FormRow>
+          <FormRow>
+            <FormField md={3}>
+              <TextField
+                label="Grs Weight"
+                type="number"
+                fullWidth
+                value={job.grossWeight}
+                disabled={!editable}
+                onChange={(e) => set("grossWeight", Number(e.target.value))}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Net Weight"
+                type="number"
+                fullWidth
+                value={job.netWeight}
+                disabled={!editable}
+                onChange={(e) => set("netWeight", Number(e.target.value))}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Vol.Weight"
+                type="number"
+                fullWidth
+                value={job.volWeight}
+                disabled={!editable}
+                onChange={(e) => set("volWeight", Number(e.target.value))}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="CBM"
+                type="number"
+                fullWidth
+                value={job.cbm}
+                disabled={!editable}
+                onChange={(e) => set("cbm", Number(e.target.value))}
+              />
+            </FormField>
+          </FormRow>
+          <FormRow>
+            <FormField md={3}>
+              <TextField
+                label="CBM Rate"
+                type="number"
+                fullWidth
+                value={job.cbmRate}
+                disabled={!editable}
+                onChange={(e) => set("cbmRate", Number(e.target.value))}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="IncoTerm"
+                fullWidth
+                value={job.incoTerm}
+                disabled={!editable}
+                onChange={(e) => set("incoTerm", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="HS Code"
+                fullWidth
+                value={job.hsCode}
+                disabled={!editable}
+                onChange={(e) => set("hsCode", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Stack Code"
+                fullWidth
+                value={job.stackCode}
+                disabled={!editable}
+                onChange={(e) => set("stackCode", e.target.value)}
+              />
+            </FormField>
+          </FormRow>
+          <FormRow>
+            <FormField md={3}>
+              <TextField
+                label="Vehicle No."
+                fullWidth
+                value={job.vehicleNo}
+                disabled={!editable}
+                onChange={(e) => set("vehicleNo", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Vehicle Type"
+                fullWidth
+                value={job.vehicleType}
+                disabled={!editable}
+                onChange={(e) => set("vehicleType", e.target.value)}
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Run No."
+                fullWidth
+                value={job.runNo}
+                disabled={!editable}
+                onChange={(e) => set("runNo", e.target.value)}
+              />
+            </FormField>
+          </FormRow>
+
+          <SectionHeader>Shipper Invoice</SectionHeader>
+          <FormRow>
+            <FormField md={3}>
+              <TextField
+                label="Inv. No."
+                fullWidth
+                value={job.shipperInvoice.invNo}
+                disabled={!editable}
+                onChange={(e) =>
+                  set("shipperInvoice", {
+                    ...job.shipperInvoice,
+                    invNo: e.target.value,
+                  })
+                }
+              />
+            </FormField>
+            <FormField md={3}>
+              <DateField
+                label="Date"
+                value={job.shipperInvoice.date}
+                disabled={!editable}
+                onChange={(value) =>
+                  set("shipperInvoice", { ...job.shipperInvoice, date: value })
+                }
+              />
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                select
+                label="Currency Code"
+                fullWidth
+                value={job.shipperInvoice.currencyCode}
+                disabled={!editable}
+                onChange={(e) =>
+                  set("shipperInvoice", {
+                    ...job.shipperInvoice,
+                    currencyCode: e.target.value,
+                  })
+                }
+              >
+                {currencies.map((c) => (
+                  <MenuItem key={c.code} value={c.code}>
+                    {c.code}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </FormField>
+            <FormField md={3}>
+              <TextField
+                label="Amount"
+                type="number"
+                fullWidth
+                value={job.shipperInvoice.amount}
+                disabled={!editable}
+                onChange={(e) =>
+                  set("shipperInvoice", {
+                    ...job.shipperInvoice,
+                    amount: Number(e.target.value),
+                  })
+                }
+              />
+            </FormField>
+          </FormRow>
+          <FormRow>
+            <FormField md={3}>
+              <TextField
+                label="P.O. No."
+                fullWidth
+                value={job.shipperInvoice.poNo}
+                disabled={!editable}
+                onChange={(e) =>
+                  set("shipperInvoice", {
+                    ...job.shipperInvoice,
+                    poNo: e.target.value,
+                  })
+                }
               />
             </FormField>
           </FormRow>
@@ -1412,12 +1517,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
           </FormRow>
 
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 700, display: "block", mt: 1 }}
-          >
-            Transshipment Points
-          </Typography>
+          <SectionHeader>Transshipment Points</SectionHeader>
           <Box
             sx={{
               border: "1px solid",
@@ -1582,7 +1682,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           </Paper>
 
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>Container Summary</Typography>
+            <SectionHeader>Container Summary</SectionHeader>
             <Box sx={{ display: "flex", gap: 1 }}><Button size="small" color="error" variant="outlined" disabled={!editable || selectedContainerIds.length === 0} onClick={() => setDeleteDialogOpen(true)}>Delete Selected</Button><Button size="small" variant="contained" disabled={!editable} onClick={() => set("containers", [...job.containers, { id: crypto.randomUUID(), containerNo: "", sizeType: "", sealNo: "", isoCode: "", vehicleNo: "", vehicleDate: "", vehicleEta: "", vehicleAta: "", serialNo: job.containers.length + 1, containerTypes: "", vehicleType: "", polEta: "", polAta: "", pcd: "", transporterName: "", driverName: "", mobileNo: "", charges: 0, fromPol: "", toPod: "", noOfPkgs: 0, unit: "", cbm: 0, grossWeight: 0, netWeight: 0 }])}>+ Add Container</Button></Box>
           </Box>
           <Paper variant="outlined" sx={{ overflowX: "auto", mb: 2 }}>
@@ -1630,12 +1730,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             <DialogActions><Button onClick={() => setDeleteDialogOpen(false)}>No</Button><Button color="error" variant="contained" onClick={() => { set("containers", job.containers.filter((item) => !selectedContainerIds.includes(item.id))); setSelectedContainerIds([]); setDeleteDialogOpen(false); }}>Yes, Delete</Button></DialogActions>
           </Dialog>
 
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 700, display: "block" }}
-          >
-            Consol
-          </Typography>
+          <SectionHeader>Consol</SectionHeader>
           <Paper variant="outlined" sx={{ overflowX: "auto", mb: 2 }}>
             <Table size="small">
               <TableHead>
@@ -1669,12 +1764,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </Table>
           </Paper>
 
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 700, display: "block" }}
-          >
-            Job History
-          </Typography>
+          <SectionHeader>Job History</SectionHeader>
           <Paper variant="outlined" sx={{ overflowX: "auto" }}>
             <Table size="small">
               <TableHead>
