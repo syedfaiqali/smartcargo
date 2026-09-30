@@ -4,7 +4,7 @@ import { airlineRepo } from '../../data/masterDataService';
 
 const cleanAwb = (value: string) => value.replace(/[^A-Za-z0-9]/g, '');
 const shownAwb = (value: string) => cleanAwb(value).replace(/^(.{3})(.{7})$/, '$1-$2') || value;
-const logoUrl = `${process.env.PUBLIC_URL}/masum-logo.png`;
+const logoUrl = `${import.meta.env.BASE_URL}masum-logo.png`;
 let masumLogo: string | undefined;
 
 async function loadLogo() {
