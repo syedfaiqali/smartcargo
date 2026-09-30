@@ -203,6 +203,8 @@ export function emptyPrintingOptions(): PrintingOptions {
     cargoManifestPrintOn: 'PLAIN_PAPER',
     cargoManifestSpecialNote: '',
     cargoManifestSignatoryCode: '',
+    labelPrintQuantity: 'TWO',
+    labelPrintLogo: 'COMPANY',
     printBarCode: 'N',
     signatureLine: 'SIGNED BY THE AGENT ON BEHALF OF CARRIER',
     copies: {

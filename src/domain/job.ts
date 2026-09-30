@@ -201,6 +201,8 @@ export interface PrintingOptions {
   cargoManifestPrintOn: 'LETTER_PAD' | 'PLAIN_PAPER';
   cargoManifestSpecialNote: string;
   cargoManifestSignatoryCode: string;
+  labelPrintQuantity: 'TWO' | 'FOUR' | 'ONE_4X6' | 'ONE_4X3';
+  labelPrintLogo: 'COMPANY' | 'AIRLINE';
   printBarCode: YesNo;
   signatureLine: string;
   copies: Record<string, boolean>;

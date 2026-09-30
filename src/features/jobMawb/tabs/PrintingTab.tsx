@@ -151,7 +151,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
       )}
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={p.documentType === 'AIR_WAYBILL' || p.documentType === 'UNDER_TAKING_LETTER' || p.documentType === 'CARGO_MANIFEST' ? 4 : 12}>
+        <Grid item xs={12} md={p.documentType === 'AIR_WAYBILL' || p.documentType === 'UNDER_TAKING_LETTER' || p.documentType === 'CARGO_MANIFEST' || p.documentType === 'LABEL_PRINTING' ? 4 : 12}>
           <SectionCard number="4.2" title="Document Type" tint="mint">
             <FormControl>
               <RadioGroup value={p.documentType} onChange={(e) => setP({ documentType: e.target.value })}>
@@ -214,6 +214,35 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField label="Special Note" fullWidth multiline minRows={2} value={p.cargoManifestSpecialNote ?? ''} disabled={!editable} onChange={(e) => setP({ cargoManifestSpecialNote: e.target.value })} />
+                </Grid>
+              </Grid>
+            </SectionCard>
+          </Grid>
+        )}
+
+        {p.documentType === 'LABEL_PRINTING' && (
+          <Grid item xs={12} md={8}>
+            <SectionCard number="4.2C" title="Label Printing Options" tint="cyan">
+              <Grid container spacing={1.5}>
+                <Grid item xs={12} md={7}>
+                  <FormControl disabled={!editable}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>No. of Labels to Print</Typography>
+                    <RadioGroup value={p.labelPrintQuantity ?? 'TWO'} onChange={(e) => setP({ labelPrintQuantity: e.target.value as Job['printing']['labelPrintQuantity'] })}>
+                      <FormControlLabel value="TWO" control={<Radio size="small" />} label="2" />
+                      <FormControlLabel value="FOUR" control={<Radio size="small" />} label="4" />
+                      <FormControlLabel value="ONE_4X6" control={<Radio size="small" />} label={'1 - (Sticker Size = 4”×6”) Printing on TSC Printer Model TTP-244 Pro'} />
+                      <FormControlLabel value="ONE_4X3" control={<Radio size="small" />} label={'1 - (Sticker Size = 4”×3”) Printing on TSC Printer Model TTP-244 Pro'} />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={5}>
+                  <FormControl disabled={!editable}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Print LOGO</Typography>
+                    <RadioGroup value={p.labelPrintLogo ?? 'COMPANY'} onChange={(e) => setP({ labelPrintLogo: e.target.value as 'COMPANY' | 'AIRLINE' })}>
+                      <FormControlLabel value="COMPANY" control={<Radio size="small" />} label="Company" />
+                      <FormControlLabel value="AIRLINE" control={<Radio size="small" />} label="Airline" />
+                    </RadioGroup>
+                  </FormControl>
                 </Grid>
               </Grid>
             </SectionCard>

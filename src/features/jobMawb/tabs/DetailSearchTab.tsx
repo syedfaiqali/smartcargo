@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
@@ -346,7 +346,7 @@ export function DetailSearchTab({ kind, onOpenJob, onEditJob, onDeleteJob, onPri
               </TableRow>
             ) : (
               paginatedResults.map((job) => (
-                <>
+                <Fragment key={job.id}>
                   {operationalRow(job)}
                   <TableRow key={job.id} sx={{ display: 'none' }}>
                   <TableCell padding="checkbox">
@@ -380,7 +380,7 @@ export function DetailSearchTab({ kind, onOpenJob, onEditJob, onDeleteJob, onPri
                     </Tooltip>
                   </TableCell>
                   </TableRow>
-                </>
+                </Fragment>
               ))
             )}
           </TableBody>
