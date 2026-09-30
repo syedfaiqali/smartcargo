@@ -12,6 +12,23 @@ code {
     monospace;
 }
 
+/* Numeric inputs are always readable in operational forms: no browser spinners,
+   and values line up on the right. */
+.numeric-field .MuiInputBase-input,
+.MuiInputBase-input[type='number'] {
+  text-align: right;
+}
+
+.MuiInputBase-input[type='number']::-webkit-inner-spin-button,
+.MuiInputBase-input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.MuiInputBase-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
 /* Operational grids: make every header and filter column boundary explicit. */
 .MuiTableHead-root .MuiTableCell-root {
   border-right: 1px solid #315a9a !important;
