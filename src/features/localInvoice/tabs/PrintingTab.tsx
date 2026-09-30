@@ -157,9 +157,8 @@ export function PrintingTab({ invoice, editable, onChange }: PrintingTabProps) {
       </Grid>
 
       <Alert severity="info" sx={{ mt: 2 }}>
-        Print output rendering is not wired up in this milestone — options here are captured and persisted with the
-        invoice, ready to feed a real print/PDF pipeline. Per docs Section 4.8, there may be additional options below
-        "Print NTN No." not yet captured (reference screenshot was scrolled to top).
+        Per docs Section 4.8, there may be additional options below "Print NTN No." not yet captured (reference
+        screenshot was scrolled to top).
       </Alert>
     </Box>
   );
