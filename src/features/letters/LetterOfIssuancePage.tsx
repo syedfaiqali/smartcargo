@@ -9,12 +9,14 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import GridOnIcon from '@mui/icons-material/GridOn';
 import { PageShell } from '../../layout/PageShell';
 import { FormRow, FormField, SectionHeader } from '../../components/FormGrid';
-import { airlineRepo, ownerRepo } from '../../data/masterDataService';
+import { airlineRepo, ownerRepo, signatoryRepo } from '../../data/masterDataService';
 import { getStockSummary } from '../../data/awbStockService';
+import { printLetterOfIssuance } from './letterOfIssuanceReport';
 
 export function LetterOfIssuancePage() {
   const airlines = airlineRepo.list();
   const owners = ownerRepo.list();
+  const signatories = signatoryRepo.list();
 
   const [airlineCode, setAirlineCode] = useState('');
   const [airlineName, setAirlineName] = useState('');
@@ -47,6 +49,11 @@ export function LetterOfIssuancePage() {
   const detailsEnabled = !!airlineCode;
 
   const handleExport = (format: 'PDF' | 'Excel') => {
+    if (format === 'PDF') {
+      const signatory = signatories.find((item) => item.code === signatoryCode);
+      printLetterOfIssuance({ airlineName, letterDate, noOfAwbs, bearerOfLetter, cnic, signatoryName: signatory?.name || '' });
+      return;
+    }
     setMessage(`${format} export is not wired up in this milestone — would export the Letter of Issuance of Stock addressed to ${airlineName || '(no airline selected)'}.`);
   };
 
@@ -140,6 +147,11 @@ export function LetterOfIssuancePage() {
               helperText={!detailsEnabled ? 'Select an Airline Code first' : ''}
             >
               <MenuItem value="">(none)</MenuItem>
+                {signatories.map((signatory) => (
+                  <MenuItem key={signatory.code} value={signatory.code}>
+                    {signatory.code} — {signatory.name}
+                  </MenuItem>
+                ))}
             </TextField>
           </FormField>
           <FormField md={6}>
