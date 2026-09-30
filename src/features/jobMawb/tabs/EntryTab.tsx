@@ -556,12 +556,14 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </SectionCardRow>
             <SectionCardRow>
               <SectionCardField md={8}>
-                <TextField
-                  label="Shipper Invoice No."
-                  fullWidth
+                <Autocomplete
+                  freeSolo
+                  options={['SELF']}
                   value={job.routing.shipperInvoiceNo}
                   disabled={!editable}
-                  onChange={(e) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceNo: e.target.value } })}
+                  onChange={(_, value) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceNo: value || '', shipperInvoiceDate: value === 'SELF' ? '' : job.routing.shipperInvoiceDate } })}
+                  onInputChange={(_, value) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceNo: value, shipperInvoiceDate: value === 'SELF' ? '' : job.routing.shipperInvoiceDate } })}
+                  renderInput={(params) => <TextField {...params} label="Shipper Invoice No." fullWidth />}
                 />
               </SectionCardField>
               <SectionCardField md={4}>
@@ -571,14 +573,22 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   value={job.routing.shipperInvoiceDate}
-                  disabled={!editable}
+                  disabled={!editable || job.routing.shipperInvoiceNo === 'SELF'}
                   onChange={(e) => onChange({ ...job, routing: { ...job.routing, shipperInvoiceDate: e.target.value } })}
                 />
               </SectionCardField>
             </SectionCardRow>
             <SectionCardRow>
               <SectionCardField md={8}>
-                <TextField label="S/B No." fullWidth value={job.routing.sbNo} disabled={!editable} onChange={(e) => onChange({ ...job, routing: { ...job.routing, sbNo: e.target.value } })} />
+                <Autocomplete
+                  freeSolo
+                  options={['SELF']}
+                  value={job.routing.sbNo}
+                  disabled={!editable}
+                  onChange={(_, value) => onChange({ ...job, routing: { ...job.routing, sbNo: value || '', sbDate: value === 'SELF' ? '' : job.routing.sbDate } })}
+                  onInputChange={(_, value) => onChange({ ...job, routing: { ...job.routing, sbNo: value, sbDate: value === 'SELF' ? '' : job.routing.sbDate } })}
+                  renderInput={(params) => <TextField {...params} label="S/B No." fullWidth />}
+                />
               </SectionCardField>
               <SectionCardField md={4}>
                 <TextField
@@ -587,7 +597,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   fullWidth
                   InputLabelProps={{ shrink: true }}
                   value={job.routing.sbDate}
-                  disabled={!editable}
+                  disabled={!editable || job.routing.sbNo === 'SELF'}
                   onChange={(e) => onChange({ ...job, routing: { ...job.routing, sbDate: e.target.value } })}
                 />
               </SectionCardField>
