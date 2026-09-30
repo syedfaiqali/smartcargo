@@ -21,14 +21,18 @@ import { PrintingTab } from './tabs/PrintingTab';
 import { ConsolTab } from './tabs/ConsolTab';
 import { InstructionLetterTab } from './tabs/InstructionLetterTab';
 import { SeaExportJobGrid } from './SeaExportJobGrid';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setCurrentSeaExportJob } from '../../store/seaExportJobSlice';
 
 const TAB_LABELS = ['Entry', 'B/L Screen', 'Container', 'Job Charges', 'Consol', 'Instruction Letter'] as const;
 
 export function SeaExportJobPage() {
+  const dispatch = useAppDispatch();
   const [tab, setTab] = useState(0);
   const [showList, setShowList] = useState(true);
   const [isPrintingView, setIsPrintingView] = useState(false);
-  const [job, setJob] = useState<SeaExportJob | null>(null);
+  const job = useAppSelector((state) => state.seaExportJob.currentJob);
+  const setJob = (nextJob: SeaExportJob | null) => dispatch(setCurrentSeaExportJob(nextJob));
   const [editable, setEditable] = useState(false);
   const [message, setMessage] = useState<{ severity: 'success' | 'error' | 'warning'; text: string } | null>(null);
 

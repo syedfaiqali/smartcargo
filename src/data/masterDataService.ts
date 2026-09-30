@@ -111,6 +111,41 @@ const jobTypes = [
   { code: 'EX-WORKS', description: 'EX-WORKS', incomeCode: '', incomeDescription: '' },
 ];
 
+const seaExportChargeableCodes = [
+  { code: 'FC', description: 'AIR FREIGHT TO COLLECT' },
+  { code: 'CC', description: 'CHARGES COLLECT' },
+  { code: 'DDP', description: 'DELIVERED DUTY UNPAID' },
+  { code: 'DDU', description: 'DELIVERED DUTY UNPAID' },
+  { code: 'C&I', description: 'FREIGHT COLLECT' },
+  { code: 'FOB', description: 'FREIGHT COLLECT' },
+  { code: 'FCP', description: 'FREIGHT COLLECT D/C PREPAID' },
+  { code: 'FPD', description: 'FREIGHT PAYABLE AT DESTINATION' },
+  { code: 'CIF', description: 'FREIGHT PREPAID' },
+  { code: 'PP', description: 'FREIGHT PREPAID' },
+  { code: 'C&F', description: 'INVOICED' },
+  { code: 'CFR', description: 'INVOICED' },
+  { code: 'CIP', description: 'INVOICED' },
+  { code: 'CPT', description: 'INVOICED' },
+  { code: 'FP', description: 'INVOICED' },
+  { code: 'HGG', description: 'MASTER FILE' },
+];
+
+const seaExportCurrencies = [
+  { code: 'AUD', name: 'Australian Dollar', defaultExchangeRate: 0 },
+  { code: 'RMB', name: 'China Yuan RMB', defaultExchangeRate: 0 },
+  { code: 'AED', name: 'DHARAM', defaultExchangeRate: 0 },
+  { code: 'EUR', name: 'EURO DOLLARS', defaultExchangeRate: 0 },
+  { code: 'HKD', name: 'HONG KONG DOLLAR', defaultExchangeRate: 0 },
+  { code: 'NZD', name: 'NEWZEALAND DOLLAR', defaultExchangeRate: 0 },
+  { code: 'PKR', name: 'PAK CURRENCY', defaultExchangeRate: 1 },
+  { code: 'SGD', name: 'Singapore Dollar', defaultExchangeRate: 0 },
+  { code: 'SEK', name: 'SWEDISH KRONA', defaultExchangeRate: 0 },
+  { code: 'CHF', name: 'SWISS FRANCE', defaultExchangeRate: 0 },
+  { code: 'GBP', name: 'UK POUND', defaultExchangeRate: 0 },
+  { code: 'US$', name: 'US DOLLARS DAILY', defaultExchangeRate: 0 },
+  { code: 'USD', name: 'US Dollar', defaultExchangeRate: 278.5 },
+];
+
 const sectorCodes = [
   { code: '1', name: 'USA / CANADA' },
   { code: '2', name: 'EUROPE' },
@@ -127,7 +162,15 @@ const countryCodes = 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD B
   .map((code) => ({ code, name: countryNames.of(code) ?? code, sectorCode: '' }));
 
 function seedIfEmpty() {
-  if (isSeeded('masterData')) return;
+  if (isSeeded('masterData')) {
+    if (currencyRepo.list().length < seaExportCurrencies.length) {
+      currencyRepo.replaceAll(seaExportCurrencies.map(withAudit));
+    }
+    if (chargeableRepo.list().length < seaExportChargeableCodes.length) {
+      chargeableRepo.replaceAll(seaExportChargeableCodes.map(withAudit));
+    }
+    return;
+  }
 
   airlineRepo.replaceAll(
     legacyAirlineCodes.map(toLegacyAirline)
@@ -142,9 +185,8 @@ function seedIfEmpty() {
 
   partyRepo.replaceAll(
     [
-      { code: 'P-1001', name: 'Al Baraka Textiles Ltd', address: 'Site Area, Karachi', creditLimit: 500000 },
-      { code: 'P-1002', name: 'Indus Garments (Pvt) Ltd', address: 'SITE-II, Karachi', creditLimit: 250000 },
-      { code: 'P-1003', name: 'Sindh Rice Exporters', address: 'Korangi, Karachi', creditLimit: 750000 },
+      { code: 'GEN-01', name: 'General Format', address: 'Site Area, Karachi', creditLimit: 500000 },
+      { code: 'MSL-01', name: 'Masum Logistics', address: 'SITE-II, Karachi', creditLimit: 250000 },
     ].map(withAudit)
   );
 
@@ -173,12 +215,7 @@ function seedIfEmpty() {
   );
 
   currencyRepo.replaceAll(
-    [
-      { code: 'USD', name: 'US Dollar', defaultExchangeRate: 278.5 },
-      { code: 'PKR', name: 'Pakistani Rupee', defaultExchangeRate: 1 },
-      { code: 'EUR', name: 'Euro', defaultExchangeRate: 302.1 },
-      { code: 'AED', name: 'UAE Dirham', defaultExchangeRate: 75.8 },
-    ].map(withAudit)
+    seaExportCurrencies.map(withAudit)
   );
 
   agentRepo.replaceAll(
@@ -264,10 +301,7 @@ function seedIfEmpty() {
   );
 
   chargeableRepo.replaceAll(
-    [
-      { code: 'PP', name: 'Prepaid', description: 'FREIGHT PREPAID', ppCc: 'PP' as const },
-      { code: 'CC', name: 'Collect', description: 'FREIGHT COLLECT', ppCc: 'CC' as const },
-    ].map(withAudit)
+    seaExportChargeableCodes.map(withAudit)
   );
 
   invoiceChargeRepo.replaceAll(

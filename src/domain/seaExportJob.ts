@@ -97,6 +97,7 @@ export interface SeaExportJob extends AuditFields {
   // --- 12.1 Entry Tab ---
   branch: string;
   jobNo: string;
+  jobNo2: string;
   date: IsoDate;
   jobType: string;
   loadProgramNo: string;
@@ -133,10 +134,10 @@ export interface SeaExportJob extends AuditFields {
   };
   lastConsolNo: string;
 
-  lclFcl: "LCL" | "FCL";
-  mPpCc: "PP" | "CC";
+  lclFcl: "LL" | "LF" | "FL" | "FF" | "PF";
+  mPpCc: string;
   cyCfs: "CY" | "CFS";
-  hPpCc: "PP" | "CC";
+  hPpCc: string;
   cyCfsCutOff: IsoDate | "";
   roNo: string;
   gdDate: IsoDate | "";
@@ -227,10 +228,12 @@ export interface SeaExportJob extends AuditFields {
 
   polEta: IsoDate | "";
   polEtaTime: string;
+  polEtaChecked: boolean;
   polEtd: IsoDate | "";
   polEtdTime: string;
   etaAtDest: IsoDate | "";
   etaAtDestTime: string;
+  etaAtDestChecked: boolean;
   vessel: string;
   voyage: string;
   rotationNo: string;
