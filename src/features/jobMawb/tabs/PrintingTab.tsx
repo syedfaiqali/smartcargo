@@ -151,7 +151,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
       )}
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={p.documentType === 'AIR_WAYBILL' || p.documentType === 'UNDER_TAKING_LETTER' || p.documentType === 'CARGO_MANIFEST' || p.documentType === 'LABEL_PRINTING' ? 4 : 12}>
+        <Grid item xs={12} md={p.documentType === 'AIR_WAYBILL' || p.documentType === 'UNDER_TAKING_LETTER' || p.documentType === 'CARGO_MANIFEST' || p.documentType === 'LABEL_PRINTING' || p.documentType === 'EXTRA_SHEET_PRINTING' || p.documentType === 'SHIPMENT_PRE_ALERT' || p.documentType === 'OUTER' || p.documentType === 'SECURITY_CERTIFICATE' || p.documentType === 'MAWB_ACCEPTANCE_STATEMENT' ? 4 : 12}>
           <SectionCard number="4.2" title="Document Type" tint="mint">
             <FormControl>
               <RadioGroup value={p.documentType} onChange={(e) => setP({ documentType: e.target.value })}>
@@ -243,6 +243,118 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
                       <FormControlLabel value="AIRLINE" control={<Radio size="small" />} label="Airline" />
                     </RadioGroup>
                   </FormControl>
+                </Grid>
+              </Grid>
+            </SectionCard>
+          </Grid>
+        )}
+
+        {p.documentType === 'EXTRA_SHEET_PRINTING' && (
+          <Grid item xs={12} md={8}>
+            <SectionCard number="4.2D" title="Extra Sheet Printing Options" tint="cyan">
+              <FormControl disabled={!editable}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on</Typography>
+                <RadioGroup row value={p.extraSheetPrintOn ?? 'PLAIN_PAPER'} onChange={(e) => setP({ extraSheetPrintOn: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}>
+                  <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                  <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                </RadioGroup>
+              </FormControl>
+            </SectionCard>
+          </Grid>
+        )}
+
+        {p.documentType === 'SHIPMENT_PRE_ALERT' && (
+          <Grid item xs={12} md={8}>
+            <SectionCard number="4.2E" title="Shipment Pre-Alert Print Options" tint="cyan">
+              <Grid container spacing={1.5}>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Give Letter Date" type="date" fullWidth value={p.shipmentPreAlertLetterDate || job.awbDate || job.jobDate} disabled={!editable} onChange={(e) => setP({ shipmentPreAlertLetterDate: e.target.value })} InputLabelProps={{ shrink: true }} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControl disabled={!editable}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on</Typography>
+                    <RadioGroup row value={p.shipmentPreAlertPrintOn ?? 'PLAIN_PAPER'} onChange={(e) => setP({ shipmentPreAlertPrintOn: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}>
+                      <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                      <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField select label="Signatory" fullWidth value={p.shipmentPreAlertSignatoryCode ?? ''} disabled={!editable} onChange={(e) => setP({ shipmentPreAlertSignatoryCode: e.target.value })}>
+                    <MenuItem value="">Select Signatory Code</MenuItem>
+                    {signatories.map((signatory) => <MenuItem key={signatory.id} value={signatory.code}>{signatory.code} — {signatory.name}</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField label="Special Note" fullWidth multiline minRows={2} value={p.shipmentPreAlertSpecialNote ?? ''} disabled={!editable} onChange={(e) => setP({ shipmentPreAlertSpecialNote: e.target.value })} />
+                </Grid>
+              </Grid>
+            </SectionCard>
+          </Grid>
+        )}
+
+        {p.documentType === 'OUTER' && (
+          <Grid item xs={12} md={8}>
+            <SectionCard number="4.2F" title="Outer Print Options" tint="cyan">
+              <FormControl disabled={!editable}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on</Typography>
+                <RadioGroup row value={p.outerPrintOn ?? 'PLAIN_PAPER'} onChange={(e) => setP({ outerPrintOn: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}>
+                  <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                  <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                </RadioGroup>
+              </FormControl>
+            </SectionCard>
+          </Grid>
+        )}
+
+        {p.documentType === 'SECURITY_CERTIFICATE' && (
+          <Grid item xs={12} md={8}>
+            <SectionCard number="4.2G" title="Security Certificate Print Options" tint="cyan">
+              <Grid container spacing={1.5}>
+                <Grid item xs={12} md={5}>
+                  <FormControl disabled={!editable}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on</Typography>
+                    <RadioGroup row value={p.securityCertificatePrintOn ?? 'PLAIN_PAPER'} onChange={(e) => setP({ securityCertificatePrintOn: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}>
+                      <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                      <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={7}>
+                  <TextField select label="Signatory" fullWidth value={p.securityCertificateSignatoryCode ?? ''} disabled={!editable} onChange={(e) => setP({ securityCertificateSignatoryCode: e.target.value })}>
+                    <MenuItem value="">Select Signatory Code</MenuItem>
+                    {signatories.map((signatory) => <MenuItem key={signatory.id} value={signatory.code}>{signatory.code} — {signatory.name}</MenuItem>)}
+                  </TextField>
+                </Grid>
+              </Grid>
+            </SectionCard>
+          </Grid>
+        )}
+
+        {p.documentType === 'MAWB_ACCEPTANCE_STATEMENT' && (
+          <Grid item xs={12} md={8}>
+            <SectionCard number="4.2H" title="US-Bound Acceptance Statement Options" tint="cyan">
+              <Grid container spacing={1.25}>
+                <Grid item xs={12} md={5}>
+                  <FormControl disabled={!editable}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on</Typography>
+                    <RadioGroup row value={p.mawbAcceptancePrintOn ?? 'PLAIN_PAPER'} onChange={(e) => setP({ mawbAcceptancePrintOn: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}>
+                      <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                      <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={7}>
+                  <TextField select label="Signatory" fullWidth value={p.mawbAcceptanceSignatoryCode ?? ''} disabled={!editable} onChange={(e) => setP({ mawbAcceptanceSignatoryCode: e.target.value })}>
+                    <MenuItem value="">Select Signatory Code</MenuItem>
+                    {signatories.map((signatory) => <MenuItem key={signatory.id} value={signatory.code}>{signatory.code} — {signatory.name}</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField label="Special Note" fullWidth multiline minRows={3} value={p.mawbAcceptanceSpecialNote ?? ''} disabled={!editable} onChange={(e) => setP({ mawbAcceptanceSpecialNote: e.target.value })} />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField label="Review Note" fullWidth multiline minRows={2} value={p.mawbAcceptanceReviewNote ?? ''} disabled={!editable} onChange={(e) => setP({ mawbAcceptanceReviewNote: e.target.value })} />
                 </Grid>
               </Grid>
             </SectionCard>

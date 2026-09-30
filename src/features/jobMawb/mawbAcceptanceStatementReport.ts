@@ -36,9 +36,9 @@ export async function printMawbAcceptanceStatement(job: Job) {
   doc.setLineWidth(.25); doc.line(17, 35, 192, 35);
   text('Master Air Waybill Acceptance Statement', 105, 44, 11, 'bold', 'center'); doc.line(58, 46, 152, 46);
   text(`Master Airway Bill (MAWB) ${job.mawbNo}`, 14, 59, 8.5, 'bold');
-  wrapped('All shipment tendered in this Master Air Waybill were received directly from a shipper, or other person with an established relationship with Masum Logistics Lahore for at least 180 calendar days, which has an established shipping address, and a payment, credit, or invoice history of at least 180 calendar days; or person originating or tendering a shipment where Masum Logistics Lahore has an established business relationship or payment, credit or invoice history with the consignee or bill-to party of at least 180 calendar days.', 14, 70, 180, 8.1);
+  wrapped(job.printing.mawbAcceptanceSpecialNote, 14, 70, 180, 8.1);
   text('Declaration For US-Bound Shipments', 105, 95, 10.5, 'bold', 'center'); doc.line(70, 97, 140, 97);
-  wrapped('(Masum Logistics Lahore) has reviewed all available documentation and has determined that none of the cargo being offered in this consignment or consolidation has originated in, transferred from, or transited through any point in Somalia, Syria, Yemen, Egypt.', 14, 106, 180, 8.1);
+  wrapped(job.printing.mawbAcceptanceReviewNote, 14, 106, 180, 8.1);
   detail('Date', date(job.awbDate || job.jobDate), 125);
   detail('AWB or MAWB Number', job.mawbNo, 132);
   detail('HAWB Number', job.hawbNo || '-', 139);

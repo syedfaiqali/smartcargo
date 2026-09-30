@@ -605,6 +605,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   disabled={!editable}
                   onChange={(e) => onChange({ ...job, agents: { ...job.agents, clearingAgent: e.target.value } })}
                 >
+                <MenuItem value="SELF">Self</MenuItem>
                   {clearingAgents.map((a) => (
                     <MenuItem key={a.code} value={a.code}>
                       {a.code} — {a.name}

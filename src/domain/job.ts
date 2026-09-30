@@ -203,6 +203,18 @@ export interface PrintingOptions {
   cargoManifestSignatoryCode: string;
   labelPrintQuantity: 'TWO' | 'FOUR' | 'ONE_4X6' | 'ONE_4X3';
   labelPrintLogo: 'COMPANY' | 'AIRLINE';
+  extraSheetPrintOn: 'LETTER_PAD' | 'PLAIN_PAPER';
+  shipmentPreAlertLetterDate: IsoDate | '';
+  shipmentPreAlertPrintOn: 'LETTER_PAD' | 'PLAIN_PAPER';
+  shipmentPreAlertSpecialNote: string;
+  shipmentPreAlertSignatoryCode: string;
+  outerPrintOn: 'LETTER_PAD' | 'PLAIN_PAPER';
+  securityCertificatePrintOn: 'LETTER_PAD' | 'PLAIN_PAPER';
+  securityCertificateSignatoryCode: string;
+  mawbAcceptancePrintOn: 'LETTER_PAD' | 'PLAIN_PAPER';
+  mawbAcceptanceSignatoryCode: string;
+  mawbAcceptanceSpecialNote: string;
+  mawbAcceptanceReviewNote: string;
   printBarCode: YesNo;
   signatureLine: string;
   copies: Record<string, boolean>;

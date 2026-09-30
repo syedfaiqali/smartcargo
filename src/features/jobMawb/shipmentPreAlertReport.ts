@@ -46,7 +46,7 @@ export async function printShipmentPreAlert(job: Job) {
   doc.addImage(header, 'PNG', 2, -17, 205, 68.5, undefined, 'FAST');
   doc.setLineWidth(.25); doc.line(17, 35, 192, 35);
   text('SHIPMENT PRE-ALERT', 105, 44, 12, 'bold', 'center'); doc.line(69, 46, 141, 46);
-  text('Date', 151, 40, 6.5, 'bold'); text(':', 164, 40, 6.5, 'bold'); text(date(job.awbDate || job.jobDate), 170, 40, 6.5, 'bold');
+  text('Date', 151, 40, 6.5, 'bold'); text(':', 164, 40, 6.5, 'bold'); text(date(job.printing.shipmentPreAlertLetterDate || job.awbDate || job.jobDate), 170, 40, 6.5, 'bold');
 
   detail('MASTER AWB NO.', job.mawbNo, 53);
   detail('TO', job.agents.deliveryAgent || job.consignee.name, 59);
