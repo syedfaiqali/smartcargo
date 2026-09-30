@@ -39,15 +39,18 @@ export async function printLabelSheet(job: Job) {
       cursor += unit;
     });
   };
-  const label = (x: number) => {
-    const y = 20; const w = 84; const h = 122;
+  const label = (x: number, y: number) => {
+    const w = 84; const h = 122;
     doc.setDrawColor(0); doc.setLineWidth(.7); doc.rect(x, y, w, h); doc.setLineWidth(.22);
-    doc.addImage(logo, 'PNG', x + w / 2 - 6, y + 2, 12, 14, undefined, 'FAST'); text('MASUM LOGISTICS', x + w / 2, y + 18, 4.2, 'bold', 'center'); doc.setDrawColor(0);
+    if (job.printing.labelPrintLogo !== 'AIRLINE') { doc.addImage(logo, 'PNG', x + w / 2 - 6, y + 2, 12, 14, undefined, 'FAST'); text('MASUM LOGISTICS', x + w / 2, y + 18, 4.2, 'bold', 'center'); }
+    else text(airline.toUpperCase(), x + w / 2, y + 12, 7, 'bold', 'center');
+    doc.setDrawColor(0);
     doc.line(x, y + 23, x + w, y + 23); barcode(x + 7, y + 27, w - 14, 18); text(awb, x + w / 2, y + 49, 8.3, 'bold', 'center');
     doc.line(x, y + 54, x + w, y + 54); doc.line(x, y + 62, x + w, y + 62); doc.line(x + 20, y + 54, x + 20, y + 80); text('Airline', x + 1, y + 59, 6.2, 'bold'); text(airline.toUpperCase(), x + 27, y + 59, 6, 'bold'); text('MAWB No.', x + 1, y + 68, 6.2, 'bold'); text(awb, x + 27, y + 68, 7.2, 'bold');
     doc.line(x, y + 80, x + w, y + 80); doc.line(x + w / 2, y + 80, x + w / 2, y + 101); text('Origin', x + 1, y + 86, 6.8, 'bold'); text('Destination', x + w / 2 + 1, y + 86, 6.8, 'bold'); text(job.routing.airportOfDeparture || '', x + w / 4, y + 96, 8.2, 'bold', 'center'); text(job.routing.destination || '', x + w * .75, y + 96, 8.2, 'bold', 'center');
     doc.line(x, y + 101, x + w, y + 101); doc.line(x + w / 2, y + 101, x + w / 2, y + h); text('Weight', x + 1, y + 107, 6.8, 'bold'); text('No of Pieces', x + w / 2 + 1, y + 107, 6.8, 'bold'); text(`${Number(firstLine?.grossWt || 0).toFixed(2)} K`, x + w / 4, y + 116, 7.8, 'bold', 'center'); text(String(firstLine?.pcs ?? 0), x + w * .75, y + 116, 7.8, 'bold', 'center');
   };
-  label(11); label(116);
+  const positions = job.printing.labelPrintQuantity === 'FOUR' ? [[11, 10], [116, 10], [11, 151], [116, 151]] : job.printing.labelPrintQuantity === 'ONE_4X6' || job.printing.labelPrintQuantity === 'ONE_4X3' ? [[11, 20]] : [[11, 20], [116, 20]];
+  positions.forEach(([x, y]) => label(x, y));
   window.open(doc.output('bloburl'), '_blank');
 }
