@@ -29,6 +29,7 @@ import { WorkflowSection } from "../../../components/WorkflowSection";
 import { SeaExportJob } from "../../../domain/seaExportJob";
 import {
   agentRepo,
+  chargeableRepo,
   currencyRepo,
   foreignAgentRepo,
   jobTypeRepo,
@@ -64,6 +65,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const clearingAgents = agentRepo.find((a) => a.kind === "CLEARING");
   const deliveryAgents = agentRepo.find((a) => a.kind === "DELIVERY");
   const currencies = currencyRepo.list();
+  const chargeableCodes = chargeableRepo.list();
   const jobTypes = jobTypeRepo.list();
 
   const set = <K extends keyof SeaExportJob>(key: K, value: SeaExportJob[K]) =>
@@ -73,6 +75,18 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
     const p = parties.find((x) => x.code === partyCode);
     onChange({ ...job, partyCode, partyName: p?.name ?? "" });
   };
+
+  const selectFromE = [
+    { code: '001', name: 'Form E No.' },
+    { code: '002', name: 'Fin. Inst. No.' },
+    { code: '003', name: 'EPZ NOC No.' },
+    { code: '004', name: 'GD No.' },
+  ];
+
+  const hblType = [
+    { code: 'GEN - 01', name: 'General Format' },
+      { code: 'MSL - 01', name: 'Masum Logistics' },
+  ];
 
   return (
     <Box>
@@ -87,15 +101,29 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
           <FormRow>
             <FormField md={4}>
               <TextField
+                select
                 label="Branch"
                 fullWidth
+                required
                 value={job.branch}
                 disabled={!editable}
                 onChange={(e) => set("branch", e.target.value)}
-              />
+              >
+                <MenuItem value="">Select Branch</MenuItem>
+                <MenuItem value="KHI">KHI</MenuItem>
+              </TextField>
             </FormField>
-            <FormField md={4}>
+            <FormField md={2}>
               <TextField label="Job No." fullWidth value={job.jobNo} disabled />
+            </FormField>
+            <FormField md={2}>
+              <NumberField
+                label=""
+                fullWidth
+                value={job.jobNo2}
+                disabled={!editable}
+                onChange={(event) => set("jobNo2", event.target.value)}
+              />
             </FormField>
             <FormField md={4}>
               <DateField
@@ -106,8 +134,6 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               />
             </FormField>
           </FormRow>
-          {/* <FormRow> */}
-          {/* </FormRow> */}
           <FormRow>
             <FormField md={4}>
               <TextField
@@ -156,7 +182,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 disabled={!editable}
                 onChange={(e) => set("consolYN", e.target.value as "Y" | "N")}
               >
-                {yn(job.consolYN)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
             <FormField md={4}>
@@ -168,7 +195,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 disabled={!editable}
                 onChange={(e) => set("nomination", e.target.value as "Y" | "N")}
               >
-                {yn(job.nomination)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
             <FormField md={4}>
@@ -180,7 +208,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 disabled={!editable}
                 onChange={(e) => set("quotRefNo", e.target.value)}
               >
-                {yn(job.quotRefNo)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
           </FormRow>
@@ -494,7 +523,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 required
                 fullWidth
                 value={job.jobStatus}
-                disabled={!editable}
+                disabled
                 onChange={(e) => set("jobStatus", e.target.value)}
               >
                 {parties.map((p) => (
@@ -508,7 +537,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               <DateField
                 label="Shipment Date"
                 value={job.shipmentdate}
-                disabled={!editable}
+                disabled
                 onChange={(value) => set("shipmentdate", value)}
               />
             </FormField>
@@ -606,9 +635,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 disabled={!editable}
                 onChange={(e) => set("selectFromE", e.target.value)}
               >
-                {parties.map((p) => (
+                {selectFromE.map((p) => (
                   <MenuItem key={p.code} value={p.code}>
-                    {p.code} — {p.name}
+                    {p.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -827,7 +856,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   set("mblReceived", e.target.value as "Y" | "N")
                 }
               >
-                {yn(job.mblReceived)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
           </FormRow>
@@ -842,9 +872,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 disabled={!editable}
                 onChange={(e) => set("hblType", e.target.value)}
               >
-                {parties.map((p) => (
+                {hblType.map((p) => (
                   <MenuItem key={p.code} value={p.code}>
-                    {p.code} — {p.name}
+                    {p.code} - {p.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -924,7 +954,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               <TextField
                 fullWidth
                 label="Destination"
-                value={job.Destination}
+                value={job.destination}
                 disabled={!editable}
               // onChange={(e) =>
               //   update({ destinationCode: e.target.value })
@@ -943,10 +973,13 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 fullWidth
                 value={job.lclFcl}
                 disabled={!editable}
-                onChange={(e) => set("lclFcl", e.target.value as "LCL" | "FCL")}
+                onChange={(e) => set("lclFcl", e.target.value as "LL" | "LF" | "FL" | "FF" | "PF")}
               >
-                <MenuItem value="LCL">LCL</MenuItem>
-                <MenuItem value="FCL">FCL</MenuItem>
+                <MenuItem value="LL">LCL/LCL</MenuItem>
+                <MenuItem value="LF">LCL/FCL</MenuItem>
+                <MenuItem value="FL">FCL/LCL</MenuItem>
+                <MenuItem value="FF">FCL/FCL</MenuItem>
+                <MenuItem value="PF">P/FCL</MenuItem>
               </TextField>
             </FormField>
             <FormField md={3}>
@@ -956,10 +989,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 fullWidth
                 value={job.mPpCc}
                 disabled={!editable}
-                onChange={(e) => set("mPpCc", e.target.value as "PP" | "CC")}
+                onChange={(e) => set("mPpCc", e.target.value)}
               >
-                <MenuItem value="PP">PP</MenuItem>
-                <MenuItem value="CC">CC</MenuItem>
+                <MenuItem value="">Select Chargeable Code</MenuItem>
+                {chargeableCodes.map((item) => <MenuItem key={item.code} value={item.code}>{item.code} - {item.description}</MenuItem>)}
               </TextField>
             </FormField>
             <FormField md={3}>
@@ -971,8 +1004,11 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 disabled={!editable}
                 onChange={(e) => set("cyCfs", e.target.value as "CY" | "CFS")}
               >
-                <MenuItem value="CY">CY</MenuItem>
-                <MenuItem value="CFS">CFS</MenuItem>
+                <MenuItem value="CYCFS">CY/CFS</MenuItem>
+                <MenuItem value="CFSCY">CFS/CY</MenuItem>
+                <MenuItem value="CYCY">CY/CY</MenuItem>
+                <MenuItem value="CFCFS">CFS/CFS</MenuItem>
+                <MenuItem value="CYSD">CY/SD</MenuItem>
               </TextField>
             </FormField>
             <FormField md={3}>
@@ -982,10 +1018,10 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 fullWidth
                 value={job.hPpCc}
                 disabled={!editable}
-                onChange={(e) => set("hPpCc", e.target.value as "PP" | "CC")}
+                onChange={(e) => set("hPpCc", e.target.value)}
               >
-                <MenuItem value="PP">PP</MenuItem>
-                <MenuItem value="CC">CC</MenuItem>
+                <MenuItem value="">Select Chargeable Code</MenuItem>
+                {chargeableCodes.map((item) => <MenuItem key={item.code} value={item.code}>{item.code} - {item.description}</MenuItem>)}
               </TextField>
             </FormField>
           </FormRow>
@@ -1120,12 +1156,16 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
             <FormField md={3}>
               <TextField
+                select
                 label="IncoTerm"
                 fullWidth
                 value={job.incoTerm}
                 disabled={!editable}
                 onChange={(e) => set("incoTerm", e.target.value)}
-              />
+              >
+                <MenuItem value="">Select Chargeable Code</MenuItem>
+                {chargeableCodes.map((item) => <MenuItem key={item.code} value={item.code}>{item.code} - {item.description}</MenuItem>)}
+              </TextField>
             </FormField>
             <FormField md={3}>
               <TextField
@@ -1277,7 +1317,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   set("invoiceRequired", e.target.value as "Y" | "N")
                 }
               >
-                {yn(job.invoiceRequired)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
             <FormField md={4}>
@@ -1291,7 +1332,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   set("localInvoice", e.target.value as "Y" | "N")
                 }
               >
-                {yn(job.localInvoice)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
             <FormField md={4}>
@@ -1305,7 +1347,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   set("intlInvoice", e.target.value as "Y" | "N")
                 }
               >
-                {yn(job.intlInvoice)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
           </FormRow>
@@ -1321,7 +1364,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   set("payableToSl", e.target.value as "Y" | "N")
                 }
               >
-                {yn(job.payableToSl)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
             <FormField md={4}>
@@ -1335,7 +1379,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   set("refundFromSl", e.target.value as "Y" | "N")
                 }
               >
-                {yn(job.refundFromSl)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
             <FormField md={4}>
@@ -1347,7 +1392,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 disabled={!editable}
                 onChange={(e) => set("ddShip", e.target.value as "Y" | "N")}
               >
-                {yn(job.ddShip)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
           </FormRow>
@@ -1365,7 +1411,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   set("shipmentDelivered", e.target.value as "Y" | "N")
                 }
               >
-                {yn(job.shipmentDelivered)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
             <FormField md={3}>
@@ -1405,7 +1452,8 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   set("shipmentContainerized", e.target.value as "Y" | "N")
                 }
               >
-                {yn(job.shipmentContainerized)}
+                <MenuItem value="N">N</MenuItem>
+                <MenuItem value="Y">Y</MenuItem>
               </TextField>
             </FormField>
             <FormField md={9}>
@@ -1442,9 +1490,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             <FormField md={4}>
               <Checkbox
                 // label="CC Time"
-                value={job.polEtaCheckbox}
+                checked={job.polEtaChecked}
                 disabled={!editable}
-                onChange={(value) => set("polEtaCheckbox", value)}
+                onChange={(event) => set("polEtaChecked", event.target.checked)}
               />
             </FormField>
             <FormField md={4}>
@@ -1463,7 +1511,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 onChange={(value) => set("polEtdTime", value)}
               />
             </FormField>
-            <FormField md={4}></FormField>
+            <FormField md={4}><Box /></FormField>
             <FormField md={4}>
               <DateField
                 label="ETA At Dest"
@@ -1474,18 +1522,18 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
             <FormField md={4}>
               <TimeField
-                label="POL ETD Time"
-                value={job.polEtdTime}
+                label="ETA At Dest Time"
+                value={job.etaAtDestTime}
                 disabled={!editable}
-                onChange={(value) => set("polEtdTime", value)}
+                onChange={(value) => set("etaAtDestTime", value)}
               />
             </FormField>
             <FormField md={4}>
               <Checkbox
                 // label="CC Time"
-                value={job.polEtaCheckbox}
+                checked={job.etaAtDestChecked}
                 disabled={!editable}
-                onChange={(value) => set("polEtaCheckbox", value)}
+                onChange={(event) => set("etaAtDestChecked", event.target.checked)}
               />
             </FormField>
             <FormField md={4}>
