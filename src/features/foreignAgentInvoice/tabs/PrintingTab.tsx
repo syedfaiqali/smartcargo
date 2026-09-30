@@ -13,6 +13,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { ForeignAgentInvoice } from '../../../domain/foreignAgentInvoice';
 import { VariantConfig } from '../variantConfig';
 import { SectionHeader } from '../../../components/FormGrid';
+import { printForeignAgentInvoice } from '../foreignAgentInvoiceReport';
 
 interface PrintingTabProps {
   invoice: ForeignAgentInvoice;
@@ -36,7 +37,7 @@ export function PrintingTab({ invoice, config, editable, onChange }: PrintingTab
           <TextField label={config.printingDocLabel} fullWidth value={invoice.documentNo} disabled />
         </Grid>
         <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
-          <Button variant="outlined" startIcon={<PictureAsPdfIcon />}>
+          <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => printForeignAgentInvoice(invoice)}>
             PDF
           </Button>
         </Grid>
