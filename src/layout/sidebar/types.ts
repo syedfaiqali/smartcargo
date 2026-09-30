@@ -13,4 +13,6 @@ export interface SearchIndexEntry {
 export interface OpenFlyoutState {
   moduleKey: string;
   groupLabel: string;
+  /** Vertical position of the menu trigger, used to align its flyout beside it. */
+  anchorTop?: number;
 }

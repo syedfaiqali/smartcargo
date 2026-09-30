@@ -18,6 +18,7 @@ export function ModuleRow({
   onToggleExpand,
   onSwitchFlyoutOnHover,
   onGroupClick,
+  onGroupHover,
   isPinned,
   togglePin,
   activePath,
@@ -32,6 +33,7 @@ export function ModuleRow({
   /** Hover-intent: only switches to this module's flyout if some flyout is already open. */
   onSwitchFlyoutOnHover: () => void;
   onGroupClick: (groupLabel: string) => void;
+  onGroupHover: (groupLabel: string, anchorTop: number) => void;
   isPinned: (path: string) => boolean;
   togglePin: (path: string) => void;
   activePath: string;
@@ -148,6 +150,7 @@ export function ModuleRow({
                 label={entry.label}
                 isOpen={isFlyoutOpen && openFlyoutGroupLabel === entry.label}
                 onClick={() => onGroupClick(entry.label)}
+                onHover={(anchorTop) => onGroupHover(entry.label, anchorTop)}
               />
             ) : (
               <SubmenuLeafRow
@@ -166,13 +169,24 @@ export function ModuleRow({
   );
 }
 
-function SubmenuGroupTrigger({ label, isOpen, onClick }: { label: string; isOpen: boolean; onClick: () => void }) {
+function SubmenuGroupTrigger({
+  label,
+  isOpen,
+  onClick,
+  onHover,
+}: {
+  label: string;
+  isOpen: boolean;
+  onClick: () => void;
+  onHover: (anchorTop: number) => void;
+}) {
   return (
     <Box
       role="button"
       tabIndex={0}
       aria-expanded={isOpen}
       onClick={onClick}
+      onMouseEnter={(event) => onHover(event.currentTarget.getBoundingClientRect().top)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();

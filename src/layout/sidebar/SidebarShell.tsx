@@ -55,6 +55,22 @@ export function SidebarShell() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const flyoutRef = useRef<HTMLDivElement>(null);
+  const flyoutCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearFlyoutCloseTimer = () => {
+    if (flyoutCloseTimer.current) {
+      clearTimeout(flyoutCloseTimer.current);
+      flyoutCloseTimer.current = null;
+    }
+  };
+
+  const scheduleFlyoutClose = () => {
+    clearFlyoutCloseTimer();
+    // Leave enough time to move the pointer across the small sidebar-to-flyout gap.
+    flyoutCloseTimer.current = setTimeout(() => setOpenFlyout(null), 1200);
+  };
+
+  useEffect(() => clearFlyoutCloseTimer, []);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -144,6 +160,8 @@ export function SidebarShell() {
   const content = (
     <Box
       ref={rootRef}
+      onMouseEnter={clearFlyoutCloseTimer}
+      onMouseLeave={() => !isMobile && openFlyout && scheduleFlyoutClose()}
       sx={{
         width: SIDEBAR_WIDTH,
         flexShrink: 0,
@@ -215,7 +233,7 @@ export function SidebarShell() {
         ref={flyoutRef}
         sx={{
           position: 'fixed',
-          top: 0,
+          top: 8,
           left: isMobile ? 0 : SIDEBAR_WIDTH,
           right: isMobile ? 0 : undefined,
           bottom: isMobile ? 0 : undefined,
@@ -229,7 +247,11 @@ export function SidebarShell() {
           pointerEvents: isMobile ? 'auto' : 'none',
         }}
       >
-        <Box sx={{ pointerEvents: 'auto', width: isMobile ? '100%' : 'auto' }}>
+        <Box
+          onMouseEnter={clearFlyoutCloseTimer}
+          onMouseLeave={() => !isMobile && scheduleFlyoutClose()}
+          sx={{ pointerEvents: 'auto', width: isMobile ? '100%' : 'auto' }}
+        >
           <FlyoutPanel
             title={openFlyoutGroup.label}
             groups={[{ label: null, items: openFlyoutGroup.items }]}
