@@ -13,6 +13,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { ForeignAgentInvoice } from '../../../domain/foreignAgentInvoice';
 import { VariantConfig } from '../variantConfig';
 import { SectionHeader } from '../../../components/FormGrid';
+import { printForeignAgentInvoice } from '../foreignAgentInvoiceReport';
 
 interface PrintingTabProps {
   invoice: ForeignAgentInvoice;
@@ -36,7 +37,7 @@ export function PrintingTab({ invoice, config, editable, onChange }: PrintingTab
           <TextField label={config.printingDocLabel} fullWidth value={invoice.documentNo} disabled />
         </Grid>
         <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
-          <Button variant="outlined" startIcon={<PictureAsPdfIcon />}>
+          <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => printForeignAgentInvoice(invoice, config)}>
             PDF
           </Button>
         </Grid>
@@ -84,27 +85,21 @@ export function PrintingTab({ invoice, config, editable, onChange }: PrintingTab
             <MenuItem value="N">No</MenuItem>
             <MenuItem value="Y">Yes</MenuItem>
           </TextField>
-          <TextField
-            select
-            label="Print"
-            fullWidth
-            value={p.printCopyType}
-            disabled={!editable}
-            onChange={(e) => setP({ printCopyType: e.target.value as ForeignAgentInvoice['printing']['printCopyType'] })}
-          >
-            <MenuItem value="ORIGINAL">Original</MenuItem>
-            <MenuItem value="REVISED">Revised</MenuItem>
-            <MenuItem value="DUPLICATE">Duplicate</MenuItem>
-            <MenuItem value="OFFICE_COPY">Office Copy</MenuItem>
-          </TextField>
+          <FormControl>
+            <FormLabel>Print</FormLabel>
+            <RadioGroup value={p.printCopyType} onChange={(e) => setP({ printCopyType: e.target.value as ForeignAgentInvoice['printing']['printCopyType'] })}>
+              <FormControlLabel value="ORIGINAL" control={<Radio size="small" />} label="Original" />
+              <FormControlLabel value="REVISED" control={<Radio size="small" />} label="Revised" />
+              <FormControlLabel value="DUPLICATE" control={<Radio size="small" />} label="Duplicate" />
+              <FormControlLabel value="OFFICE_COPY" control={<Radio size="small" />} label="Office Copy" />
+            </RadioGroup>
+          </FormControl>
         </Grid>
       </Grid>
 
       <Alert severity="info" sx={{ mt: 2 }}>
-        Print output rendering is not wired up in this milestone — options here are captured and persisted with the
-        record, ready to feed a real print/PDF pipeline. Per docs Sections 7.1/9.1, this tab keeps the "
-        {config.printingDocLabel}" label even on Credit Note variants — an observed quirk in the reference system,
-        replicated faithfully rather than corrected.
+        Per docs Sections 7.1/9.1, this tab keeps the "{config.printingDocLabel}" label even on Credit Note variants
+        — an observed quirk in the reference system, replicated faithfully rather than corrected.
       </Alert>
     </Box>
   );
