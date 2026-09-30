@@ -26,6 +26,7 @@ import { printOuterReport } from '../outerReport';
 import { printSecurityCertificate } from '../securityCertificateReport';
 import { printAirwaybillBackSide } from '../airwaybillBackSideReport';
 import { printMawbAcceptanceStatement } from '../mawbAcceptanceStatementReport';
+import { signatoryRepo } from '../../../data/masterDataService';
 
 interface PrintingTabProps {
   job: Job;
@@ -65,6 +66,7 @@ const YES_NO_TOGGLES: { key: keyof Job['printing']; label: string }[] = [
 
 export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
   const p = job.printing;
+  const signatories = signatoryRepo.list();
   const setP = (patch: Partial<Job['printing']>) => onChange({ ...job, printing: { ...p, ...patch } });
   const toggle = (key: keyof Job['printing']) => setP({ [key]: p[key] === 'Y' ? 'N' : 'Y' } as Partial<Job['printing']>);
 
@@ -108,8 +110,48 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
         </Grid>
       </SectionCard>
 
+      {false && p.documentType === 'UNDER_TAKING_LETTER' && (
+        <SectionCard number="4.2A" title="Under Taking Letter Print Options" tint="cyan">
+          <Grid container spacing={1.5}>
+            <Grid item xs={12} md={5}>
+              <TextField
+                select
+                label="Signatory"
+                fullWidth
+                value={p.undertakingSignatoryCode ?? ''}
+                disabled={!editable}
+                onChange={(e) => setP({ undertakingSignatoryCode: e.target.value })}
+              >
+                <MenuItem value="">Select Signatory Code</MenuItem>
+                {signatories.map((signatory) => <MenuItem key={signatory.id} value={signatory.code}>{signatory.code} — {signatory.name}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl disabled={!editable}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on</Typography>
+                <RadioGroup row value={p.undertakingPrintOn ?? 'PLAIN_PAPER'} onChange={(e) => setP({ undertakingPrintOn: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}>
+                  <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                  <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="Print Date"
+                type="date"
+                fullWidth
+                value={p.undertakingPrintDate || job.awbDate || job.jobDate}
+                disabled={!editable}
+                onChange={(e) => setP({ undertakingPrintDate: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+          </Grid>
+        </SectionCard>
+      )}
+
       <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={p.documentType === 'AIR_WAYBILL' || p.documentType === 'UNDER_TAKING_LETTER' || p.documentType === 'CARGO_MANIFEST' ? 4 : 12}>
           <SectionCard number="4.2" title="Document Type" tint="mint">
             <FormControl>
               <RadioGroup value={p.documentType} onChange={(e) => setP({ documentType: e.target.value })}>
@@ -121,7 +163,64 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
           </SectionCard>
         </Grid>
 
-        <Grid item xs={12} md={5}>
+        {p.documentType === 'UNDER_TAKING_LETTER' && (
+          <Grid item xs={12} md={8}>
+            <SectionCard number="4.2A" title="Under Taking Letter Print Options" tint="cyan">
+              <Grid container spacing={1.5}>
+                <Grid item xs={12} md={5}>
+                  <TextField select label="Signatory" fullWidth value={p.undertakingSignatoryCode ?? ''} disabled={!editable} onChange={(e) => setP({ undertakingSignatoryCode: e.target.value })}>
+                    <MenuItem value="">Select Signatory Code</MenuItem>
+                    {signatories.map((signatory) => <MenuItem key={signatory.id} value={signatory.code}>{signatory.code} — {signatory.name}</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControl disabled={!editable}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on</Typography>
+                    <RadioGroup row value={p.undertakingPrintOn ?? 'PLAIN_PAPER'} onChange={(e) => setP({ undertakingPrintOn: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}>
+                      <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                      <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField label="Print Date" type="date" fullWidth value={p.undertakingPrintDate || job.awbDate || job.jobDate} disabled={!editable} onChange={(e) => setP({ undertakingPrintDate: e.target.value })} InputLabelProps={{ shrink: true }} />
+                </Grid>
+              </Grid>
+            </SectionCard>
+          </Grid>
+        )}
+
+        {p.documentType === 'CARGO_MANIFEST' && (
+          <Grid item xs={12} md={8}>
+            <SectionCard number="4.2B" title="Cargo Manifest Print Options" tint="cyan">
+              <Grid container spacing={1.5}>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Give Letter Date" type="date" fullWidth value={p.cargoManifestLetterDate || job.awbDate || job.jobDate} disabled={!editable} onChange={(e) => setP({ cargoManifestLetterDate: e.target.value })} InputLabelProps={{ shrink: true }} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControl disabled={!editable}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on</Typography>
+                    <RadioGroup row value={p.cargoManifestPrintOn ?? 'PLAIN_PAPER'} onChange={(e) => setP({ cargoManifestPrintOn: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}>
+                      <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                      <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField select label="Signatory" fullWidth value={p.cargoManifestSignatoryCode ?? ''} disabled={!editable} onChange={(e) => setP({ cargoManifestSignatoryCode: e.target.value })}>
+                    <MenuItem value="">Select Signatory Code</MenuItem>
+                    {signatories.map((signatory) => <MenuItem key={signatory.id} value={signatory.code}>{signatory.code} — {signatory.name}</MenuItem>)}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField label="Special Note" fullWidth multiline minRows={2} value={p.cargoManifestSpecialNote ?? ''} disabled={!editable} onChange={(e) => setP({ cargoManifestSpecialNote: e.target.value })} />
+                </Grid>
+              </Grid>
+            </SectionCard>
+          </Grid>
+        )}
+
+        {p.documentType === 'AIR_WAYBILL' && <Grid item xs={12} md={5}>
           <SectionCard number="4.3" title="Air Waybill Print Options" tint="cyan">
           <Grid container spacing={1}>
             <Grid item xs={12}>
@@ -187,6 +286,19 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
               </TextField>
             </Grid>
             <Grid item xs={12}>
+              <FormControl disabled={!editable}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Print on stationery</Typography>
+                <RadioGroup
+                  row
+                  value={p.printOnStationery ?? 'PLAIN_PAPER'}
+                  onChange={(e) => setP({ printOnStationery: e.target.value as 'LETTER_PAD' | 'PLAIN_PAPER' })}
+                >
+                  <FormControlLabel value="LETTER_PAD" control={<Radio size="small" />} label="Letter Pad" />
+                  <FormControlLabel value="PLAIN_PAPER" control={<Radio size="small" />} label="Plain Paper" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
               <TextField
                 label="Signature Line"
                 fullWidth
@@ -197,9 +309,9 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
             </Grid>
           </Grid>
           </SectionCard>
-        </Grid>
+        </Grid>}
 
-        <Grid item xs={12} md={3}>
+        {p.documentType === 'AIR_WAYBILL' && <Grid item xs={12} md={3}>
           <SectionCard number="4.4" title="Copy Selection" tint="purple">
           <Paper
             variant="outlined"
@@ -241,7 +353,7 @@ export function PrintingTab({ job, editable, onChange }: PrintingTabProps) {
             ))}
           </Paper>
           </SectionCard>
-        </Grid>
+        </Grid>}
       </Grid>
 
       <Alert severity="info" sx={{ mt: 2 }}>

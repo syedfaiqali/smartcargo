@@ -193,6 +193,14 @@ export interface PrintingOptions {
   printAirlineAddress: YesNo;
   printMemberOfIata: YesNo;
   printOn: 'PLAIN_PAPER' | 'PRE_PRINTED_AWB';
+  printOnStationery: 'LETTER_PAD' | 'PLAIN_PAPER';
+  undertakingSignatoryCode: string;
+  undertakingPrintOn: 'LETTER_PAD' | 'PLAIN_PAPER';
+  undertakingPrintDate: IsoDate | '';
+  cargoManifestLetterDate: IsoDate | '';
+  cargoManifestPrintOn: 'LETTER_PAD' | 'PLAIN_PAPER';
+  cargoManifestSpecialNote: string;
+  cargoManifestSignatoryCode: string;
   printBarCode: YesNo;
   signatureLine: string;
   copies: Record<string, boolean>;

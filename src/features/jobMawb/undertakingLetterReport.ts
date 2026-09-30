@@ -26,7 +26,7 @@ export async function printUndertakingLetter(job: Job) {
   const firstLine = job.chargeLines[0];
   const mawb = job.mawbNo.replace(/[^A-Za-z0-9-]/g, '');
   const hawb = job.hawbNo || '';
-  const printDate = date(job.awbDate || job.jobDate);
+  const printDate = date(job.printing.undertakingPrintDate || job.awbDate || job.jobDate);
   const text = (value: string, x: number, y: number, size = 10, style: 'normal' | 'bold' = 'normal', align: 'left' | 'center' | 'right' = 'left') => doc.setFont('helvetica', style).setFontSize(size).text(value, x, y, { align });
   const wrapped = (value: string, x: number, y: number, width: number, size = 9.5, style: 'normal' | 'bold' = 'normal') => doc.setFont('helvetica', style).setFontSize(size).text(doc.splitTextToSize(value, width), x, y, { lineHeightFactor: 1.08 });
 
