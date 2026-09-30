@@ -57,6 +57,13 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
   const deleteInvoiceFromList = (inv: ForeignAgentInvoice) => { foreignAgentInvoiceRepo.remove(inv.id); syncCreditNoteLinks(inv); syncForeignAgentInvoiceLinks(inv); setMessage({ severity: 'success', text: `${config.entryDocLabel} ${inv.documentNo} deleted.` }); };
   const printInvoiceFromList = (inv: ForeignAgentInvoice) => { setInvoice(inv); setEditable(false); setTab(0); setShowList(false); setIsPrintingView(true); };
 
+  // Print preferences do not alter finalized financial figures, so they may be
+  // updated directly from the printing screen without reopening the invoice.
+  const handlePrintingChange = (updated: ForeignAgentInvoice) => {
+    const saved = foreignAgentInvoiceRepo.save(updated);
+    setInvoice(saved);
+  };
+
   const handleAction = (action: ToolbarAction) => {
     switch (action) {
       case 'new': {
@@ -179,7 +186,7 @@ export function ForeignAgentInvoicePage({ variant, breadcrumbs }: ForeignAgentIn
         <Alert severity="info">Click New to create a record.</Alert>
       ) : (
         <>
-          {isPrintingView ? <PrintingTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} /> : <EntryTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />}
+          {isPrintingView ? <PrintingTab invoice={invoice} config={config} editable onChange={handlePrintingChange} /> : <EntryTab invoice={invoice} config={config} editable={editable} onChange={setInvoice} />}
         </>
       )}
       </>}

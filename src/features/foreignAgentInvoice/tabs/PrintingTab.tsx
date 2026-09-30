@@ -38,6 +38,7 @@ export function PrintingTab({ invoice, config, editable, onChange }: PrintingTab
         </Grid>
         <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
           <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => printForeignAgentInvoice(invoice, config)}>
+          {/* <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => printForeignAgentInvoice(invoice)}> */}
             PDF
           </Button>
         </Grid>
