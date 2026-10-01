@@ -5,10 +5,17 @@ import { airlineRepo } from '../../data/masterDataService';
 const money = (value: number) => Number(value || 0).toFixed(2);
 const date = (value: string) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-GB') : '';
 const formatAwb = (awb: string) => awb.replace(/[^A-Za-z0-9]/g, '').replace(/^(.{3})(.{3})(.{4})(.*)$/, '$1 $2 $3 $4').trim() || awb;
+const loadImage = (source: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+  const image = new Image();
+  image.onload = () => resolve(image);
+  image.onerror = () => reject(new Error(`Unable to load ${source}`));
+  image.src = source;
+});
 
-export function printAirWaybill(job: Job) {
+export async function printAirWaybill(job: Job) {
   const airlinePrefix = job.mawbNo.split('-')[0];
   const airlineName = airlineRepo.list().find((airline) => airline.code === airlinePrefix)?.name || job.owner || 'ISSUING CARRIER';
+  const ethiopianLogo = airlinePrefix === '071' ? await loadImage('/ethiopian-airlines-logo.png') : undefined;
   const awbNumber = formatAwb(job.mawbNo);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   doc.setProperties({ title: 'AirWayBillPrint', subject: `Air Waybill ${awbNumber}` });
@@ -50,7 +57,11 @@ export function printAirWaybill(job: Job) {
     doc.setFont('helvetica', 'bold').setFontSize(11).text('Air Waybill', x + 103, y + 14);
     doc.setFont('helvetica', 'normal').setFontSize(8).text('issued by', x + 103, y + 18);
     doc.setFont('helvetica', 'bold').setFontSize(9).text(airlineName, x + 103, y + 24);
-    doc.setFont('helvetica', 'bold').setFontSize(13).setTextColor(130, 20, 35).text(airlineName, x + 164, y + 20, { align: 'center' });
+    if (ethiopianLogo) {
+      doc.addImage(ethiopianLogo, 'PNG', x + 157, y + 10, 37, 14);
+    } else {
+      doc.setFont('helvetica', 'bold').setFontSize(13).setTextColor(130, 20, 35).text(airlineName, x + 164, y + 20, { align: 'center' });
+    }
     doc.setTextColor(0, 0, 0);
     box(x, y + 30, 92, 27, "Consignee's Name and Address", job.printing.printConsigneeNameAddress === 'Y' ? `${job.consignee.name}\n${job.consignee.address}` : '');
     box(x + 92, y + 30, 44, 27, "Consignee's Account Number", '');
