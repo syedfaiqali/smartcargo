@@ -193,11 +193,14 @@ export async function printAirWaybill(job: Job) {
     doc.rect(x, chargeTop + 51, chargeWidth, 8);
     slantedLabel(x, chargeTop + 51, 37, 'Currency Conversion Rates');
     slantedLabel(x + 37, chargeTop + 51, 37, 'CC Charges in Dest Currency');
-    doc.rect(x, chargeTop + 59, chargeWidth, 10);
-    doc.line(x + 40, chargeTop + 59, x + 40, chargeTop + 69);
-    doc.setFillColor(210, 210, 210).rect(x + 40, chargeTop + 59, 45, 10, 'F');
-    doc.setFont('helvetica', 'normal').setFontSize(5.5).text("For Carrier's Use only at Destination", x + 2, chargeTop + 64);
-    doc.setFont('helvetica', 'normal').setFontSize(5.5).text('Charges at Destination', x + 62, chargeTop + 64, { align: 'center' });
+    doc.rect(x, chargeTop + 60, 40, 9);
+    doc.setFillColor(210, 210, 210).rect(x + 40, chargeTop + 60, 45, 9, 'F');
+    doc.rect(x + 40, chargeTop + 60, 45, 9);
+    doc.setFillColor(210, 210, 210).rect(x + 85, chargeTop + 60, 35, 9, 'F');
+    doc.rect(x + 85, chargeTop + 60, 35, 9);
+    doc.setFont('helvetica', 'normal').setFontSize(5.5).text("For Carrier's Use only at Destination", x + 2, chargeTop + 64.5);
+    doc.setFont('helvetica', 'normal').setFontSize(5.5).text('Charges at Destination', x + 62.5, chargeTop + 64.5, { align: 'center' });
+    doc.setFont('helvetica', 'normal').setFontSize(5.5).text('Total Collect Charges', x + 102.5, chargeTop + 64.5, { align: 'center' });
     doc.setFont('courier', 'bold').setFontSize(6.5).text(money(job.totals.totalAwbAmount), x + 18.5, chargeTop + 49, { align: 'center' });
     doc.setFont('courier', 'bold').setFontSize(6.5).text(job.printing.printExRate === 'Y' ? money(job.printableExRate) : '', x + 18.5, chargeTop + 57, { align: 'center' });
 
