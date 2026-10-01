@@ -319,7 +319,18 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                       fullWidth
                       value={job.party.agentParty}
                       disabled={!editable}
-                      onChange={(e) => onChange({ ...job, party: { ...job.party, agentParty: e.target.value } })}
+                      onChange={(e) => {
+                        const agentParty = parties.find((party) => party.code === e.target.value);
+                        onChange({
+                          ...job,
+                          party: {
+                            ...job.party,
+                            agentParty: e.target.value,
+                            name: agentParty?.name ?? '',
+                            address: agentParty?.address ?? '',
+                          },
+                        });
+                      }}
                     >
                       <MenuItem value="">— Select Agent Party —</MenuItem>
                       {parties.map((party) => (

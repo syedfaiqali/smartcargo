@@ -41,7 +41,17 @@ export async function printAirWaybill(job: Job) {
     const topBox = (left: number, width: number, heading: string, content: string) => {
       doc.rect(left, y + 6, width, 24);
       doc.setFont('helvetica', 'normal').setFontSize(8).text(heading, left + 1, y + 10);
-      if (content) doc.setFont('courier', 'bold').setFontSize(9).text(doc.splitTextToSize(content, width - 2), left + 1, y + 15);
+      if (content) {
+        // Fit variable-length shipper data within the fixed header box so it cannot overlap Consignee.
+        let fontSize = 8;
+        let lines: string[] = [];
+        do {
+          doc.setFont('courier', 'bold').setFontSize(fontSize);
+          lines = doc.splitTextToSize(content, width - 2);
+          fontSize -= 0.25;
+        } while (lines.length * (fontSize + 0.25) * 0.405 * 1.05 > 14 && fontSize >= 4);
+        doc.setFont('courier', 'bold').setFontSize(Math.max(fontSize + 0.25, 4)).text(lines, left + 1, y + 15, { lineHeightFactor: 1.05 });
+      }
     };
     const slantedLabel = (left: number, top: number, width: number, text: string) => {
       doc.line(left, top, left + 5, top + 4); doc.line(left + 5, top + 4, left + width - 5, top + 4); doc.line(left + width - 5, top + 4, left + width, top); doc.line(left + 5, top + 4, left + 5, top + 6); doc.line(left + width - 5, top + 4, left + width - 5, top + 6);
@@ -49,7 +59,8 @@ export async function printAirWaybill(job: Job) {
     };
 
     doc.setLineWidth(.35); doc.rect(x, y, w, h); doc.setLineWidth(.18);
-    value(awbNumber, x + 2, y + 4, 8); value(awbNumber, x + w - 2, y + 4, 8); doc.text(awbNumber, x + w - 2, y + 4, { align: 'right' });
+    value(awbNumber, x + 2, y + 4, 8);
+    doc.setFont('courier', 'bold').setFontSize(8).text(awbNumber, x + w - 2, y + 4, { align: 'right' });
     topBox(x, 58, "Shipper's Name and Address", job.printing.printShipperNameAddress === 'Y' ? `${job.party.name}\n${job.party.address}` : '');
     topBox(x + 58, 44, "Shipper's Account Number", job.routing.accountNo);
     doc.rect(x + 102, y + 6, 94, 24);
