@@ -21,6 +21,7 @@ import { AirImportJob } from '../../domain/airImportJob';
 import {
   agentRepo,
   airportRepo,
+  commodityRepo,
   currencyRepo,
   foreignAgentRepo,
   jobStatusRepo,
@@ -43,6 +44,7 @@ export function JobEntryForm({ job, editable, onChange }: JobEntryFormProps) {
   const foreignAgents = foreignAgentRepo.list();
   const spoCodes = spoRepo.list();
   const airports = airportRepo.list();
+  const commodities = commodityRepo.list();
   const currencies = currencyRepo.list();
   const clearingAgents = agentRepo.find((a) => a.kind === 'CLEARING');
   const jobStatuses = jobStatusRepo.list();
@@ -125,7 +127,14 @@ export function JobEntryForm({ job, editable, onChange }: JobEntryFormProps) {
       </Grid>
       <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
         <FormField md={8}>
-          <TextField label="Commodity" fullWidth value={job.commodity} disabled={!editable} onChange={(e) => apply({ commodity: e.target.value })} />
+          <TextField select label="Commodity" fullWidth value={job.commodity} disabled={!editable} onChange={(e) => apply({ commodity: e.target.value })}>
+            <MenuItem value="">(none)</MenuItem>
+            {commodities.map((commodity) => (
+              <MenuItem key={commodity.code} value={commodity.code}>
+                {commodity.code} — {commodity.description}
+              </MenuItem>
+            ))}
+          </TextField>
         </FormField>
         <FormField md={4}>
           <TextField label="Quot. Ref No." fullWidth value={job.quotRefNo} disabled={!editable} onChange={(e) => apply({ quotRefNo: e.target.value })} />

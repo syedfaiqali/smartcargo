@@ -16,23 +16,25 @@ import Typography from '@mui/material/Typography';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { FormField } from '../../components/FormGrid';
 import { AirImportManifest } from '../../domain/airImportManifest';
-import { airportRepo, currencyRepo, foreignAgentRepo, jobTypeRepo } from '../../data/masterDataService';
+import { airportRepo, commodityRepo, currencyRepo, foreignAgentRepo, jobTypeRepo } from '../../data/masterDataService';
 
 interface ManifestEntryFormProps {
   manifest: AirImportManifest;
   editable: boolean;
   onChange: (manifest: AirImportManifest) => void;
+  onSavedMawbEntered: (mawbNo: string) => void;
 }
 
-export function ManifestEntryForm({ manifest, editable, onChange }: ManifestEntryFormProps) {
+export function ManifestEntryForm({ manifest, editable, onChange, onSavedMawbEntered }: ManifestEntryFormProps) {
   const jobTypes = jobTypeRepo.list();
   const foreignAgents = foreignAgentRepo.list();
+  const commodities = commodityRepo.list();
   const airports = airportRepo.list();
   const currencies = currencyRepo.list();
 
   const apply = (patch: Partial<AirImportManifest>) => onChange({ ...manifest, ...patch });
 
-  const hawbTotals = manifest.hawbLines.reduce(
+  const calculatedHawbTotals = manifest.hawbLines.reduce(
     (acc, l) => ({
       pcs: acc.pcs + l.pcs,
       cbm: acc.cbm + l.cbm,
@@ -41,6 +43,13 @@ export function ManifestEntryForm({ manifest, editable, onChange }: ManifestEntr
     }),
     { pcs: 0, cbm: 0, grossWeight: 0, chargeWeight: 0 }
   );
+  // Before HAWB jobs are added, legacy behavior displays the entered MAWB totals here.
+  const hawbTotals = manifest.hawbLines.length ? calculatedHawbTotals : {
+    pcs: manifest.pcs,
+    cbm: manifest.cbm,
+    grossWeight: manifest.grossWeight,
+    chargeWeight: manifest.chargeWeight,
+  };
 
   const addHawbLine = () => {
     apply({
@@ -141,6 +150,7 @@ export function ManifestEntryForm({ manifest, editable, onChange }: ManifestEntr
                   value={manifest.mawbNo}
                   disabled={!editable}
                   onChange={(e) => apply({ mawbNo: e.target.value })}
+                  onBlur={(e) => onSavedMawbEntered(e.target.value)}
                 />
               </TableCell>
               <TableCell sx={{ minWidth: 130 }}>
@@ -199,6 +209,16 @@ export function ManifestEntryForm({ manifest, editable, onChange }: ManifestEntr
                 {foreignAgents.map((a) => (
                   <MenuItem key={a.code} value={a.code}>
                     {a.code} — {a.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </FormField>
+            <FormField md={12}>
+              <TextField select label="Commodity" fullWidth value={manifest.commodity ?? ''} disabled={!editable} onChange={(e) => apply({ commodity: e.target.value })}>
+                <MenuItem value="">(none)</MenuItem>
+                {commodities.map((commodity) => (
+                  <MenuItem key={commodity.code} value={commodity.code}>
+                    {commodity.code} — {commodity.description}
                   </MenuItem>
                 ))}
               </TextField>
