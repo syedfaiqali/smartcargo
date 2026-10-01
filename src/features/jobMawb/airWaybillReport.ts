@@ -58,7 +58,9 @@ export async function printAirWaybill(job: Job) {
       }
     };
     const slantedLabel = (left: number, top: number, width: number, text: string) => {
-      doc.line(left, top, left + 5, top + 4); doc.line(left + 5, top + 4, left + width - 5, top + 4); doc.line(left + width - 5, top + 4, left + width, top); doc.line(left + 5, top + 4, left + 5, top + 6); doc.line(left + width - 5, top + 4, left + width - 5, top + 6);
+      doc.line(left, top, left + 5, top + 4);
+      doc.line(left + 5, top + 4, left + width - 5, top + 4);
+      doc.line(left + width - 5, top + 4, left + width, top);
       doc.setFont('helvetica', 'normal').setFontSize(5.4).text(text, left + width / 2, top + 3.2, { align: 'center' });
     };
 
@@ -178,31 +180,50 @@ export async function printAirWaybill(job: Job) {
     const signatureWidth = 196 - chargeWidth;
     // Left: prepaid / collect and other-charge form columns.
     [8, 7, 7, 7, 7].forEach((height, index) => doc.rect(x, chargeTop + [0, 8, 15, 22, 29][index], chargeWidth, height));
-    slantedLabel(x, chargeTop, 25, 'Prepaid');
-    slantedLabel(x + 25, chargeTop, 27, 'Weight Charge');
-    slantedLabel(x + 52, chargeTop, 24, 'Collect');
-    slantedLabel(x, chargeTop + 8, 58, 'Valuation Charge');
-    slantedLabel(x, chargeTop + 15, 58, 'Tax');
-    slantedLabel(x, chargeTop + 22, 76, 'Total Other Charges Due Agent');
-    slantedLabel(x, chargeTop + 29, 76, 'Total Other Charges Due Carrier');
+    // Use the full charge block: the three legacy tabs are equal-width columns.
+    const chargeTabWidth = chargeWidth / 3;
+    slantedLabel(x, chargeTop, chargeTabWidth, 'Prepaid');
+    slantedLabel(x + chargeTabWidth, chargeTop, chargeTabWidth, 'Weight Charge');
+    slantedLabel(x + chargeTabWidth * 2, chargeTop, chargeTabWidth, 'Collect');
+    // One divider directly under the middle Weight Charge tab.
+    const weightChargeCenter = x + chargeWidth / 2;
+    doc.line(weightChargeCenter, chargeTop + 4, weightChargeCenter, chargeTop + 8);
+    const centeredChargeLabelWidth = 27;
+    const centeredChargeLabelLeft = x + (chargeWidth - centeredChargeLabelWidth) / 2;
+    slantedLabel(centeredChargeLabelLeft, chargeTop + 8, centeredChargeLabelWidth, 'Valuation Charge');
+    doc.line(weightChargeCenter, chargeTop + 12, weightChargeCenter, chargeTop + 15);
+    slantedLabel(centeredChargeLabelLeft, chargeTop + 15, centeredChargeLabelWidth, 'Tax');
+    doc.line(weightChargeCenter, chargeTop + 19, weightChargeCenter, chargeTop + 22);
+    const otherChargeLabelWidth = 66;
+    const otherChargeLabelLeft = x + (chargeWidth - otherChargeLabelWidth) / 2;
+    slantedLabel(otherChargeLabelLeft, chargeTop + 22, otherChargeLabelWidth, 'Total Other Charges Due Agent');
+    doc.line(weightChargeCenter, chargeTop + 26, weightChargeCenter, chargeTop + 29);
+    slantedLabel(otherChargeLabelLeft, chargeTop + 29, otherChargeLabelWidth, 'Total Other Charges Due Carrier');
+    doc.line(weightChargeCenter, chargeTop + 33, weightChargeCenter, chargeTop + 36);
     doc.setFillColor(210, 210, 210).rect(x, chargeTop + 36, chargeWidth, 7, 'F');
     doc.rect(x, chargeTop + 36, chargeWidth, 7);
     doc.rect(x, chargeTop + 43, chargeWidth, 8);
-    slantedLabel(x, chargeTop + 43, 37, 'Total Prepaid');
-    slantedLabel(x + 37, chargeTop + 43, 37, 'Total Collect');
+    slantedLabel(x, chargeTop + 43, chargeWidth / 2, 'Total Prepaid');
+    slantedLabel(x + chargeWidth / 2, chargeTop + 43, chargeWidth / 2, 'Total Collect');
+    doc.line(weightChargeCenter, chargeTop + 47, weightChargeCenter, chargeTop + 51);
     doc.rect(x, chargeTop + 51, chargeWidth, 8);
-    slantedLabel(x, chargeTop + 51, 37, 'Currency Conversion Rates');
-    slantedLabel(x + 37, chargeTop + 51, 37, 'CC Charges in Dest Currency');
-    doc.rect(x, chargeTop + 60, 40, 9);
-    doc.setFillColor(210, 210, 210).rect(x + 40, chargeTop + 60, 45, 9, 'F');
-    doc.rect(x + 40, chargeTop + 60, 45, 9);
-    doc.setFillColor(210, 210, 210).rect(x + 85, chargeTop + 60, 35, 9, 'F');
-    doc.rect(x + 85, chargeTop + 60, 35, 9);
+    slantedLabel(x, chargeTop + 51, chargeWidth / 2, 'Currency Conversion Rates');
+    slantedLabel(x + chargeWidth / 2, chargeTop + 51, chargeWidth / 2, 'CC Charges in Dest Currency');
+    doc.line(weightChargeCenter, chargeTop + 55, weightChargeCenter, chargeTop + 60);
+    // Legacy destination strip: 3 distinct cells, with tabs on the gray charge cells.
+    const carrierUseWidth = chargeWidth / 2;
+    const destinationChargeWidth = chargeWidth / 2;
+    const totalCollectWidth = 34;
+    doc.rect(x, chargeTop + 60, carrierUseWidth, 9);
+    doc.setFillColor(210, 210, 210).rect(x + carrierUseWidth, chargeTop + 60, destinationChargeWidth, 9, 'F');
+    doc.rect(x + carrierUseWidth, chargeTop + 60, destinationChargeWidth, 9);
+    doc.setFillColor(210, 210, 210).rect(x + carrierUseWidth + destinationChargeWidth, chargeTop + 60, totalCollectWidth, 9, 'F');
+    doc.rect(x + carrierUseWidth + destinationChargeWidth, chargeTop + 60, totalCollectWidth, 9);
+    slantedLabel(x + carrierUseWidth, chargeTop + 60, destinationChargeWidth, 'Charges at Destination');
+    slantedLabel(x + carrierUseWidth + destinationChargeWidth, chargeTop + 60, totalCollectWidth, 'Total Collect Charges');
     doc.setFont('helvetica', 'normal').setFontSize(5.5).text("For Carrier's Use only at Destination", x + 2, chargeTop + 64.5);
-    doc.setFont('helvetica', 'normal').setFontSize(5.5).text('Charges at Destination', x + 62.5, chargeTop + 64.5, { align: 'center' });
-    doc.setFont('helvetica', 'normal').setFontSize(5.5).text('Total Collect Charges', x + 102.5, chargeTop + 64.5, { align: 'center' });
-    doc.setFont('courier', 'bold').setFontSize(6.5).text(money(job.totals.totalAwbAmount), x + 18.5, chargeTop + 49, { align: 'center' });
-    doc.setFont('courier', 'bold').setFontSize(6.5).text(job.printing.printExRate === 'Y' ? money(job.printableExRate) : '', x + 18.5, chargeTop + 57, { align: 'center' });
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(money(job.totals.totalAwbAmount), x + chargeWidth / 4, chargeTop + 49, { align: 'center' });
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(job.printing.printExRate === 'Y' ? money(job.printableExRate) : '', x + chargeWidth / 4, chargeTop + 57, { align: 'center' });
 
     // Right: other charges, certification, and carrier signature section.
     doc.rect(signatureLeft, chargeTop, signatureWidth, 22);
