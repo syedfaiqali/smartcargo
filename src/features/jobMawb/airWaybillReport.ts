@@ -20,6 +20,7 @@ export async function printAirWaybill(job: Job) {
   const awbDigits = job.mawbNo.replace(/\D/g, '');
   const waybillNo = (awbDigits.slice(3).match(/.{1,4}/g) ?? []).join(' ');
   const topLeftAwbHeader = [airlinePrefix, job.branch, waybillNo].filter(Boolean).join(' | ');
+  const topRightAwbHeader = airlinePrefix && waybillNo ? `${airlinePrefix}-${waybillNo}` : awbNumber;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   doc.setProperties({ title: 'AirWayBillPrint', subject: `Air Waybill ${awbNumber}` });
   doc.setDisplayMode('fullwidth', 'continuous', 'UseOutlines');
@@ -63,7 +64,7 @@ export async function printAirWaybill(job: Job) {
 
     doc.setLineWidth(.35); doc.rect(x, y, w, h); doc.setLineWidth(.18);
     value(topLeftAwbHeader, x + 2, y + 4, 8);
-    doc.setFont('courier', 'bold').setFontSize(8).text(awbNumber, x + w - 2, y + 4, { align: 'right' });
+    doc.setFont('courier', 'bold').setFontSize(8).text(topRightAwbHeader, x + w - 2, y + 4, { align: 'right' });
     topBox(x, 58, "Shipper's Name and Address", job.printing.printShipperNameAddress === 'Y' ? `${job.party.name}\n${job.party.address}` : '');
     topBox(x + 58, 44, "Shipper's Account Number", job.routing.accountNo);
     doc.rect(x + 102, y + 6, 94, 24);
