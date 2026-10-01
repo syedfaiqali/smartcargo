@@ -15,7 +15,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { AirportCode } from '../../domain/masterData';
-import { airportRepo, countryRepo } from '../../data/masterDataService';
+import { airportRepo } from '../../data/masterDataService';
 import { themeColors } from '../../theme/themeColors';
 
 interface AirportCodeGridProps {
@@ -27,8 +27,6 @@ interface AirportCodeGridProps {
 
 export function AirportCodeGrid({ version, onChange, onEdit, onView }: AirportCodeGridProps) {
   const rows = airportRepo.list();
-  const countries = countryRepo.list();
-  const countryName = (code: string) => countries.find((c) => c.code === code)?.name ?? code;
 
   const [filter, setFilter] = useState('');
   const [page, setPage] = useState(0);
@@ -71,20 +69,18 @@ export function AirportCodeGrid({ version, onChange, onEdit, onView }: AirportCo
             <TableCell align="center" sx={{ width: 90, fontWeight: 700 }}>Action</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Code</TableCell>
             <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}>Country</TableCell>
           </TableRow>
           <TableRow>
             <TableCell />
             <TableCell colSpan={2}>
               <TextField size="small" value={filter} onChange={(e) => { setFilter(e.target.value); setPage(0); }} placeholder="Filter Code / Name" fullWidth />
             </TableCell>
-            <TableCell />
           </TableRow>
         </TableHead>
         <TableBody>
           {filteredRows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} align="center">
+              <TableCell colSpan={3} align="center">
                 <Typography variant="body2" sx={{ color: themeColors.textSecondary, py: 2 }}>
                   No records yet — use New to create one.
                 </Typography>
@@ -108,7 +104,6 @@ export function AirportCodeGrid({ version, onChange, onEdit, onView }: AirportCo
                 </TableCell>
                 <TableCell>{row.code}</TableCell>
                 <TableCell>{row.name}</TableCell>
-                <TableCell>{row.countryCode ? countryName(row.countryCode) : ''}</TableCell>
               </TableRow>
             ))
           )}
