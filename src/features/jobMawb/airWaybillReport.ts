@@ -89,9 +89,47 @@ export async function printAirWaybill(job: Job) {
     box(x, y + 87, 100, 12, 'Airport of Departure/Addr. of First Carrier and Requested Routing', job.routing.airportOfDeparture);
     box(x + 100, y + 87, 55, 12, 'Reference Number', job.jobNo);
     box(x + 155, y + 87, 41, 12, 'Optional Shipping Information', '');
-    box(x, y + 99, 30, 12, 'To', job.routing.destination, 'center'); box(x + 30, y + 99, 30, 12, 'By First Carrier', job.routing.flightNo1, 'center'); box(x + 60, y + 99, 26, 12, 'To', job.routing.legs[0]?.to ?? '', 'center');
-    box(x + 86, y + 99, 19, 12, 'Currency', job.currency, 'center'); box(x + 105, y + 99, 42, 12, 'Declared Value for Carriage', job.declaredValCarriage, 'center'); box(x + 147, y + 99, 49, 12, 'Declared Value for Customs', job.declaredValCustoms, 'center');
-    box(x, y + 111, 86, 10, 'Airport of Destination', job.routing.destination); box(x + 86, y + 111, 34, 10, 'Requested Flight/Date', `${job.routing.flightNo2 || job.routing.flightNo1} ${date(job.routing.flightDate2 || job.routing.flightDate)}`); box(x + 120, y + 111, 76, 10, 'Amount of Insurance', job.insurance);
+    const routingTop = y + 99;
+    const routingColumns = [
+      { width: 8, label: 'To', value: 'ADD' },
+      { width: 20, label: 'By First Carrier', value: job.routing.flightNo1 },
+      { width: 28, label: 'Routing and Destination', value: job.routing.destination },
+      { width: 8, label: 'To', value: job.routing.legs[0]?.to ?? '' },
+      { width: 8, label: 'By', value: job.routing.legs[0]?.by ?? '' },
+      { width: 8, label: 'To', value: '' },
+      { width: 8, label: 'By', value: '' },
+      { width: 12, label: 'Currency', value: job.currency },
+      { width: 9, label: 'CHGS\ncode', value: job.printing.printChargeType },
+      { width: 11, label: 'WT/VAL\nPPD', value: job.printing.printChargeType === 'PP' ? 'P' : '' },
+      { width: 13, label: 'Other\nCOLL', value: job.printing.printChargeType === 'PP' ? '' : 'P' },
+      { width: 32, label: 'Declared Value for Carriage', value: job.declaredValCarriage },
+      { width: 31, label: 'Declared Value for Customs', value: job.declaredValCustoms },
+    ];
+    let routingLeft = x;
+    routingColumns.forEach((column) => {
+      box(routingLeft, routingTop, column.width, 12, column.label, column.value, 'center');
+      routingLeft += column.width;
+    });
+    const requestedFlight = job.routing.flightNo2 || job.routing.flightNo1;
+    const requestedDate = date(job.routing.flightDate2 || job.routing.flightDate);
+    box(x, y + 111, 58, 10, 'Airport of Destination', job.routing.destination);
+    doc.rect(x + 58, y + 111, 40, 10);
+    doc.line(x + 78, y + 115, x + 78, y + 121);
+    doc.setFont('helvetica', 'normal').setFontSize(5.3).text('Requested Flight / Date', x + 78, y + 113.3, { align: 'center' });
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(requestedFlight, x + 68, y + 118.6, { align: 'center' });
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(requestedDate, x + 88, y + 118.6, { align: 'center' });
+    box(x + 98, y + 111, 34, 10, 'Amount of Insurance', job.insurance, 'center');
+    doc.rect(x + 132, y + 111, 64, 10);
+    const insuranceTitle = 'INSURANCE:';
+    const insuranceText = 'If Carrier Offers Insurance and Such Insurance is requested in accordance with the Conditions noted in the amount to be insured in figures in box marked “Amount of insurance”.';
+    doc.setFont('helvetica', 'bold').setFontSize(4.4);
+    const insuranceTitleWidth = doc.getTextWidth(insuranceTitle);
+    doc.text(insuranceTitle, x + 133, y + 113);
+    doc.setFont('helvetica', 'normal').setFontSize(4.4);
+    const firstLine = doc.splitTextToSize(insuranceText, 60 - insuranceTitleWidth)[0] ?? '';
+    const remainingInsuranceText = insuranceText.slice(firstLine.length).trim();
+    doc.text(firstLine, x + 133 + insuranceTitleWidth + 0.6, y + 113);
+    doc.text(doc.splitTextToSize(remainingInsuranceText, 62), x + 133, y + 114.8, { lineHeightFactor: 1.02 });
     box(x, y + 121, 196, 16, 'Handling Information', job.handlingInformation);
     const top = y + 145; const cols = [12, 18, 22, 22, 18, 22, 82]; const heads = ['No. of\npieces\nRCP', 'Gross\nWeight', 'Rate Class\nCommodity', 'Chargeable\nWeight', 'Rate /\nCharge', 'Total', 'Nature and Quantity of Goods\n(incl. Dimensions or Volume)'];
     let left = x; cols.forEach((width, index) => { box(left, top, width, 62, heads[index], index === 0 ? String(line?.pcs ?? '') : index === 1 ? `${line?.grossWt ?? ''} kg` : index === 2 ? `${line?.cl ?? ''}\n${line?.comdty ?? ''}` : index === 3 ? String(line?.chargeWt ?? '') : index === 4 ? money(line?.rate ?? 0) : index === 5 ? money(line?.total ?? 0) : `${job.saidToContain || line?.comdty || ''}\n\n${job.otherInformation || ''}` , index === 6 ? 'left' : 'center'); left += width; });
