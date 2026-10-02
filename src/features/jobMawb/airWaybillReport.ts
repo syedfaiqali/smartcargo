@@ -110,8 +110,8 @@ export async function printAirWaybill(job: Job) {
     box(x + 102, y + 57, 94, 30, 'Accounting Information', job.accountingInformationNotify || `${job.printing.printChargeType === 'PP' ? 'FREIGHT PREPAID' : 'FREIGHT COLLECT'}\nJOB NO. ${job.jobNo}`);
     box(x, y + 79, 45, 8, "Agent's IATA Code", job.agents.spoCode);
     box(x + 45, y + 79, 57, 8, 'Account No', job.routing.accountNo);
-    box(x, y + 87, 100, 12, 'Airport of Departure/Addr. of First Carrier and Requested Routing', job.routing.airportOfDeparture);
-    box(x + 100, y + 87, 55, 12, 'Reference Number', job.jobNo);
+    box(x, y + 87, 102, 12, 'Airport of Departure/Addr. of First Carrier and Requested Routing', job.routing.airportOfDeparture);
+    box(x + 102, y + 87, 53, 12, 'Reference Number', job.jobNo);
     box(x + 155, y + 87, 41, 12, 'Optional Shipping Information', '');
     const routingTop = y + 99;
     const routingColumns = [
@@ -122,12 +122,12 @@ export async function printAirWaybill(job: Job) {
       { width: 8, label: 'By', value: job.routing.legs[0]?.by ?? '' },
       { width: 8, label: 'To', value: '' },
       { width: 8, label: 'By', value: '' },
-      { width: 12, label: 'Currency', value: job.currency },
+      { width: 14, label: 'Currency', value: job.currency },
       { width: 9, label: 'CHGS\ncode', value: job.printing.printChargeType },
       { width: 11, label: 'WT/VAL\nPPD', value: job.printing.printChargeType === 'PP' ? 'P' : '' },
       { width: 13, label: 'Other\nCOLL', value: job.printing.printChargeType === 'PP' ? '' : 'P' },
       { width: 32, label: 'Declared Value for Carriage', value: job.declaredValCarriage },
-      { width: 31, label: 'Declared Value for Customs', value: job.declaredValCustoms },
+      { width: 29, label: 'Declared Value for Customs', value: job.declaredValCustoms },
     ];
     let routingLeft = x;
     routingColumns.forEach((column) => {
@@ -137,12 +137,12 @@ export async function printAirWaybill(job: Job) {
     const requestedFlight = job.routing.flightNo2 || job.routing.flightNo1;
     const requestedDate = date(job.routing.flightDate2 || job.routing.flightDate);
     box(x, y + 111, 58, 10, 'Airport of Destination', job.routing.destination);
-    doc.rect(x + 58, y + 111, 40, 10);
-    doc.line(x + 78, y + 115, x + 78, y + 121);
-    doc.setFont('helvetica', 'normal').setFontSize(5.3).text('Requested Flight / Date', x + 78, y + 113.3, { align: 'center' });
-    doc.setFont('courier', 'bold').setFontSize(6.5).text(requestedFlight, x + 68, y + 118.6, { align: 'center' });
-    doc.setFont('courier', 'bold').setFontSize(6.5).text(requestedDate, x + 88, y + 118.6, { align: 'center' });
-    box(x + 98, y + 111, 34, 10, 'Amount of Insurance', job.insurance, 'center');
+    doc.rect(x + 58, y + 111, 44, 10);
+    doc.line(x + 80, y + 115, x + 80, y + 121);
+    doc.setFont('helvetica', 'normal').setFontSize(5.3).text('Requested Flight / Date', x + 80, y + 113.3, { align: 'center' });
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(requestedFlight, x + 69, y + 118.6, { align: 'center' });
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(requestedDate, x + 91, y + 118.6, { align: 'center' });
+    box(x + 102, y + 111, 30, 10, 'Amount of Insurance', job.insurance, 'center');
     doc.rect(x + 132, y + 111, 64, 10);
     const insuranceTitle = 'INSURANCE:';
     const insuranceText = 'If Carrier Offers Insurance and Such Insurance is requested in accordance with the Conditions noted in the amount to be insured in figures in box marked “Amount of insurance”.';
