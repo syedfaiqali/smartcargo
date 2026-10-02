@@ -212,11 +212,26 @@ export async function printAirWaybill(job: Job) {
     const remainingInsuranceText = insuranceText.slice(firstLine.length).trim();
     doc.text(firstLine, x + 133 + insuranceTitleWidth + 0.6, y + 113);
     doc.text(doc.splitTextToSize(remainingInsuranceText, 62), x + 133, y + 114.8, { lineHeightFactor: 1.02 });
-    box(x, y + 121, 196, 16, 'Handling Information', job.handlingInformation);
-    const top = y + 145;
+    // Keep Handling Information as one uninterrupted area.  The SCI box sits
+    // in its lower-right corner, so no horizontal rule crosses the middle.
+    const handlingTop = y + 121;
+    const handlingHeight = 28;
+    doc.rect(x, handlingTop, 196, handlingHeight);
+    doc.setFont('helvetica', 'normal').setFontSize(5.3).text('Handling Information', x + 1, handlingTop + 2.3);
+    if (job.handlingInformation) {
+      doc.setFont('courier', 'bold').setFontSize(6.5).text(doc.splitTextToSize(job.handlingInformation, 167), x + 1, handlingTop + 6.5);
+    }
+    const sciWidth = 27;
+    const sciHeight = 12;
+    const sciLeft = x + 196 - sciWidth;
+    const sciTop = handlingTop + handlingHeight - sciHeight;
+    doc.rect(sciLeft, sciTop, sciWidth, sciHeight);
+    doc.setFont('helvetica', 'normal').setFontSize(8).text('SCI', sciLeft + sciWidth / 2, sciTop + 5.2, { align: 'center' });
+    const top = y + 149;
+    const cargoSectionHeight = 58;
     const cargoColumns = { pieces: 13, gross: 19, unit: 5, rateClass: 26, chargeable: 25, rate: 23, total: 22, nature: 63 };
     const cargoCell = (left: number, width: number, heading: string, content: string) => {
-      doc.rect(left, top, width, 62);
+      doc.rect(left, top, width, cargoSectionHeight);
       doc.setFont('helvetica', 'normal').setFontSize(5.3).text(heading, left + width / 2, top + 2.5, { align: 'center' });
       doc.line(left, top + 11, left + width, top + 11);
       doc.setFont('courier', 'bold').setFontSize(6.5).text(content, left + width / 2, top + 16, { align: 'center' });
@@ -229,10 +244,10 @@ export async function printAirWaybill(job: Job) {
     left += cargoColumns.gross;
     cargoCell(left, cargoColumns.unit, 'kg\n\nlb', 'K');
     left += cargoColumns.unit;
-    doc.rect(left, top, cargoColumns.rateClass, 62);
+    doc.rect(left, top, cargoColumns.rateClass, cargoSectionHeight);
     doc.setFont('helvetica', 'normal').setFontSize(5.3).text('Rate Class', left + cargoColumns.rateClass / 2, top + 2.5, { align: 'center' });
     doc.line(left, top + 6, left + cargoColumns.rateClass, top + 6);
-    doc.line(left + 5, top + 6, left + 5, top + 62);
+    doc.line(left + 5, top + 6, left + 5, top + cargoSectionHeight);
     doc.setFont('helvetica', 'normal').setFontSize(5).text('Commodity\nItem No', left + 5 + (cargoColumns.rateClass - 5) / 2, top + 7.5, { align: 'center' });
     doc.line(left, top + 11, left + cargoColumns.rateClass, top + 11);
     doc.setFont('courier', 'bold').setFontSize(6.5).text(line?.cl ?? '', left + 2.5, top + 16, { align: 'center' });
@@ -240,7 +255,7 @@ export async function printAirWaybill(job: Job) {
     left += cargoColumns.rateClass;
     cargoCell(left, cargoColumns.chargeable, 'Chargeable\nWeight', money(line?.chargeWt ?? 0));
     left += cargoColumns.chargeable;
-    doc.rect(left, top, cargoColumns.rate, 62);
+    doc.rect(left, top, cargoColumns.rate, cargoSectionHeight);
     doc.line(left, top + 11, left + cargoColumns.rate * 0.72, top + 2);
     doc.setFont('helvetica', 'normal').setFontSize(6).text('Rate', left + 5, top + 4.5);
     doc.setFont('helvetica', 'normal').setFontSize(6).text('Charge', left + cargoColumns.rate - 5, top + 9, { align: 'right' });
@@ -249,12 +264,20 @@ export async function printAirWaybill(job: Job) {
     left += cargoColumns.rate;
     cargoCell(left, cargoColumns.total, 'Total', money(line?.total ?? 0));
     left += cargoColumns.total;
-    doc.rect(left, top, cargoColumns.nature, 62);
+    doc.rect(left, top, cargoColumns.nature, cargoSectionHeight);
     doc.setFont('helvetica', 'normal').setFontSize(6).text('Nature and Quantity of Goods\n(incl. Dimension or Volume)', left + cargoColumns.nature / 2, top + 3, { align: 'center' });
     doc.line(left, top + 11, left + cargoColumns.nature, top + 11);
     doc.setFont('courier', 'bold').setFontSize(6.5).text(job.saidToContain || line?.comdty || '', left + 2, top + 16);
     if (job.otherInformation) doc.setFont('courier', 'bold').setFontSize(6).text(doc.splitTextToSize(job.otherInformation, cargoColumns.nature - 4), left + 2, top + 50);
-    const chargeTop = top + 62;
+
+    // Lower divider used by the original AWB in the pieces/weight and total
+    // columns.  Leave the adjoining fields open for their cargo details.
+    const lowerCargoDividerTop = top + cargoSectionHeight - 7;
+    const piecesAndGrossWidth = cargoColumns.pieces + cargoColumns.gross;
+    const totalLeft = x + piecesAndGrossWidth + cargoColumns.unit + cargoColumns.rateClass + cargoColumns.chargeable + cargoColumns.rate;
+    doc.line(x, lowerCargoDividerTop, x + piecesAndGrossWidth, lowerCargoDividerTop);
+    doc.line(totalLeft, lowerCargoDividerTop, totalLeft + cargoColumns.total, lowerCargoDividerTop);
+    const chargeTop = top + cargoSectionHeight;
     const chargeWidth = 85;
     const signatureLeft = x + chargeWidth;
     const signatureWidth = 196 - chargeWidth;
