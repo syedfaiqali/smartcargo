@@ -116,21 +116,52 @@ export async function printAirWaybill(job: Job) {
     const routingTop = y + 99;
     const routingColumns = [
       { width: 8, label: 'To', value: 'ADD' },
-      { width: 20, label: 'By First Carrier', value: job.routing.flightNo1 },
-      { width: 28, label: 'Routing and Destination', value: job.routing.destination },
-      { width: 8, label: 'To', value: job.routing.legs[0]?.to ?? '' },
-      { width: 8, label: 'By', value: job.routing.legs[0]?.by ?? '' },
-      { width: 8, label: 'To', value: '' },
-      { width: 8, label: 'By', value: '' },
+      // Fill the left half continuously through the centre divider; the
+      // routing fields absorb the space previously left as a blank cell.
+      { width: 12, label: 'To', value: job.routing.legs[0]?.to ?? '' },
+      { width: 11, label: 'By', value: job.routing.legs[0]?.by ?? '' },
+      { width: 12, label: 'To', value: '' },
+      { width: 11, label: 'By', value: '' },
       { width: 14, label: 'Currency', value: job.currency },
       { width: 9, label: 'CHGS\ncode', value: job.printing.printChargeType },
       { width: 11, label: 'WT/VAL\nPPD', value: job.printing.printChargeType === 'PP' ? 'P' : '' },
       { width: 13, label: 'Other\nCOLL', value: job.printing.printChargeType === 'PP' ? '' : 'P' },
-      { width: 32, label: 'Declared Value for Carriage', value: job.declaredValCarriage },
-      { width: 29, label: 'Declared Value for Customs', value: job.declaredValCustoms },
+      { width: 25, label: 'Declared Value\nfor Carriage', value: job.declaredValCarriage },
+      { width: 22, label: 'Declared Value\nfor Customs', value: job.declaredValCustoms },
     ];
+    const legacyCarrierRoutingCell = (left: number) => {
+      const carrierWidth = 20;
+      const destinationWidth = 28;
+      const width = carrierWidth + destinationWidth;
+      const tabInset = 5;
+      const tabDepth = 4;
+
+      // The legacy AWB has one continuous cell for these two routing fields.
+      // Its destination heading is an inset tab, rather than a second box
+      // with a straight top border and a vertical divider.
+      doc.line(left, routingTop, left + carrierWidth, routingTop);
+      doc.line(left + carrierWidth, routingTop, left + carrierWidth + tabInset, routingTop + tabDepth);
+      doc.line(left + carrierWidth + tabInset, routingTop + tabDepth, left + width - tabInset, routingTop + tabDepth);
+      doc.line(left + width - tabInset, routingTop + tabDepth, left + width, routingTop);
+      doc.line(left, routingTop, left, routingTop + 12);
+      doc.line(left, routingTop + 12, left + width, routingTop + 12);
+      doc.line(left + width, routingTop, left + width, routingTop + 12);
+
+      doc.setFont('helvetica', 'normal').setFontSize(5.3).text('By First Carrier', left + 1, routingTop + 7.2);
+      doc.setFont('helvetica', 'normal').setFontSize(5.3).text('Routing and Destination', left + carrierWidth + destinationWidth / 2, routingTop + 3.2, { align: 'center' });
+      doc.setFont('courier', 'bold').setFontSize(6.5).text(job.routing.flightNo1, left + carrierWidth / 2, routingTop + 10.2, { align: 'center' });
+      doc.setFont('courier', 'bold').setFontSize(6.5).text(job.routing.destination, left + carrierWidth + destinationWidth / 2, routingTop + 10.2, { align: 'center' });
+    };
+
+    // "To" remains its own field; the next two fields use the original
+    // connected, slanted-header cell from the legacy form.
     let routingLeft = x;
-    routingColumns.forEach((column) => {
+    const [firstRoutingColumn, ...remainingRoutingColumns] = routingColumns;
+    box(routingLeft, routingTop, firstRoutingColumn.width, 12, firstRoutingColumn.label, firstRoutingColumn.value, 'center');
+    routingLeft += firstRoutingColumn.width;
+    legacyCarrierRoutingCell(routingLeft);
+    routingLeft += 48;
+    remainingRoutingColumns.forEach((column) => {
       box(routingLeft, routingTop, column.width, 12, column.label, column.value, 'center');
       routingLeft += column.width;
     });
