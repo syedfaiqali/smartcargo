@@ -160,7 +160,7 @@ export async function printAirWaybill(job: Job) {
       doc.setFont('helvetica', 'normal').setFontSize(5.3).text('By First Carrier', left + 1, routingTop + 7.2);
       doc.setFont('helvetica', 'normal').setFontSize(5.3).text('Routing and Destination', left + carrierWidth + destinationWidth / 2, routingTop + 3.2, { align: 'center' });
       doc.setFont('courier', 'bold').setFontSize(6.5).text(job.routing.flightNo1, left + carrierWidth / 2, routingTop + 10.2, { align: 'center' });
-      doc.setFont('courier', 'bold').setFontSize(6.5).text(job.routing.destination, left + carrierWidth + destinationWidth / 2, routingTop + 10.2, { align: 'center' });
+      // Keep the legacy Routing and Destination cell empty as requested.
     };
     const chargeStatusCell = (left: number, width: number, heading: string) => {
       const split = width / 2;
