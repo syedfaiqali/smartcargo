@@ -37,6 +37,7 @@ const DUE_CARRIER_DEFAULT_LABELS = [
 ];
 
 const DUE_AGENT_DEFAULT_LABELS = ['AWB Fee', 'AIS Charges'];
+const ADDITIONAL_DUE_AGENT_ROWS = 12;
 
 /** Shared Due Carrier charge-head defaults — reused by Job (MAWB/HAWB) Charges tab and Local Invoice 4.4. */
 export function emptyDueCarrierLines(): DueCarrierChargeLine[] {
@@ -53,7 +54,7 @@ export function emptyDueCarrierLines(): DueCarrierChargeLine[] {
 
 /** Shared Due Agent charge-head defaults — reused by Job (MAWB/HAWB) Charges tab and Local Invoice 4.4. */
 export function emptyDueAgentLines(): DueAgentChargeLine[] {
-  return DUE_AGENT_DEFAULT_LABELS.map((label) => ({
+  const standardLines = DUE_AGENT_DEFAULT_LABELS.map((label) => ({
     id: uuid(),
     label,
     chargesForeign: 0,
@@ -62,6 +63,12 @@ export function emptyDueAgentLines(): DueAgentChargeLine[] {
     manualInput: label === 'AIS Charges',
     editableLabel: false,
   }));
+  const blankLines = Array.from({ length: ADDITIONAL_DUE_AGENT_ROWS }, () => emptyAdditionalDueAgentLine());
+  return [...standardLines, ...blankLines];
+}
+
+function emptyAdditionalDueAgentLine(): DueAgentChargeLine {
+  return { id: uuid(), label: '', chargesForeign: 0, chargesPkr: 0, printOnAwb: false, manualInput: false, editableLabel: true };
 }
 
 function emptyAdditionalDueCarrierLines(): DueCarrierChargeLine[] {
@@ -83,11 +90,17 @@ export function emptyChargesTab(): ChargesTab {
   };
 }
 
-/** Adds Due Carrier fields introduced after older jobs may already have been saved. */
+/** Adds charge-panel fields introduced after older jobs may already have been saved. */
 export function ensureChargesTabFields(charges: ChargesTab): ChargesTab {
+  const dueAgentLines = charges.dueAgentLines ?? [];
+  const requiredDueAgentRows = DUE_AGENT_DEFAULT_LABELS.length + ADDITIONAL_DUE_AGENT_ROWS;
   return {
     ...charges,
     additionalDueCarrierLines: charges.additionalDueCarrierLines ?? emptyAdditionalDueCarrierLines(),
+    dueAgentLines: [
+      ...dueAgentLines,
+      ...Array.from({ length: Math.max(0, requiredDueAgentRows - dueAgentLines.length) }, () => emptyAdditionalDueAgentLine()),
+    ],
   };
 }
 

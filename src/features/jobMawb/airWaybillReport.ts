@@ -32,6 +32,9 @@ export async function printAirWaybill(job: Job) {
   const printInLocalCurrency = job.printing.printCurrency === 'LOCAL';
   const dueAgent = printInLocalCurrency ? job.totals.dueAgentPkr : job.totals.dueAgent;
   const dueCarrier = printInLocalCurrency ? job.totals.dueCarrierPkr : job.totals.dueCarrier;
+  const printableOtherCharges = job.charges.dueAgentLines
+    .filter((charge) => charge.printOnAwb && (charge.chargesForeign || charge.chargesPkr))
+    .map((charge) => `${charge.label || 'Other Charge'}  ${money(printInLocalCurrency ? charge.chargesPkr : charge.chargesForeign)}`);
 
   selectedCopies.forEach((copy, page) => {
     if (page) doc.addPage();
@@ -346,6 +349,10 @@ export async function printAirWaybill(job: Job) {
     // Right: other charges, certification, and carrier signature section.
     doc.rect(signatureLeft, chargeTop, signatureWidth, 22);
     doc.setFont('helvetica', 'bold').setFontSize(6).text('Other Charges', signatureLeft + 1, chargeTop + 3);
+    if (printableOtherCharges.length) {
+      doc.setFont('courier', 'bold').setFontSize(6.5);
+      doc.text(doc.splitTextToSize(printableOtherCharges.join('\n'), signatureWidth - 4), signatureLeft + 2, chargeTop + 7, { lineHeightFactor: 1.2 });
+    }
     doc.rect(signatureLeft, chargeTop + 22, signatureWidth, 21);
     const certification = 'Shipper certifies that the particulars on the face hereof are correct and that the goods are properly described and are in proper condition for carriage by air according to applicable national governmental regulations.';
     doc.setFont('helvetica', 'normal').setFontSize(4.2).text(doc.splitTextToSize(certification, signatureWidth - 3), signatureLeft + 1, chargeTop + 25, { lineHeightFactor: 1.02 });
