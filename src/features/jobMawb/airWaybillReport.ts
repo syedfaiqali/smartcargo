@@ -26,6 +26,12 @@ export async function printAirWaybill(job: Job) {
   doc.setDisplayMode('fullwidth', 'continuous', 'UseOutlines');
   const selectedCopies = Object.keys(job.printing.copies).map((copy) => copy === 'Dummy' ? 'Copy 12 (Extra Copy)' : copy);
   const line = job.chargeLines[0];
+  // The AWB's lower charge panel must follow the selected print currency just
+  // like the freight total.  The detailed Charges tab is the source of these
+  // amounts; `totals` contains the reconciled roll-up for the report.
+  const printInLocalCurrency = job.printing.printCurrency === 'LOCAL';
+  const dueAgent = printInLocalCurrency ? job.totals.dueAgentPkr : job.totals.dueAgent;
+  const dueCarrier = printInLocalCurrency ? job.totals.dueCarrierPkr : job.totals.dueCarrier;
 
   selectedCopies.forEach((copy, page) => {
     if (page) doc.addPage();
@@ -327,6 +333,15 @@ export async function printAirWaybill(job: Job) {
     doc.setFont('helvetica', 'normal').setFontSize(5.5).text("For Carrier's Use only at Destination", x + 2, chargeTop + 64.5);
     doc.setFont('courier', 'bold').setFontSize(6.5).text(money(job.totals.totalAwbAmount), x + chargeWidth / 4, chargeTop + 49, { align: 'center' });
     doc.setFont('courier', 'bold').setFontSize(6.5).text(job.printing.printExRate === 'Y' ? money(job.printableExRate) : '', x + chargeWidth / 4, chargeTop + 57, { align: 'center' });
+
+    // These are the two dedicated rows in the standard AWB charge panel. Put
+    // each amount in Prepaid or Collect according to the selected charge type,
+    // directly under its slanted row title (as on the legacy printed form).
+    const otherChargeColumnCenter = job.printing.printChargeType === 'PP'
+      ? x + chargeTabWidth / 2
+      : x + chargeTabWidth * 2.5;
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(money(dueAgent), otherChargeColumnCenter, chargeTop + 28.3, { align: 'center' });
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(money(dueCarrier), otherChargeColumnCenter, chargeTop + 35.3, { align: 'center' });
 
     // Right: other charges, certification, and carrier signature section.
     doc.rect(signatureLeft, chargeTop, signatureWidth, 22);
