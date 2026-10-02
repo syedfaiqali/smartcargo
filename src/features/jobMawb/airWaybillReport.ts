@@ -30,8 +30,14 @@ export async function printAirWaybill(job: Job) {
   selectedCopies.forEach((copy, page) => {
     if (page) doc.addPage();
     const x = 7; const y = 7; const w = 196; const h = 278;
-    const box = (left: number, top: number, width: number, height: number, label = '', value = '', align: 'left' | 'center' | 'right' = 'left') => {
-      doc.rect(left, top, width, height);
+    const box = (left: number, top: number, width: number, height: number, label = '', value = '', align: 'left' | 'center' | 'right' = 'left', drawRightBorder = true) => {
+      if (drawRightBorder) {
+        doc.rect(left, top, width, height);
+      } else {
+        doc.line(left, top, left + width, top);
+        doc.line(left, top, left, top + height);
+        doc.line(left, top + height, left + width, top + height);
+      }
       doc.setFont('helvetica', 'normal').setFontSize(5.3).text(label, left + 1, top + 2.3);
       if (value) {
         doc.setFont('courier', 'bold').setFontSize(6.5);
@@ -42,8 +48,14 @@ export async function printAirWaybill(job: Job) {
     };
     const label = (text: string, left: number, top: number, size = 5.5) => doc.setFont('helvetica', 'normal').setFontSize(size).text(text, left, top);
     const value = (text: string, left: number, top: number, size = 6.5) => doc.setFont('courier', 'bold').setFontSize(size).text(text, left, top);
-    const topBox = (left: number, width: number, heading: string, content: string) => {
-      doc.rect(left, y + 6, width, 24);
+    const topBox = (left: number, width: number, heading: string, content: string, drawRightBorder = true) => {
+      if (drawRightBorder) {
+        doc.rect(left, y + 6, width, 24);
+      } else {
+        doc.line(left, y + 6, left + width, y + 6);
+        doc.line(left, y + 6, left, y + 30);
+        doc.line(left, y + 30, left + width, y + 30);
+      }
       doc.setFont('helvetica', 'normal').setFontSize(8).text(heading, left + 1, y + 10);
       if (content) {
         // Fit variable-length shipper data within the fixed header box so it cannot overlap Consignee.
@@ -67,8 +79,14 @@ export async function printAirWaybill(job: Job) {
     doc.setLineWidth(.35); doc.rect(x, y, w, h); doc.setLineWidth(.18);
     value(topLeftAwbHeader, x + 2, y + 4, 8);
     doc.setFont('courier', 'bold').setFontSize(8).text(topRightAwbHeader, x + w - 2, y + 4, { align: 'right' });
-    topBox(x, 58, "Shipper's Name and Address", job.printing.printShipperNameAddress === 'Y' ? `${job.party.name}\n${job.party.address}` : '');
-    topBox(x + 58, 44, "Shipper's Account Number", job.routing.accountNo);
+    topBox(x, 58, "Shipper's Name and Address", job.printing.printShipperNameAddress === 'Y' ? `${job.party.name}\n${job.party.address}` : '', false);
+    // The account-number field on the AWB is a compact header cell, not a full
+    // address-height box. Keep any entered account number on the same line.
+    doc.rect(x + 58, y + 6, 44, 4.5);
+    doc.setFont('helvetica', 'normal').setFontSize(5.3).text("Shipper's Account Number", x + 59, y + 8.9);
+    if (job.routing.accountNo) {
+      doc.setFont('courier', 'bold').setFontSize(5.3).text(job.routing.accountNo, x + 101, y + 8.9, { align: 'right' });
+    }
     doc.rect(x + 102, y + 6, 94, 24);
     doc.setFont('helvetica', 'normal').setFontSize(8).text('Not negotiable', x + 103, y + 10);
     doc.setFont('helvetica', 'bold').setFontSize(11).text('Air Waybill', x + 103, y + 14);
@@ -80,9 +98,10 @@ export async function printAirWaybill(job: Job) {
       doc.setFont('helvetica', 'bold').setFontSize(13).setTextColor(130, 20, 35).text(airlineName, x + 164, y + 20, { align: 'center' });
     }
     doc.setTextColor(0, 0, 0);
-    box(x, y + 30, 92, 27, "Consignee's Name and Address", job.printing.printConsigneeNameAddress === 'Y' ? `${job.consignee.name}\n${job.consignee.address}` : '');
-    box(x + 92, y + 30, 44, 27, "Consignee's Account Number", '');
-    box(x + 136, y + 30, 60, 27, 'Copies 1, 2 and 3 of this Air Waybill are originals and have the same validity.', 'It is agreed that the goods described herein are accepted in apparent good order and condition for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. All goods may be carried by any other means including road or any other carrier.');
+    box(x, y + 30, 58, 27, "Consignee's Name and Address", job.printing.printConsigneeNameAddress === 'Y' ? `${job.consignee.name}\n${job.consignee.address}` : '');
+    doc.rect(x + 58, y + 30, 44, 4.5);
+    doc.setFont('helvetica', 'normal').setFontSize(5.3).text("Consignee's Account Number", x + 59, y + 32.9);
+    box(x + 102, y + 30, 94, 27, 'Copies 1, 2 and 3 of this Air Waybill are originals and have the same validity.', 'It is agreed that the goods described herein are accepted in apparent good order and condition for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. All goods may be carried by any other means including road or any other carrier.');
     box(x, y + 57, 92, 22, "Issuing Carrier's Agent Name and City", job.agents.clearingAgent || job.owner);
     box(x + 92, y + 57, 104, 22, 'Accounting Information', job.accountingInformationNotify || `${job.printing.printChargeType === 'PP' ? 'FREIGHT PREPAID' : 'FREIGHT COLLECT'}\nJOB NO. ${job.jobNo}`);
     box(x, y + 79, 45, 8, "Agent's IATA Code", job.agents.spoCode);
