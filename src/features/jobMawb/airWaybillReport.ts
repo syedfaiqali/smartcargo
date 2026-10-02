@@ -30,8 +30,11 @@ export async function printAirWaybill(job: Job) {
   // like the freight total.  The detailed Charges tab is the source of these
   // amounts; `totals` contains the reconciled roll-up for the report.
   const printInLocalCurrency = job.printing.printCurrency === 'LOCAL';
+  const freight = printInLocalCurrency ? job.totals.freightPkr : job.totals.freight;
   const dueAgent = printInLocalCurrency ? job.totals.dueAgentPkr : job.totals.dueAgent;
   const dueCarrier = printInLocalCurrency ? job.totals.dueCarrierPkr : job.totals.dueCarrier;
+  const totalAwbAmount = printInLocalCurrency ? job.totals.totalAwbAmountPkr : job.totals.totalAwbAmount;
+  const isPrepaid = job.printing.printChargeType === 'PP';
   const printableOtherCharges = job.charges.dueAgentLines
     .filter((charge) => charge.printOnAwb && (charge.chargesForeign || charge.chargesPkr))
     .map((charge) => `${charge.label || 'Other Charge'}  ${money(printInLocalCurrency ? charge.chargesPkr : charge.chargesForeign)}`);
@@ -334,13 +337,25 @@ export async function printAirWaybill(job: Job) {
     slantedLabel(x + carrierUseWidth, chargeTop + 60, destinationChargeWidth, 'Charges at Destination');
     slantedLabel(x + carrierUseWidth + destinationChargeWidth, chargeTop + 60, totalCollectWidth, 'Total Collect Charges');
     doc.setFont('helvetica', 'normal').setFontSize(5.5).text("For Carrier's Use only at Destination", x + 2, chargeTop + 64.5);
-    doc.setFont('courier', 'bold').setFontSize(6.5).text(money(job.totals.totalAwbAmount), x + chargeWidth / 4, chargeTop + 49, { align: 'center' });
+    // The first row is the freight/weight charge.  It was previously drawn
+    // without a value, which made the Prepaid/Collect area look blank.
+    const chargeColumnCenter = isPrepaid
+      ? x + chargeTabWidth / 2
+      : x + chargeTabWidth * 2.5;
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(money(freight), chargeColumnCenter, chargeTop + 7, { align: 'center' });
+
+    // Totals belong under the matching Prepaid or Collect heading, and must
+    // use the same selected print currency as the rest of this panel.
+    const totalColumnCenter = isPrepaid
+      ? x + chargeWidth / 4
+      : x + chargeWidth * 0.75;
+    doc.setFont('courier', 'bold').setFontSize(6.5).text(money(totalAwbAmount), totalColumnCenter, chargeTop + 49, { align: 'center' });
     doc.setFont('courier', 'bold').setFontSize(6.5).text(job.printing.printExRate === 'Y' ? money(job.printableExRate) : '', x + chargeWidth / 4, chargeTop + 57, { align: 'center' });
 
     // These are the two dedicated rows in the standard AWB charge panel. Put
     // each amount in Prepaid or Collect according to the selected charge type,
     // directly under its slanted row title (as on the legacy printed form).
-    const otherChargeColumnCenter = job.printing.printChargeType === 'PP'
+    const otherChargeColumnCenter = isPrepaid
       ? x + chargeTabWidth / 2
       : x + chargeTabWidth * 2.5;
     doc.setFont('courier', 'bold').setFontSize(6.5).text(money(dueAgent), otherChargeColumnCenter, chargeTop + 28.3, { align: 'center' });
