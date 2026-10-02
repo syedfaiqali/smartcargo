@@ -178,11 +178,17 @@ export async function printAirWaybill(job: Job) {
       box(routingLeft, routingTop, column.width, 12, column.label, column.value, 'center');
       routingLeft += column.width;
     });
+    // The charge fields follow the routing section in the same sequence as
+    // the source AWB: Currency, CHGS code, WT/VAL, Other, then declared values.
+    remainingRoutingColumns.slice(4, 6).forEach((column) => {
+      box(routingLeft, routingTop, column.width, 12, column.label, column.value, 'center');
+      routingLeft += column.width;
+    });
     chargeStatusCell(routingLeft, 11, 'WT/VAL');
     routingLeft += 11;
     chargeStatusCell(routingLeft, 13, 'Other');
     routingLeft += 13;
-    remainingRoutingColumns.slice(4).forEach((column) => {
+    remainingRoutingColumns.slice(6).forEach((column) => {
       box(routingLeft, routingTop, column.width, 12, column.label, column.value, 'center');
       routingLeft += column.width;
     });
