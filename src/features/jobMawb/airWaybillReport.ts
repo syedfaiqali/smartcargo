@@ -104,11 +104,12 @@ export async function printAirWaybill(job: Job) {
     doc.rect(x + 58, y + 30, 44, 4.5);
     doc.setFont('helvetica', 'normal').setFontSize(5.3).text("Consignee's Account Number", x + 59, y + 32.9);
     box(x + 102, y + 30, 94, 27, 'Copies 1, 2 and 3 of this Air Waybill are originals and have the same validity.', 'It is agreed that the goods described herein are accepted in apparent good order and condition for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. All goods may be carried by any other means including road or any other carrier.');
-    box(x, y + 57, 92, 22, "Issuing Carrier's Agent Name and City", job.agents.clearingAgent || job.owner);
-    box(x + 92, y + 57, 104, 22, 'Accounting Information', job.accountingInformationNotify || `${job.printing.printChargeType === 'PP' ? 'FREIGHT PREPAID' : 'FREIGHT COLLECT'}\nJOB NO. ${job.jobNo}`);
+    // Align this split with the upper header division and keep the accounting
+    // area open through the agent/account row (no internal horizontal rule).
+    box(x, y + 57, 102, 22, "Issuing Carrier's Agent Name and City", job.agents.clearingAgent || job.owner);
+    box(x + 102, y + 57, 94, 30, 'Accounting Information', job.accountingInformationNotify || `${job.printing.printChargeType === 'PP' ? 'FREIGHT PREPAID' : 'FREIGHT COLLECT'}\nJOB NO. ${job.jobNo}`);
     box(x, y + 79, 45, 8, "Agent's IATA Code", job.agents.spoCode);
-    box(x + 45, y + 79, 47, 8, 'Account No', job.routing.accountNo);
-    box(x + 92, y + 79, 104, 8, '');
+    box(x + 45, y + 79, 57, 8, 'Account No', job.routing.accountNo);
     box(x, y + 87, 100, 12, 'Airport of Departure/Addr. of First Carrier and Requested Routing', job.routing.airportOfDeparture);
     box(x + 100, y + 87, 55, 12, 'Reference Number', job.jobNo);
     box(x + 155, y + 87, 41, 12, 'Optional Shipping Information', '');
