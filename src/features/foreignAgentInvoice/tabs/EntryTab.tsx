@@ -45,7 +45,62 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
       apply({ mawbJobNo: '', mawbNo: '', mawbDate: '' });
       return;
     }
-    apply({ mawbJobNo: jobNo, mawbNo: ref.mawbNo, mawbDate: ref.mawbDate, mawbJobYear: ref.jobYear, origin: invoice.origin || ref.job.routing.airportOfDeparture, destination: invoice.destination || ref.job.routing.destination });
+    const { job } = ref;
+    const pieces = job.chargeLines.reduce((sum, line) => sum + (line.pcs || 0), 0);
+    const grossWeight = job.chargeLines.reduce((sum, line) => sum + (line.grossWt || 0), 0);
+    const chargeWeight = job.chargeLines.reduce((sum, line) => sum + (line.chargeWt || 0), 0);
+
+    // Freight rows are the selling side. Carrier/agent rows are the buying
+    // side, mirroring the MAWB's calculated Freight, Due Carrier and Due
+    // Agent totals respectively.
+    const carrierRcpCodes = new Set(['D/C', 'INT']);
+    const sellingCharges = job.chargeLines
+      .filter((line) => !carrierRcpCodes.has(line.rcp))
+      .map((line) => ({
+        id: uuid(), side: 'SELLING' as const, code: line.rcp,
+        description: line.comdty || 'Freight', rate: line.rate, charges: line.total,
+      }));
+    const buyingCharges = [
+      ...job.chargeLines
+        .filter((line) => carrierRcpCodes.has(line.rcp))
+        .map((line) => ({
+          id: uuid(), side: 'BUYING' as const, code: line.rcp,
+          description: line.comdty || 'Due Carrier', rate: line.rate, charges: line.total,
+        })),
+      ...[...job.charges.dueCarrierLines, ...(job.charges.additionalDueCarrierLines ?? [])]
+        .filter((line) => line.charges)
+        .map((line) => ({
+          id: uuid(), side: 'BUYING' as const, code: 'DUE-CARRIER',
+          description: line.label || 'Due Carrier', rate: line.rate, charges: line.charges,
+        })),
+      ...job.charges.dueAgentLines
+        .filter((line) => line.chargesForeign)
+        .map((line) => ({
+          id: uuid(), side: 'BUYING' as const, code: 'DUE-AGENT',
+          description: line.label || 'Due Agent', rate: line.chargesForeign, charges: line.chargesForeign,
+        })),
+    ];
+    const totalBuying = buyingCharges.reduce((sum, line) => sum + line.charges, 0);
+
+    apply({
+      mawbJobNo: jobNo,
+      mawbNo: ref.mawbNo,
+      mawbDate: ref.mawbDate,
+      mawbJobYear: ref.jobYear,
+      origin: job.routing.airportOfDeparture,
+      destination: job.routing.destination,
+      pieces,
+      grossWeight,
+      chargeWeight,
+      ppCc: job.printing.printChargeType === 'PP' ? 'PP' : 'CC',
+      currencyCode: job.currency || invoice.currencyCode,
+      exchangeRate: job.exRate || invoice.exchangeRate,
+      allocationLines: [{
+        id: uuid(), jobNo: job.jobNo, hawbNo: '', pcs: pieces, grWeight: grossWeight,
+        chWeight: chargeWeight, cost: totalBuying, partyName: job.party.name || job.party.partyCode,
+      }],
+      chargeLines: [...sellingCharges, ...buyingCharges],
+    });
   };
 
   const setFAgentCode = (code: string) => {
