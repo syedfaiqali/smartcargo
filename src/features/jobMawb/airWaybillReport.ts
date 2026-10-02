@@ -120,7 +120,7 @@ export async function printAirWaybill(job: Job) {
     box(x, y + 79, 45, 8, "Agent's IATA Code", job.agents.spoCode);
     box(x + 45, y + 79, 57, 8, 'Account No', job.routing.accountNo);
     box(x, y + 87, 102, 12, 'Airport of Departure/Addr. of First Carrier and Requested Routing', job.routing.airportOfDeparture);
-    box(x + 102, y + 87, 53, 12, 'Reference Number', job.jobNo);
+    box(x + 102, y + 87, 53, 12, 'Reference Number', job.quotRefNo);
     box(x + 155, y + 87, 41, 12, 'Optional Shipping Information', '');
     const routingTop = y + 99;
     const routingColumns = [
