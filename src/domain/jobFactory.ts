@@ -286,7 +286,7 @@ export function createEmptyJob(kind: JobKind, branch = 'KHI'): Job {
     shipmentStatus: '',
     shipmentStatusDate: '',
     insurance: '',
-    declaredValCarriage: '',
+    declaredValCarriage: 'N V D',
     declaredValCustoms: '',
     handlingInformation: '',
     currency: 'PKR',
