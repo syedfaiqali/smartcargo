@@ -124,8 +124,6 @@ export async function printAirWaybill(job: Job) {
       { width: 11, label: 'By', value: '' },
       { width: 14, label: 'Currency', value: job.currency },
       { width: 9, label: 'CHGS\ncode', value: job.printing.printChargeType },
-      { width: 11, label: 'WT/VAL\nPPD', value: job.printing.printChargeType === 'PP' ? 'P' : '' },
-      { width: 13, label: 'Other\nCOLL', value: job.printing.printChargeType === 'PP' ? '' : 'P' },
       { width: 25, label: 'Declared Value\nfor Carriage', value: job.declaredValCarriage },
       { width: 22, label: 'Declared Value\nfor Customs', value: job.declaredValCustoms },
     ];
@@ -152,6 +150,21 @@ export async function printAirWaybill(job: Job) {
       doc.setFont('courier', 'bold').setFontSize(6.5).text(job.routing.flightNo1, left + carrierWidth / 2, routingTop + 10.2, { align: 'center' });
       doc.setFont('courier', 'bold').setFontSize(6.5).text(job.routing.destination, left + carrierWidth + destinationWidth / 2, routingTop + 10.2, { align: 'center' });
     };
+    const chargeStatusCell = (left: number, width: number, heading: string) => {
+      const split = width / 2;
+      const isPrepaid = job.printing.printChargeType === 'PP';
+
+      // The AWB charge-status area uses a merged group heading with PPD and
+      // COLL sub-cells below it. Drawing these explicitly keeps both groups
+      // identical, rather than letting each render as a single tall cell.
+      doc.rect(left, routingTop, width, 12);
+      doc.line(left, routingTop + 4.5, left + width, routingTop + 4.5);
+      doc.line(left + split, routingTop + 4.5, left + split, routingTop + 12);
+      doc.setFont('helvetica', 'normal').setFontSize(5.3).text(heading, left + width / 2, routingTop + 2.8, { align: 'center' });
+      doc.text('PPD', left + split / 2, routingTop + 7.2, { align: 'center' });
+      doc.text('COLL', left + split + split / 2, routingTop + 7.2, { align: 'center' });
+      doc.setFont('courier', 'bold').setFontSize(6.5).text('P', left + (isPrepaid ? split / 2 : split + split / 2), routingTop + 10.8, { align: 'center' });
+    };
 
     // "To" remains its own field; the next two fields use the original
     // connected, slanted-header cell from the legacy form.
@@ -161,7 +174,15 @@ export async function printAirWaybill(job: Job) {
     routingLeft += firstRoutingColumn.width;
     legacyCarrierRoutingCell(routingLeft);
     routingLeft += 48;
-    remainingRoutingColumns.forEach((column) => {
+    remainingRoutingColumns.slice(0, 4).forEach((column) => {
+      box(routingLeft, routingTop, column.width, 12, column.label, column.value, 'center');
+      routingLeft += column.width;
+    });
+    chargeStatusCell(routingLeft, 11, 'WT/VAL');
+    routingLeft += 11;
+    chargeStatusCell(routingLeft, 13, 'Other');
+    routingLeft += 13;
+    remainingRoutingColumns.slice(4).forEach((column) => {
       box(routingLeft, routingTop, column.width, 12, column.label, column.value, 'center');
       routingLeft += column.width;
     });
