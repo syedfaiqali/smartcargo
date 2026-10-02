@@ -98,7 +98,9 @@ export async function printAirWaybill(job: Job) {
       doc.setFont('helvetica', 'bold').setFontSize(13).setTextColor(130, 20, 35).text(airlineName, x + 164, y + 20, { align: 'center' });
     }
     doc.setTextColor(0, 0, 0);
-    box(x, y + 30, 58, 27, "Consignee's Name and Address", job.printing.printConsigneeNameAddress === 'Y' ? `${job.consignee.name}\n${job.consignee.address}` : '');
+    // Keep this lower address area continuous; the compact account-number cell
+    // above it supplies the only required separation in this section.
+    box(x, y + 30, 58, 27, "Consignee's Name and Address", job.printing.printConsigneeNameAddress === 'Y' ? `${job.consignee.name}\n${job.consignee.address}` : '', 'left', false);
     doc.rect(x + 58, y + 30, 44, 4.5);
     doc.setFont('helvetica', 'normal').setFontSize(5.3).text("Consignee's Account Number", x + 59, y + 32.9);
     box(x + 102, y + 30, 94, 27, 'Copies 1, 2 and 3 of this Air Waybill are originals and have the same validity.', 'It is agreed that the goods described herein are accepted in apparent good order and condition for carriage SUBJECT TO THE CONDITIONS OF CONTRACT ON THE REVERSE HEREOF. All goods may be carried by any other means including road or any other carrier.');
