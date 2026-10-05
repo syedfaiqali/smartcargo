@@ -29,6 +29,7 @@ const { BankReceiptEntryGrid } = require('../src/features/voucher/BankReceiptEnt
 const { BankReceiptPrintingTab } = require('../src/features/voucher/BankReceiptPrintingTab.tsx');
 const { BankReceiptPage } = require('../src/features/voucher/BankReceiptPage.tsx');
 const { voucherRepo } = require('../src/data/voucherService.ts');
+const { withReceiptEntryLines } = require('../src/domain/receiptEntry.ts');
 const { createEmptyVoucher } = require('../src/domain/voucherFactory.ts');
 const { analysisCodeRepo } = require('../src/data/financeSetupService.ts');
 analysisCodeRepo.save({ id: 'analysis-ops', createdAt: '', updatedAt: '', code: 'OPS', name: 'Operations' });
@@ -116,6 +117,25 @@ function TestGrid() {
   assert.deepEqual(screen.getAllByRole('tab').map(tab => tab.textContent), ['Entry', 'Docs. Knock Off', 'COST']);
   fireEvent.click(screen.getByRole('tab', { name: 'COST' }));
   assert.ok(screen.getByRole('button', { name: 'Add Cost' }));
+  cleanup();
+  const standalone = withReceiptEntryLines({ ...printVoucher, partyCode: '', partyName: '', receivedFrom: 'faiq jafri', clearingLines: [] },
+    printVoucher.receiptEntryLines.map(line => ({ ...line, currencyCode: 'PKR', exchangeRate: '1', amount: '10000' })));
+  voucherRepo.replaceAll([standalone]);
+  render(React.createElement(BankReceiptPage));
+  fireEvent.click(screen.getByRole('button', { name: 'Edit voucher' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Received From' }), { target: { value: 'faiq jafri updated' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  assert.ok(screen.getByRole('alert').textContent.includes('saved.'));
+  assert.equal(voucherRepo.get(standalone.id).receivedFrom, 'faiq jafri updated');
+  assert.equal(voucherRepo.get(standalone.id).partyCode, '', 'Standalone entries must save without forcing a knock-off party');
+  assert.equal(voucherRepo.get(standalone.id).amount, 10000);
+  assert.equal(voucherRepo.list().length, 1, 'Editing must update the existing voucher');
+  cleanup();
+  voucherRepo.replaceAll([{ ...standalone, receiptEntryLines: standalone.receiptEntryLines.map((line, i) => i === 0 ? { ...line, accountCode: '' } : line) }]);
+  render(React.createElement(BankReceiptPage));
+  fireEvent.click(screen.getByRole('button', { name: 'Edit voucher' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  assert.ok(screen.getByRole('alert').textContent.includes('Complete Account Code'));
   cleanup();
   console.log('Receipt UI checks passed: searchable Analysis, automatic rows, single-row deletion, note currency selection and cheque settings/preview.');
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => dom.window.close());

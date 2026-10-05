@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
 } from "@mui/material";
 import { BankReceiptPrintingTab } from "./BankReceiptPrintingTab";
 import { PageShell } from "../../layout/PageShell";
@@ -57,6 +58,7 @@ export function BankReceiptPage() {
   const [isPrintingView, setIsPrintingView] = useState(false);
   const [tab, setTab] = useState(0);
   const [revision, setRevision] = useState(0);
+  const [saveToast, setSaveToast] = useState<{ id: number; text: string } | null>(null);
   const [message, setMessage] = useState<{
     severity: "success" | "error" | "warning";
     text: string;
@@ -78,6 +80,23 @@ export function BankReceiptPage() {
     setTab(0);
     setIsPrintingView(false);
     setCost(null);
+  };
+  const startNew = (branch = "KHI") => {
+    const draft: Voucher = {
+      ...createEmptyVoucher("RECEIPT", branch),
+      receiptEntryLines: [],
+      costLines: [],
+      chequeStatus: "UNCLEARED",
+      chequeType: "OPEN",
+    };
+    draft.voucherNo = nextVoucherNo("RECEIPT", branch);
+    draft.entryDate = draft.voucherDate;
+    open(draft, true);
+    setMessage(null);
+    setInvoiceDialog(false);
+    setInvoiceId("");
+    setInvoiceAmount(0);
+    setSelected([]);
   };
   const clearedTotal = (voucher?.clearingLines ?? []).reduce(
     (sum, line) => sum + line.amountCleared,
@@ -113,8 +132,11 @@ export function BankReceiptPage() {
       });
       return undefined;
     }
-    if (!voucher.partyCode) {
-      setMessage({ severity: "error", text: "Select a party before saving." });
+    if (voucher.clearingLines.length > 0 && !voucher.partyCode) {
+      setMessage({
+        severity: "error",
+        text: "Select a party in Docs. Knock Off for the allocated invoices before saving.",
+      });
       return undefined;
     }
     if (
@@ -154,10 +176,7 @@ export function BankReceiptPage() {
       const saved = voucherRepo.save(voucher);
       setVoucher(saved);
       refresh();
-      setMessage({
-        severity: "success",
-        text: `Voucher ${saved.voucherNo} saved.`,
-      });
+      setMessage(null);
       return saved;
     } catch {
       setMessage({
@@ -215,18 +234,20 @@ export function BankReceiptPage() {
   };
   const action = (a: ToolbarAction) => {
     if (a === "new") {
-      const draft = createEmptyVoucher("RECEIPT");
-      draft.voucherNo = nextVoucherNo("RECEIPT", draft.branch);
-      draft.entryDate = draft.voucherDate;
-      open(draft, true);
-      setMessage(null);
+      startNew();
     } else if (a === "search") {
       setVoucher(null);
       setEditable(false);
       setIsPrintingView(false);
       setSelected([]);
       setTab(0);
-    } else if (a === "save") save();
+    } else if (a === "save") {
+      const saved = save();
+      if (saved) {
+        startNew(saved.branch);
+        setSaveToast({ id: Date.now(), text: `Voucher ${saved.voucherNo} saved successfully.` });
+      }
+    }
     else if (a === "edit" && voucher && !voucher.final && !voucher.void)
       setEditable(true);
     else if (a === "delete" && voucher) remove(voucher);
@@ -329,6 +350,22 @@ export function BankReceiptPage() {
         ) : undefined
       }
     >
+      <Snackbar
+        key={saveToast?.id}
+        open={!!saveToast}
+        autoHideDuration={4500}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        onClose={(_, reason) => { if (reason !== "clickaway") setSaveToast(null); }}
+      >
+        <Alert
+          severity="success"
+          variant="filled"
+          onClose={() => setSaveToast(null)}
+          sx={{ borderRadius: 2, boxShadow: 6, alignItems: "center", minWidth: { sm: 320 } }}
+        >
+          {saveToast?.text}
+        </Alert>
+      </Snackbar>
       {message && (
         <Alert
           severity={message.severity}
@@ -417,12 +454,14 @@ export function BankReceiptPage() {
       {!isPrintingView && tab === 0 && voucher && (
         <>
           <BankReceiptHeader
+            key={voucher.id}
             voucher={voucher}
             editable={editable}
             clearedTotal={clearedTotal * voucher.exchangeRate}
             onChange={setVoucher}
           />
           <BankReceiptEntryGrid
+            key={voucher.id}
             voucher={voucher}
             editable={editable}
             onChange={setVoucher}
