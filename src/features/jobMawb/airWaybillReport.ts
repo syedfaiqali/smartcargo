@@ -378,7 +378,7 @@ export async function printAirWaybill(job: Job) {
     doc.setFont('helvetica', 'normal').setFontSize(6.5).text('SIGNED BY THE AGENT ON BEHALF OF CARRIER', signatureLeft + 1, chargeTop + 47);
     doc.rect(signatureLeft, chargeTop + 51, signatureWidth, 9);
     doc.setFont('courier', 'bold').setFontSize(7).text(date(job.awbDate || job.jobDate), signatureLeft + 9, chargeTop + 56, { align: 'center' });
-    doc.setFont('courier', 'bold').setFontSize(7).text(job.branch, signatureLeft + signatureWidth / 2, chargeTop + 56, { align: 'center' });
+    doc.setFont('courier', 'bold').setFontSize(7).text(job.routing.airportOfDeparture, signatureLeft + signatureWidth / 2, chargeTop + 56, { align: 'center' });
     doc.setFont('helvetica', 'normal').setFontSize(5.5).text('Executed on (Date)', signatureLeft + 9, chargeTop + 59, { align: 'center' });
     doc.setFont('helvetica', 'normal').setFontSize(5.5).text('at (Place)                 Signature of issuing Carrier or its Agent', signatureLeft + signatureWidth * 0.62, chargeTop + 59, { align: 'center' });
     doc.setFont('courier', 'bold').setFontSize(8).text(topLeftAwbHeader.replaceAll(' | ', ' '), x + w - 2, y + h - 7, { align: 'right' });
