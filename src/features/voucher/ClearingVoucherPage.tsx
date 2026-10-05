@@ -34,10 +34,11 @@ import { partyRepo, bankRepo, currencyRepo } from '../../data/masterDataService'
 
 interface ClearingVoucherPageProps {
   kind: Extract<VoucherKind, 'RECEIPT' | 'PAYMENT'>;
+  title?: string;
 }
 
-export function ClearingVoucherPage({ kind }: ClearingVoucherPageProps) {
-  const title = kind === 'RECEIPT' ? 'Receipt Voucher' : 'Payment Voucher';
+export function ClearingVoucherPage({ kind, title: titleOverride }: ClearingVoucherPageProps) {
+  const title = titleOverride ?? (kind === 'RECEIPT' ? 'Receipt Voucher' : 'Payment Voucher');
   const parties = partyRepo.list();
   const banks = bankRepo.list();
   const currencies = currencyRepo.list();

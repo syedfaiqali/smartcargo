@@ -43,6 +43,7 @@ import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage
 import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
 import { GroupCodesPage } from './features/financeSetup/GroupCodesPage';
 import { ControlCodesPage } from './features/financeSetup/ControlCodesPage';
+import { FinanceUtilityPage } from './features/financeSetup/FinanceUtilityPage';
 import { SeaOtherChargesPayablePage } from './features/seaOtherChargesPayable/SeaOtherChargesPayablePage';
 import { SeaRefundPage } from './features/seaRefundFromShippingLines/SeaRefundPage';
 import { SeaLocalInvoicePage } from './features/seaLocalInvoice/SeaLocalInvoicePage';
@@ -69,12 +70,17 @@ function App() {
       <BrowserRouter>
         <AppShell>
           <Routes>
-            <Route path="/finance" element={<ClearingVoucherPage kind="RECEIPT" />} />
+            <Route path="/finance" element={<ClearingVoucherPage kind="PAYMENT" title="BPV - Bank Payment Voucher" />} />
             <Route path="/finance/initial-setup/group-codes" element={<GroupCodesPage />} />
             <Route path="/finance/initial-setup/control-codes" element={<ControlCodesPage />} />
-            <Route path="/finance/receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" />} />
-            <Route path="/finance/payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" />} />
+            <Route path="/finance/bank-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="BPV - Bank Payment Voucher" />} />
+            <Route path="/finance/bank-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" title="BRV - Bank Receipt Voucher" />} />
+            <Route path="/finance/cash-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="CPV - Cash Payment Voucher" />} />
+            <Route path="/finance/cash-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" title="CRV - Cash Receipt Voucher" />} />
             <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />
+            <Route path="/finance/post-dated-cheques-received" element={<FinanceUtilityPage kind="post-dated-cheques" />} />
+            <Route path="/finance/cheque-book" element={<FinanceUtilityPage kind="cheque-book" />} />
+            <Route path="/finance/bank-reconciliation" element={<FinanceUtilityPage kind="bank-reconciliation" />} />
             <Route path="/finance/reports/ar-aging" element={<AgingReportPage kind="AR" />} />
             <Route path="/finance/reports/ap-aging" element={<AgingReportPage kind="AP" />} />
             <Route path="/finance/reports/bank-cash-ledger" element={<BankCashLedgerPage />} />

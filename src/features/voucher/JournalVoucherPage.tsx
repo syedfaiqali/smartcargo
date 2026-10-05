@@ -33,7 +33,7 @@ const COMMON_ACCOUNT_HEADS = [
   'Bank/Cash',
 ];
 
-export function JournalVoucherPage() {
+export function JournalVoucherPage({ title = 'JVR - Journal Voucher' }: { title?: string }) {
   const [voucher, setVoucher] = useState<Voucher | null>(null);
   const [editable, setEditable] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -124,7 +124,7 @@ export function JournalVoucherPage() {
   if (voucher?.final) disabledActions.push('edit', 'delete', 'final');
 
   return (
-    <PageShell breadcrumbs={['Finance', 'Journal Voucher']} title="Journal Voucher">
+    <PageShell breadcrumbs={['Finance', title]} title={title}>
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}
