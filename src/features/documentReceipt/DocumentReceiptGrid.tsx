@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -130,7 +131,7 @@ export function DocumentReceiptGrid({ documents, onOpen, onEdit, onDelete, onPri
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                   <Tooltip title="Open"><IconButton size="small" color="primary" onClick={() => onOpen(r)}><VisibilityOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Edit"><span><IconButton size="small" color="primary" disabled={r.status.final} onClick={() => onEdit(r)}><EditOutlinedIcon fontSize="small" /></IconButton></span></Tooltip>
-                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={r.status.final} onClick={() => onDelete(r)}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
+                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={r.status.final} onClick={() => confirmDelete(() => onDelete(r))}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
                   <Tooltip title="Print"><IconButton size="small" color="primary" onClick={() => onPrint(r)}><PrintOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                 </TableCell>
                 <TableCell>{r.recordNo}</TableCell>

@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -344,7 +345,7 @@ export function AirImportPayableEntryForm({ payable, editable, onChange }: AirIm
                       <TextField variant="standard" value={line.partyName} disabled={!editable} onChange={(e) => updateAllocationLine(line.id, { partyName: e.target.value })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeAllocationLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeAllocationLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -472,7 +473,7 @@ export function AirImportPayableEntryForm({ payable, editable, onChange }: AirIm
                     <TableCell>{line.fAmount.toFixed(2)}</TableCell>
                     <TableCell>{line.pkrAmount.toFixed(2)}</TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable || i === 0} onClick={() => removeChargeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable || i === 0} onClick={() => confirmDelete(() => removeChargeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

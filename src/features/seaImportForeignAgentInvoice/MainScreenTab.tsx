@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -289,7 +290,7 @@ export function MainScreenTab({ invoice, config, editable, onChange }: MainScree
                       />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeCostLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeCostLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -356,7 +357,7 @@ export function MainScreenTab({ invoice, config, editable, onChange }: MainScree
                       />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable || i === 0} onClick={() => removeChargeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable || i === 0} onClick={() => confirmDelete(() => removeChargeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

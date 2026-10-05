@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -601,7 +602,7 @@ export function AwbStockPage() {
         {selectedIds.length > 0 && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, px: 1.5, py: 1, borderBottom: `1px solid ${themeColors.border}` }}>
             <Typography variant="body2">{selectedIds.length} selected</Typography>
-            <Button size="small" color="error" variant="contained" startIcon={<DeleteOutlineIcon />} onClick={handleDeleteSelected}>
+            <Button size="small" color="error" variant="contained" startIcon={<DeleteOutlineIcon />} onClick={() => confirmDelete(handleDeleteSelected)}>
               Delete selected
             </Button>
           </Box>
@@ -674,7 +675,7 @@ export function AwbStockPage() {
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete">
-                        <IconButton size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
+                        <IconButton size="small" color="error" onClick={() => confirmDelete(() => handleDeleteRow(row.id))}>
                           <DeleteOutlineIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>

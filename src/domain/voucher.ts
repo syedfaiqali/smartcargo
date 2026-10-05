@@ -49,6 +49,21 @@ export interface Voucher extends AuditFields {
   branch: string;
   voucherNo: string;
   voucherDate: IsoDate;
+  entryDate?: IsoDate;
+  receivedFrom?: string;
+  chequeNo?: string;
+  chequeDate?: IsoDate;
+  chequeStatus?: 'UNCLEARED' | 'CLEARED' | 'RETURNED' | 'CANCELLED' | 'BOUNCED';
+  clearingDate?: IsoDate;
+  chequeType?: 'OPEN' | 'CROSSED' | 'PAYEE_ACCOUNT_ONLY' | 'BANK_TRANSFER' | 'ONLINE_TRANSFER' | 'CREDIT_CARD' | 'PO' | 'TT' | 'CASH' | 'PERSONAL_CHEQUE' | 'ONLINE_PERSONAL' | 'DIGITAL_WALLET' | 'ATM_TRANSFER' | 'RTGS' | 'IBFT';
+  attachment?: { name: string; dataUrl: string };
+  accountCode?: string;
+  analysisCode?: string;
+  posted?: boolean;
+  void?: boolean;
+  checked?: boolean;
+  costLines?: VoucherCostLine[];
+  receiptEntryLines?: ReceiptEntryLine[];
 
   // Receipt / Payment specific
   partyCode: string;
@@ -72,4 +87,37 @@ export interface Voucher extends AuditFields {
 
   remarks: string;
   final: boolean;
+}
+
+export interface ReceiptEntryLine {
+  id: string;
+  dc: 'DEBIT' | 'CREDIT';
+  accountCode: string;
+  accountDescription: string;
+  particulars: string;
+  analysisCode: string;
+  billNo: string;
+  billDate: IsoDate;
+  currencyCode: string;
+  exchangeRate: string;
+  amount: string;
+}
+
+export interface VoucherCostLine {
+  id: string;
+  accountCode: string;
+  description: string;
+  jobType: string;
+  jobYear: string;
+  station: string;
+  houseJobNo: string;
+  masterJobNo: string;
+  courierNo: string;
+  houseBlNo: string;
+  masterBlNo: string;
+  amount: number;
+  partyName: string;
+  invoiceNo: string;
+  invoiceYear: string;
+  invoiceAmount: number;
 }

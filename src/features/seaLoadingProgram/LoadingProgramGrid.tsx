@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -94,7 +95,7 @@ export function LoadingProgramGrid({ programs, onOpen, onEdit, onDelete, onPrint
                 <Tooltip title="Open"><IconButton size="small" color="primary" onClick={() => onOpen(program)}><VisibilityOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                 <Tooltip title="Edit"><span><IconButton size="small" color="primary" disabled={program.status.final} onClick={() => onEdit(program)}><EditOutlinedIcon fontSize="small" /></IconButton></span></Tooltip>
                 <Tooltip title="Print"><IconButton size="small" color="primary" onClick={() => onPrint(program)}><PrintOutlinedIcon fontSize="small" /></IconButton></Tooltip>
-                <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={program.status.final} onClick={() => onDelete(program)}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
+                <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={program.status.final} onClick={() => confirmDelete(() => onDelete(program))}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
               </TableCell>
               <TableCell>{program.loadProgramNo}</TableCell><TableCell>{program.date}</TableCell><TableCell>{program.branch}</TableCell>
               <TableCell>{program.shippingLine || '—'}</TableCell><TableCell>{program.destination || '—'}</TableCell><TableCell>{program.vessel || '—'}</TableCell>

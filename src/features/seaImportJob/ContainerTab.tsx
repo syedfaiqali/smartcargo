@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -136,7 +137,7 @@ export function ContainerTab({ job, editable, onChange }: ContainerTabProps) {
                     <TextField variant="standard" value={c.emptyLocation} disabled={!editable} onChange={(e) => updateContainerLine(c.id, { emptyLocation: e.target.value })} />
                   </TableCell>
                   <TableCell>
-                    <IconButton size="small" disabled={!editable} onClick={() => removeContainerLine(c.id)}>
+                    <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeContainerLine(c.id))}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>

@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -359,7 +360,7 @@ export function SeaPayableEntryForm({ payable, editable, onChange }: SeaPayableE
                       <TextField variant="standard" type="number" value={c.rate} disabled={!editable} onChange={(e) => updateContainerLine(c.id, { rate: Number(e.target.value) })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeContainerLine(c.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeContainerLine(c.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -435,7 +436,7 @@ export function SeaPayableEntryForm({ payable, editable, onChange }: SeaPayableE
                       <TextField variant="standard" value={line.partyName} disabled={!editable} onChange={(e) => updateCostLine(line.id, { partyName: e.target.value })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeCostLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeCostLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -516,7 +517,7 @@ export function SeaPayableEntryForm({ payable, editable, onChange }: SeaPayableE
                     <TableCell>{line.fAmount.toFixed(2)}</TableCell>
                     <TableCell>{line.pkrAmount.toFixed(2)}</TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable || i === 0} onClick={() => removeChargeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable || i === 0} onClick={() => confirmDelete(() => removeChargeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -590,7 +591,7 @@ export function SeaPayableEntryForm({ payable, editable, onChange }: SeaPayableE
                     </TableCell>
                     <TableCell>{line.fAmount.toFixed(2)}</TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeLessChargeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeLessChargeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -139,7 +140,7 @@ export function JobChargesTab({ job, editable, onChange }: JobChargesTabProps) {
                       <TextField variant="standard" type="number" value={line.buyFAmount} disabled={!editable} onChange={(e) => updateLine(line.id, { buyFAmount: Number(e.target.value) })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

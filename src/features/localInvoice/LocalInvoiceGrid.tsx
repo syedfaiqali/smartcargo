@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -199,7 +200,7 @@ export function LocalInvoiceGrid({ invoices, onOpenInvoice, onEditInvoice, onPri
                   <Tooltip title="Open"><IconButton size="small" color="primary" onClick={() => onOpenInvoice(invoice)}><VisibilityOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Edit"><span><IconButton size="small" color="primary" disabled={invoice.status.final} onClick={() => onEditInvoice(invoice)}><EditOutlinedIcon fontSize="small" /></IconButton></span></Tooltip>
                   <Tooltip title="Printing"><IconButton size="small" color="primary" onClick={() => onPrintInvoice(invoice)}><PrintOutlinedIcon fontSize="small" /></IconButton></Tooltip>
-                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={invoice.status.final} onClick={() => onDeleteInvoice(invoice)}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
+                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={invoice.status.final} onClick={() => confirmDelete(() => onDeleteInvoice(invoice))}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
                 </TableCell>
                 <TableCell>{invoice.invoiceNo}</TableCell>
                 <TableCell>{invoice.invoiceDate}</TableCell>
