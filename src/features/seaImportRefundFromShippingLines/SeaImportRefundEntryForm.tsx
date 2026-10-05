@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -280,7 +281,7 @@ export function SeaImportRefundEntryForm({ refund, editable, onChange }: SeaImpo
                         disabled={!editable}
                         onChange={(e) => updateChargeLine(line.id, { amount2: Number(e.target.value) })}
                       />
-                      <IconButton size="small" disabled={!editable || i === 0} onClick={() => removeChargeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable || i === 0} onClick={() => confirmDelete(() => removeChargeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

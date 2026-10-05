@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../../components/deleteConfirmation';
 import { Fragment, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -123,7 +124,7 @@ export function DetailSearchTab({ kind, onOpenJob, onEditJob, onDeleteJob, onPri
         <TableCell>
           <Tooltip title="Open"><IconButton size="small" color="primary" onClick={() => onOpenJob(job)}><VisibilityOutlinedIcon fontSize="small" /></IconButton></Tooltip>
           <Tooltip title="Edit"><IconButton size="small" color="primary" onClick={() => onEditJob?.(job)}><EditOutlinedIcon fontSize="small" /></IconButton></Tooltip>
-          <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => { onDeleteJob?.(job); runSearch(); }}><DeleteOutlineIcon fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => confirmDelete(() => { onDeleteJob?.(job); runSearch(); })}><DeleteOutlineIcon fontSize="small" /></IconButton></Tooltip>
           <Tooltip title="Printing"><IconButton size="small" color="primary" onClick={() => onPrintJob?.(job)}><PrintOutlinedIcon fontSize="small" /></IconButton></Tooltip>
         </TableCell>
         <TableCell>{job.jobNo}</TableCell><TableCell>{job.branch}</TableCell><TableCell>{job.mawbNo}</TableCell><TableCell>{job.jobDate}</TableCell><TableCell>PP</TableCell><TableCell>{job.party.name || job.party.agentParty || job.party.partyCode}</TableCell><TableCell>{job.consignee.name || '—'}</TableCell><TableCell>{job.owner || '—'}</TableCell><TableCell>{ownerName || '—'}</TableCell><TableCell>{job.routing.hsCode || '—'}</TableCell><TableCell>{job.routing.airportOfDeparture || '—'}</TableCell><TableCell>{job.routing.destination || '—'}</TableCell><TableCell>{pieces}</TableCell><TableCell>{weight}</TableCell><TableCell>{job.chargeLines[0]?.rate ?? 0}</TableCell><TableCell>{job.totals.payableToAirline.toFixed(2)}</TableCell><TableCell>{job.status.void ? 'Y' : ''}</TableCell><TableCell>{job.status.final ? 'Y' : ''}</TableCell>
@@ -376,7 +377,7 @@ export function DetailSearchTab({ kind, onOpenJob, onEditJob, onDeleteJob, onPri
                       <IconButton size="small" color="primary" onClick={() => onEditJob?.(job)}><EditOutlinedIcon fontSize="small" /></IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
-                      <IconButton size="small" color="error" onClick={() => { onDeleteJob?.(job); runSearch(); }}><DeleteOutlineIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" color="error" onClick={() => confirmDelete(() => { onDeleteJob?.(job); runSearch(); })}><DeleteOutlineIcon fontSize="small" /></IconButton>
                     </Tooltip>
                   </TableCell>
                   </TableRow>

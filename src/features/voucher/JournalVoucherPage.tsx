@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
@@ -278,7 +279,7 @@ export function JournalVoucherPage({ title = 'JVR - Journal Voucher' }: { title?
                           <TextField variant="standard" type="number" value={line.credit} disabled={!editable} onChange={(e) => updateLine(line.id, { credit: Number(e.target.value) })} />
                         </TableCell>
                         <TableCell>
-                          <IconButton size="small" disabled={!editable} onClick={() => removeLine(line.id)}>
+                          <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeLine(line.id))}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </TableCell>

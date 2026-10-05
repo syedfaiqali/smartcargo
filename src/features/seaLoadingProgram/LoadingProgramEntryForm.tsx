@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -337,7 +338,7 @@ export function LoadingProgramEntryForm({ program, editable, onChange }: Loading
                       <TextField variant="standard" value={c.vehicleNo} disabled={!editable} onChange={(e) => updateContainerLine(c.id, { vehicleNo: e.target.value })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeContainerLine(c.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeContainerLine(c.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

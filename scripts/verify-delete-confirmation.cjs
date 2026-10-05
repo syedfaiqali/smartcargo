@@ -1,0 +1,40 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ts = require('typescript');
+require.extensions['.ts'] = (module, filename) => {
+  const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+  });
+  module._compile(compiled.outputText, filename);
+};
+const { confirmDelete, acceptDelete, cancelDelete, getPendingDelete, subscribeDeleteConfirmation } = require('../src/components/deleteConfirmation.ts');
+let records = ['row-1', 'row-2'];
+let notifications = 0;
+const unsubscribe = subscribeDeleteConfirmation(() => notifications++);
+const deleteFirst = () => { records = records.filter(id => id !== 'row-1'); };
+confirmDelete(deleteFirst);
+assert.equal(records.length, 2, 'Clicking Delete must not delete before confirmation');
+assert.ok(getPendingDelete());
+cancelDelete();
+assert.deepEqual(records, ['row-1', 'row-2'], 'No, Escape and dismiss must preserve the records');
+assert.equal(getPendingDelete(), null);
+confirmDelete(deleteFirst);
+acceptDelete();
+assert.deepEqual(records, ['row-2'], 'Yes must run the requested deletion');
+assert.equal(getPendingDelete(), null);
+let calls = 0;
+confirmDelete(() => calls++);
+acceptDelete();
+acceptDelete();
+assert.equal(calls, 1, 'Repeated confirmation must not run deletion twice');
+confirmDelete(() => calls++);
+confirmDelete(() => { throw new Error('A second click must not replace the pending deletion'); });
+acceptDelete();
+assert.equal(calls, 2);
+confirmDelete(() => { records = []; }, 'Delete selected rows?');
+assert.equal(getPendingDelete().message, 'Delete selected rows?');
+cancelDelete();
+assert.deepEqual(records, ['row-2']);
+assert.ok(notifications > 0);
+unsubscribe();
+console.log('Delete confirmation checks passed: no early deletion, cancellation, confirmation, bulk cancellation and duplicate-click protection.');

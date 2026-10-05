@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useMemo, useState } from 'react';
 import Paper from '@mui/material/Paper';
 import { IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField } from '@mui/material';
@@ -57,7 +58,7 @@ export function AirImportManifestGrid({ manifests, onOpen, onEdit, onDelete, onP
               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                 <IconButton size="small" aria-label="View manifest" onClick={() => onOpen(manifest)}><VisibilityOutlinedIcon fontSize="small" /></IconButton>
                 <IconButton size="small" aria-label="Edit manifest" onClick={() => onEdit(manifest)}><EditOutlinedIcon fontSize="small" /></IconButton>
-                <IconButton size="small" color="error" aria-label="Delete manifest" onClick={() => onDelete(manifest)}><DeleteOutlineIcon fontSize="small" /></IconButton>
+                <IconButton size="small" color="error" aria-label="Delete manifest" onClick={() => confirmDelete(() => onDelete(manifest))}><DeleteOutlineIcon fontSize="small" /></IconButton>
                 <IconButton size="small" aria-label="Print manifest" onClick={() => onPrint(manifest)}><PrintOutlinedIcon fontSize="small" /></IconButton>
               </TableCell>
               {values(manifest).map((value, index) => <TableCell key={`${manifest.id}-${columns[index]}`}>{value || '—'}</TableCell>)}

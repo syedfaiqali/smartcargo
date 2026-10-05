@@ -145,9 +145,36 @@ export function applyVoucherToSources(voucher: Voucher): void {
 export function finalizeVoucher(id: string): Voucher | undefined {
   const v = voucherRepo.get(id);
   if (!v) return undefined;
+  if (v.final || v.void) return v;
   const saved = voucherRepo.save({ ...v, final: true });
   if (saved.kind !== 'JOURNAL') applyVoucherToSources(saved);
   return saved;
+}
+
+/** Reopens a voucher and removes the receipts it applied to source documents. */
+export function unfinalizeVoucher(id: string): Voucher | undefined {
+  const v = voucherRepo.get(id);
+  if (!v || !v.final || v.posted) return v;
+  for (const line of v.clearingLines) {
+    if (line.sourceType === 'LOCAL_INVOICE') {
+      const invoice = localInvoiceRepo.get(line.sourceId);
+      if (invoice) localInvoiceRepo.save({ ...invoice, receipts: invoice.receipts.filter(r => r.receiptNo !== v.voucherNo) });
+    } else if (line.sourceType === 'FOREIGN_AGENT_INVOICE') {
+      const invoice = foreignAgentInvoiceRepo.get(line.sourceId);
+      if (invoice) foreignAgentInvoiceRepo.save({ ...invoice, receipts: invoice.receipts.filter(r => r.receiptNo !== v.voucherNo) });
+    } else {
+      const payable = payableRepo.get(line.sourceId);
+      if (payable) payableRepo.save({ ...payable, usedClearedVouchers: payable.usedClearedVouchers.filter(r => r.voucherNo !== v.voucherNo) });
+    }
+    if (line.jobNo) {
+      const job = jobRepo.find(j => j.jobNo === line.jobNo)[0];
+      if (job) {
+        jobRepo.save({ ...job, usedClearedVouchers: job.usedClearedVouchers.filter(r => r.voucherNo !== v.voucherNo) });
+        if (job.kind === 'HAWB' && job.parentJobNo) syncHouseAwbsOnMaster(job.parentJobNo);
+      }
+    }
+  }
+  return voucherRepo.save({ ...v, final: false });
 }
 
 export interface VoucherFilter {

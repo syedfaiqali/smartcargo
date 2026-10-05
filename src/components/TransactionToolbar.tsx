@@ -16,6 +16,7 @@ import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import CancelIcon from '@mui/icons-material/Cancel';
 import SaveIcon from '@mui/icons-material/Save';
 import { themeColors } from '../theme/themeColors';
+import { confirmDelete } from './deleteConfirmation';
 
 export type ToolbarAction =
   | 'search'
@@ -98,7 +99,7 @@ export function TransactionToolbar({ actions = DEFAULT_ACTIONS, disabledActions 
           color={b.color ?? 'inherit'}
           startIcon={b.icon}
           disabled={disabledActions.includes(b.action)}
-          onClick={() => onAction(b.action)}
+          onClick={() => b.action === 'delete' ? confirmDelete(() => onAction(b.action)) : onAction(b.action)}
           sx={
             b.color === 'error'
               ? undefined

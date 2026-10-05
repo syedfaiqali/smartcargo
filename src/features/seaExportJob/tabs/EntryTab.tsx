@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../../components/deleteConfirmation';
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -401,7 +402,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                       size="small"
                       color="error"
                       disabled={!editable}
-                      onClick={() => set("attachmentName", "")}
+                      onClick={() => confirmDelete(() => set("attachmentName", ""))}
                       startIcon={<DeleteOutlineIcon />}
                     >
                       Remove
@@ -1756,7 +1757,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 ) : (
                   job.containers.map((c) => (
                     <TableRow key={c.id}>
-                      <TableCell><Checkbox size="small" checked={selectedContainerIds.includes(c.id)} onChange={(event) => setSelectedContainerIds(event.target.checked ? [...selectedContainerIds, c.id] : selectedContainerIds.filter((id) => id !== c.id))} /></TableCell><TableCell><Button size="small" color="error" disabled={!editable} onClick={() => set("containers", job.containers.filter((item) => item.id !== c.id))}>×</Button></TableCell>
+                      <TableCell><Checkbox size="small" checked={selectedContainerIds.includes(c.id)} onChange={(event) => setSelectedContainerIds(event.target.checked ? [...selectedContainerIds, c.id] : selectedContainerIds.filter((id) => id !== c.id))} /></TableCell><TableCell><Button size="small" color="error" disabled={!editable} onClick={() => confirmDelete(() => set("containers", job.containers.filter((item) => item.id !== c.id)))}>×</Button></TableCell>
                       <TableCell><TextField size="small" value={c.containerNo} disabled={!editable} onChange={(e) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, containerNo: e.target.value } : item))} /></TableCell>
                       <TableCell><TextField size="small" value={c.sizeType} disabled={!editable} onChange={(e) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, sizeType: e.target.value } : item))} /></TableCell>
                       <TableCell><TextField size="small" value={c.sealNo} disabled={!editable} onChange={(e) => set("containers", job.containers.map((item) => item.id === c.id ? { ...item, sealNo: e.target.value } : item))} /></TableCell>

@@ -37,6 +37,7 @@ import { CoveringLetterPage } from './features/letters/CoveringLetterPage';
 import { LetterOfIssuancePage } from './features/letters/LetterOfIssuancePage';
 import { SeaExportJobPage } from './features/seaExportJob/SeaExportJobPage';
 import { ClearingVoucherPage } from './features/voucher/ClearingVoucherPage';
+import { BankReceiptPage } from './features/voucher/BankReceiptPage';
 import { JournalVoucherPage } from './features/voucher/JournalVoucherPage';
 import { AgingReportPage } from './features/financeReports/AgingReportPage';
 import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage';
@@ -62,19 +63,21 @@ import { SeaImportLocalInvoicePage } from './features/seaImportLocalInvoice/SeaI
 import { SeaImportForeignAgentInvoicePage } from './features/seaImportForeignAgentInvoice/SeaImportForeignAgentInvoicePage';
 import { SeaImportQuotationPage } from './features/seaImportQuotation/SeaImportQuotationPage';
 import { DocumentReceiptPage } from './features/documentReceipt/DocumentReceiptPage';
+import { DeleteConfirmationDialog } from './components/DeleteConfirmationDialog';
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
+        <DeleteConfirmationDialog />
         <AppShell>
           <Routes>
             <Route path="/finance" element={<ClearingVoucherPage kind="PAYMENT" title="BPV - Bank Payment Voucher" />} />
             <Route path="/finance/initial-setup/group-codes" element={<GroupCodesPage />} />
             <Route path="/finance/initial-setup/control-codes" element={<ControlCodesPage />} />
             <Route path="/finance/bank-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="BPV - Bank Payment Voucher" />} />
-            <Route path="/finance/bank-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" title="BRV - Bank Receipt Voucher" />} />
+            <Route path="/finance/bank-receipt-voucher" element={<BankReceiptPage />} />
             <Route path="/finance/cash-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="CPV - Cash Payment Voucher" />} />
             <Route path="/finance/cash-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" title="CRV - Cash Receipt Voucher" />} />
             <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />

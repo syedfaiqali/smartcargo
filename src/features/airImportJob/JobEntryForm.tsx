@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -514,7 +515,7 @@ export function JobEntryForm({ job, editable, onChange }: JobEntryFormProps) {
                         <TextField variant="standard" type="number" value={line.weight} disabled={!editable} onChange={(e) => updateHawbLine(line.id, { weight: Number(e.target.value) })} />
                       </TableCell>
                       <TableCell>
-                        <IconButton size="small" disabled={!editable} onClick={() => removeHawbLine(line.id)}>
+                        <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeHawbLine(line.id))}>
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </TableCell>

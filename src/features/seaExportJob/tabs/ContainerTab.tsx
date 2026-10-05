@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../../components/deleteConfirmation';
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -205,7 +206,7 @@ export function ContainerTab({ job, editable, onChange }: ContainerTabProps) {
               paginatedContainers.map((c) => (
                 <TableRow key={c.id} hover>
                   <TableCell>
-                    <IconButton size="small" disabled={!editable} onClick={() => removeContainer(c.id)}>
+                    <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeContainer(c.id))}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>

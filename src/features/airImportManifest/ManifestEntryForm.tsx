@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -351,7 +352,7 @@ export function ManifestEntryForm({ manifest, editable, onChange, onSavedMawbEnt
               manifest.hawbLines.map((line) => (
                 <TableRow key={line.id}>
                   <TableCell>
-                    <IconButton size="small" disabled={!editable} onClick={() => removeHawbLine(line.id)}>
+                    <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeHawbLine(line.id))}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>

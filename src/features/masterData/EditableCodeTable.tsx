@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useMemo, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import Paper from '@mui/material/Paper';
@@ -365,7 +366,7 @@ export function EditableCodeTable<T extends AuditFields>({
                           <IconButton size="small" onClick={() => onEditRecord ? onEditRecord(row) : startEdit(row)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDelete(row.id)}>
+                          <IconButton size="small" color="error" onClick={() => confirmDelete(() => handleDelete(row.id))}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Stack>

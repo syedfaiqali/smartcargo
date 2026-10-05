@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -421,7 +422,7 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
                       <TextField variant="standard" type="number" value={c.buying} disabled={!editable} onChange={(e) => updateContainerLine(c.id, { buying: Number(e.target.value) })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeContainerLine(c.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeContainerLine(c.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -509,7 +510,7 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
                       <TextField variant="standard" value={line.partyName} disabled={!editable} onChange={(e) => updateAutoCalcCostLine(line.id, { partyName: e.target.value })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeAutoCalcCostLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeAutoCalcCostLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -574,7 +575,7 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
                       <TextField variant="standard" value={line.partyName} disabled={!editable} onChange={(e) => updateAutoCalcLine(line.id, { partyName: e.target.value })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeAutoCalcLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeAutoCalcLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -625,7 +626,7 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
                       <TextField variant="standard" type="number" value={line.charges} disabled={!editable} onChange={(e) => updateChargeLine(line.id, { charges: Number(e.target.value) })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeChargeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeChargeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -673,7 +674,7 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
                       <TextField variant="standard" type="number" value={line.charges} disabled={!editable} onChange={(e) => updateChargeLine(line.id, { charges: Number(e.target.value) })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeChargeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeChargeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -752,7 +753,7 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
                       <TextField variant="standard" type="number" value={line.charges} disabled={!editable} onChange={(e) => updateLessExpenseLine(line.id, { charges: Number(e.target.value) })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeLessExpenseLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeLessExpenseLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -800,7 +801,7 @@ export function EntryTab({ invoice, config, editable, onChange }: EntryTabProps)
                       <TextField variant="standard" type="number" value={line.charges} disabled={!editable} onChange={(e) => updateHandlingLine(line.id, { charges: Number(e.target.value) })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeHandlingLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeHandlingLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
