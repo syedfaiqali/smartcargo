@@ -1,53 +1,84 @@
+import { jsPDF } from 'jspdf';
 import { ForeignAgentInvoice } from '../../domain/foreignAgentInvoice';
 import { airportRepo, bankRepo, foreignAgentRepo } from '../../data/masterDataService';
 import { recomputeAgentInvoiceTotals } from './agentInvoiceCalculations';
 import { VariantConfig } from './variantConfig';
 
-const html = (value: string | number | undefined) => String(value ?? '—').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const money = (value: number) => (Number(value) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const date = (value: string) => value ? new Intl.DateTimeFormat('en-GB').format(new Date(`${value}T00:00:00`)) : '—';
-const airport = (code: string) => airportRepo.get(code)?.name ? `(${code}) ${airportRepo.get(code)?.name}` : code || '—';
+const headerUrl = `${import.meta.env.BASE_URL}masum-logistics-header.png`;
+let headerImage: string | undefined;
 
+async function loadHeaderImage(): Promise<string> {
+  if (headerImage) return headerImage;
+  const response = await fetch(headerUrl);
+  if (!response.ok) throw new Error('The invoice report header could not be loaded.');
+  const blob = await response.blob();
+  headerImage = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+  return headerImage;
+}
+
+const money = (value: number) => (Number(value) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const date = (value: string) => value ? new Intl.DateTimeFormat('en-GB').format(new Date(`${value}T00:00:00`)) : '';
+const safe = (value: string | number | undefined) => String(value ?? '');
 const underTwenty = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
 const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 function underThousand(value: number): string { if (value < 20) return underTwenty[value]; if (value < 100) return `${tens[Math.floor(value / 10)]}${value % 10 ? ` ${underTwenty[value % 10]}` : ''}`; return `${underTwenty[Math.floor(value / 100)]} Hundred${value % 100 ? ` ${underThousand(value % 100)}` : ''}`; }
-function inWords(value: number, unit: string): string { const number = Math.floor(Math.abs(value)); const pieces: [number, string][] = [[Math.floor(number / 10000000), 'Crore'], [Math.floor(number / 100000) % 100, 'Lakh'], [Math.floor(number / 1000) % 100, 'Thousand'], [number % 1000, '']]; return `${value < 0 ? 'Minus ' : ''}${unit} ${pieces.filter(([n]) => n).map(([n, u]) => `${underThousand(n)}${u ? ` ${u}` : ''}`).join(' ') || 'Zero'} Only`; }
+function inWords(value: number, unit: string): string { const number = Math.floor(Math.abs(value)); const pieces: [number, string][] = [[Math.floor(number / 10000000), 'Crore'], [Math.floor(number / 100000) % 100, 'Lakh'], [Math.floor(number / 1000) % 100, 'Thousand'], [number % 1000, '']]; return `${value < 0 ? 'Minus ' : ''}${unit} ${pieces.filter(([n]) => n).map(([n, suffix]) => `${underThousand(n)}${suffix ? ` ${suffix}` : ''}`).join(' ') || 'Zero'} Only`; }
 
-function agentInvoiceMarkup(invoice: ForeignAgentInvoice, config: VariantConfig): string {
-  const agent = foreignAgentRepo.get(invoice.fAgentCode) ?? { code: invoice.fAgentCode, name: invoice.fAgentName, address: '' };
-  const currency = invoice.currencyCode || 'US$';
-  const heading = invoice.printing.printHeadingAs === 'DEBIT_NOTE' ? 'Debit Note' : 'Invoice';
-  const copyTypeLabels: Record<ForeignAgentInvoice['printing']['printCopyType'], string> = {
-    ORIGINAL: '',
-    REVISED: 'Revised',
-    DUPLICATE: 'Duplicate',
-    OFFICE_COPY: 'Office Copy',
-  };
-  const copyTypeSuffix = copyTypeLabels[invoice.printing.printCopyType];
-  const sellingLines = invoice.chargeLines.filter((line) => line.side === 'SELLING' && (line.description || line.charges));
-  const meta = (name: string, content: string) => `<div class="meta"><span>${html(name)}</span><b>${html(content)}</b></div>`;
-
-  // Bank Detail always prints: prefer the manually-typed text, else fall back to the linked bank
-  // code's details, so the section isn't silently dropped when a record was saved before the user
-  // picked a Bank Code (docs 6.9 shows the block as a fixed, always-present part of the layout).
-  const bankDetail = invoice.bankDetailText || bankRepo.get(invoice.bankCode)?.accountDetail || '';
-
-  const allocationRows = invoice.allocationLines.length
-    ? invoice.allocationLines.map((line) => `<tr><td>${html(line.jobNo)}</td><td>${html(invoice.mawbJobYear)}</td><td>${html(line.hawbNo)}</td><td>${html(line.pcs)}</td><td>${html(line.grWeight)}</td><td>${html(line.chWeight)}</td><td>${html(line.partyName)}</td></tr>`).join('')
-    : `<tr><td colspan="7" style="text-align:center;color:#75869a">No allocation lines</td></tr>`;
-  const chargeRows = sellingLines.length
-    ? sellingLines.map((line) => `<tr><td>${html(line.description || line.code)}</td><td>${money(invoice.chargeWeight ? line.charges / invoice.chargeWeight : 0)}</td><td>${money(line.charges)}</td></tr>`).join('')
-    : `<tr><td>No billable charges</td><td>0.00</td><td>0.00</td></tr>`;
-  return `<!doctype html><html><head><title>${html(invoice.documentNo)} — ${heading}</title><style>
-@page{size:A4;margin:10mm}*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#15253b;font:11px Inter,Arial,sans-serif}.sheet{width:190mm;min-height:277mm;margin:0 auto;background:#fff;padding:15mm}.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #dce4ee;padding-bottom:10px}.brand{display:flex;gap:10px;align-items:center}.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#1b5a9b,#22a6a8);color:#fff;display:grid;place-items:center;font:700 20px Georgia,serif}.brand h1{margin:0;color:#102e57;font-size:19px;letter-spacing:.7px}.brand p{margin:3px 0 0;color:#68788c;font-size:9px}.invoice-heading{text-align:right}.invoice-heading .label{display:inline-block;border-radius:99px;background:#e8f3ff;color:#1764a7;padding:4px 9px;font-size:8px;font-weight:800;letter-spacing:1px;text-transform:uppercase}.invoice-heading h2{margin:5px 0 0;color:#102e57;font-size:24px}.invoice-heading h2 .copy-type{font-size:14px;font-weight:600;color:#68788c}.invoice-heading small{color:#68788c;font-weight:700}.cards{display:grid;grid-template-columns:1.05fr .95fr;gap:10px;margin-top:15px}.card{border:1px solid #dce4ee;border-radius:9px;padding:11px}.caption{color:#1d79a4;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px}.customer-name{font-size:14px;font-weight:800;color:#102e57}.address{color:#647487;line-height:1.45;margin-top:3px;white-space:pre-line}.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.meta{padding:4px 0;border-bottom:1px solid #edf1f5;display:flex;justify-content:space-between;gap:8px}.meta span{color:#718095}.meta b{text-align:right;color:#1c2e44}.shipment{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #dce4ee;border-radius:9px;overflow:hidden;margin-top:15px}.shipment th{padding:7px 10px;background:#102e57;color:#bcdcf0;font-size:8px;letter-spacing:.6px;text-transform:uppercase;text-align:left}.shipment td{padding:7px 10px;border-top:1px solid #edf1f5;font-weight:600}.shipment tbody tr:first-child td{background:#f7fafc}.table-title{display:flex;justify-content:space-between;align-items:center;margin:20px 0 7px}.table-title h3{margin:0;font-size:13px;color:#102e57}.table-title span{color:#75869a;font-size:9px}.charges{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #dce4ee;border-radius:9px;overflow:hidden}.charges th{padding:8px 10px;background:#f3f7fb;color:#617287;font-size:9px;letter-spacing:.7px;text-transform:uppercase;text-align:left}.charges th:last-child,.charges td:last-child{text-align:right}.charges td{padding:8px 10px;border-top:1px solid #edf1f5}.charges tr:nth-child(even) td{background:#fbfcfe}.total{display:grid;grid-template-columns:1fr 205px;gap:10px;margin-top:10px}.words{border:1px solid #dce4ee;border-radius:9px;padding:10px;color:#526477;line-height:1.45}.words b{display:block;color:#102e57;margin-bottom:3px}.total-box{border-radius:9px;background:linear-gradient(135deg,#102e57,#1e6ca4);padding:11px 13px;color:#fff;text-align:right}.total-box span{display:block;font-size:9px;color:#bcdcf0;letter-spacing:.7px}.total-box b{font-size:21px}.bank{margin-top:16px;border:1px solid #dce4ee;border-radius:9px;padding:11px}.bank pre{margin:0;font:11px Inter,Arial,sans-serif;color:#1c2e44;white-space:pre-wrap}.footer{margin-top:20px;text-align:center;color:#75869a;font-size:9px;font-weight:700}@media print{body{background:#fff}.sheet{width:auto;min-height:0;padding:0}.top{padding-top:0}}</style></head><body><main class="sheet"><header class="top"><div class="brand"><div class="logo">S</div><div><h1>SMARTCARGO LOGISTICS</h1><p>Global Freight Forwarding · Air, Sea &amp; Road Logistics</p></div></div><div class="invoice-heading"><span class="label">Air Export</span><h2>${html(heading)}${copyTypeSuffix ? ` <span class="copy-type">(${html(copyTypeSuffix)})</span>` : ''}</h2><small>${html(invoice.documentNo)}</small></div></header><section class="cards"><div class="card"><div class="caption">Customer</div><div class="customer-name">${html(agent.name || agent.code)}</div><div class="address">${html(agent.address)}</div></div><div class="card"><div class="caption">${html(config.printingDocLabel)}</div><div class="meta-grid">${meta(config.printingDocLabel, invoice.documentNo)}${meta('Date', date(invoice.documentDate))}${meta('MAWB No.', invoice.mawbNo)}${meta('Date', date(invoice.mawbDate))}${meta('M.JobNo.', `${invoice.mawbJobNo}/${invoice.mawbJobYear}`)}${meta('F/Agent Doc #', invoice.fAgentDocNo)}${meta('Currency', currency)}</div></div></section>${invoice.reference || invoice.consignee ? `<section class="card" style="margin-top:10px"><div class="caption">Reference / Consignee</div><div class="address">${html(invoice.reference)}${invoice.reference && invoice.consignee ? '<br><br>' : ''}${html(invoice.consignee)}</div></section>` : ''}<table class="shipment"><thead><tr><th>From</th><th>To</th><th>PCS</th><th>Grs.Weight</th><th>Ch.Weight</th></tr></thead><tbody><tr><td>${html(airport(invoice.origin))}</td><td>${html(invoice.destination)}</td><td>${html(invoice.pieces)}</td><td>${html(invoice.grossWeight)}</td><td>${html(invoice.chargeWeight)}</td></tr></tbody></table><table class="shipment" style="margin-top:8px"><thead><tr><th>Job No.</th><th>Year</th><th>HAWB No.</th><th>PCS</th><th>Gross Weight</th><th>Ch.Weight</th><th>Party Name</th></tr></thead><tbody>${allocationRows}</tbody></table><div class="table-title"><h3>Particular</h3><span>Amount (${html(currency)})</span></div><table class="charges"><thead><tr><th>Particular</th><th>Rate/Kg (${html(currency)})</th><th>Amount (${html(currency)})</th></tr></thead><tbody>${chargeRows}</tbody></table><section class="total"><div class="words"><b>Amount in words</b>${html(inWords(invoice.totalInvoiceAmount, currency))}</div><div class="total-box"><span>TOTAL</span><b>${money(invoice.totalInvoiceAmount)} ${html(currency)}</b></div></section><section class="bank"><div class="caption">Bank Detail</div><pre>${html(bankDetail)}</pre></section><footer class="footer">**This is system generated Document, does not require any signature.**</footer></main><script>window.onload=()=>window.print()</script></body></html>`;
-}
-
-/** Opens a print-ready Invoice/Credit-Note-To/From-Foreign-Agent document. Select "Save as PDF" in the browser dialog. */
-export function printForeignAgentInvoice(record: ForeignAgentInvoice, config: VariantConfig): void {
+/** Opens the selected foreign-agent invoice as a PDF report, matching Job Entry & Printing. */
+export async function printForeignAgentInvoice(record: ForeignAgentInvoice, config: VariantConfig): Promise<void> {
   const invoice = recomputeAgentInvoiceTotals(record);
-  const page = window.open('', '_blank')!;
-  if (!page) return;
-  page.opener = null;
-  page.document.write(agentInvoiceMarkup(invoice, config));
-  page.document.close();
+  const header = await loadHeaderImage();
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const agent = foreignAgentRepo.get(invoice.fAgentCode);
+  const currency = invoice.currencyCode || 'US$';
+  const heading = invoice.printing.printHeadingAs === 'DEBIT_NOTE' ? 'DEBIT NOTE' : 'INVOICE';
+  const copyType = invoice.printing.printCopyType === 'ORIGINAL' ? '' : ` (${invoice.printing.printCopyType.replace('_', ' ')})`;
+  const sellingLines = invoice.chargeLines.filter((line) => line.side === 'SELLING' && (line.description || line.code || line.charges));
+  const bankDetail = invoice.bankDetailText || bankRepo.get(invoice.bankCode)?.accountDetail || '';
+  const left = 10;
+  const right = 200;
+  const text = (content: string | number, x: number, y: number, size = 8, style: 'normal' | 'bold' = 'normal', align: 'left' | 'center' | 'right' = 'left') => doc.setFont('helvetica', style).setFontSize(size).text(safe(content) || '-', x, y, { align, maxWidth: 80 });
+  const line = (x1: number, y1: number, x2: number, y2: number) => doc.setDrawColor(40, 60, 85).setLineWidth(0.2).line(x1, y1, x2, y2);
+  const cell = (x: number, y: number, width: number, height: number, value: string | number, align: 'left' | 'center' | 'right' = 'left', bold = false) => { doc.rect(x, y, width, height); text(value, align === 'left' ? x + 2 : align === 'right' ? x + width - 2 : x + width / 2, y + 5, 7.5, bold ? 'bold' : 'normal', align); };
+
+  doc.setProperties({ title: `${heading} ${invoice.documentNo}`, subject: `Foreign agent invoice ${invoice.documentNo}` });
+  doc.addImage(header, 'PNG', 2, -17, 205, 68.5, undefined, 'FAST');
+  doc.setLineWidth(0.55).rect(1, 1, 208, 295);
+  text(heading + copyType, 105, 43, 15, 'bold', 'center');
+  line(left, 47, right, 47);
+  text('BILL TO', left, 54, 8, 'bold');
+  text(agent?.name || invoice.fAgentName || invoice.fAgentCode, left, 60, 9, 'bold');
+  const address = doc.splitTextToSize(agent?.address || '', 88) as string[];
+  doc.setFont('helvetica', 'normal').setFontSize(7.5).text(address.length ? address : ['-'], left, 65);
+  const details: [string, string][] = [[config.printingDocLabel, invoice.documentNo], ['Date', date(invoice.documentDate)], ['MAWB No.', invoice.mawbNo], ['MAWB Date', date(invoice.mawbDate)], ['M. Job No.', `${invoice.mawbJobNo}/${invoice.mawbJobYear || ''}`], ['F/Agent Doc #', invoice.fAgentDocNo], ['Currency', currency], ['P.P./C.C.', invoice.ppCc]];
+  details.forEach(([label, value], index) => { const y = 53 + index * 5; text(label, 116, y, 7.2, 'bold'); text(':', 145, y, 7.2, 'bold'); text(value, 149, y, 7.2); });
+  const shipmentY = 96;
+  const shipmentColumns = [44, 44, 25, 34, 43];
+  const shipmentLabels = ['FROM', 'TO', 'PCS', 'GRS. WEIGHT', 'CH. WEIGHT'];
+  const airport = airportRepo.get(invoice.origin)?.name ? `(${invoice.origin}) ${airportRepo.get(invoice.origin)?.name}` : invoice.origin;
+  const shipmentValues = [airport, invoice.destination, invoice.pieces, invoice.grossWeight, invoice.chargeWeight];
+  let x = left;
+  shipmentColumns.forEach((width, index) => { cell(x, shipmentY, width, 7, shipmentLabels[index], 'center', true); cell(x, shipmentY + 7, width, 7, shipmentValues[index], 'center'); x += width; });
+  let y = 121;
+  text('PARTICULARS', left, y - 3, 8, 'bold');
+  const chargeWidths = [120, 32, 38];
+  x = left;
+  ['PARTICULAR', `RATE/KG (${currency})`, `AMOUNT (${currency})`].forEach((label, index) => { cell(x, y, chargeWidths[index], 7, label, index ? 'right' : 'left', true); x += chargeWidths[index]; });
+  const rows = sellingLines.length ? sellingLines : [{ description: 'No billable charges', code: '', charges: 0, rate: 0 }];
+  rows.forEach((charge) => { y += 7; x = left; const rate = invoice.chargeWeight ? charge.charges / invoice.chargeWeight : charge.rate; [charge.description || charge.code, money(rate), money(charge.charges)].forEach((value, index) => { cell(x, y, chargeWidths[index], 7, value, index ? 'right' : 'left'); x += chargeWidths[index]; }); });
+  y += 12;
+  doc.setFillColor(235, 241, 248).rect(108, y - 6, 92, 12, 'F'); doc.rect(108, y - 6, 92, 12);
+  text('TOTAL', 113, y + 1, 9, 'bold'); text(`${money(invoice.totalInvoiceAmount)} ${currency}`, 196, y + 1, 10, 'bold', 'right');
+  y += 16;
+  text('AMOUNT IN WORDS:', left, y, 7.5, 'bold'); doc.setFont('helvetica', 'normal').setFontSize(7.5).text(doc.splitTextToSize(inWords(invoice.totalInvoiceAmount, currency), 140), left, y + 5);
+  y += 19;
+  text('BANK DETAILS:', left, y, 7.5, 'bold'); doc.setFont('helvetica', 'normal').setFontSize(7.5).text(doc.splitTextToSize(bankDetail || '-', 180), left, y + 5);
+  if (invoice.printing.printSignatorys === 'Y') { text('Authorised Signatory', right, 268, 8, 'bold', 'right'); line(150, 270, right, 270); }
+  text('This is a system-generated document and does not require a signature.', 105, 287, 7, 'normal', 'center');
+  window.open(doc.output('bloburl'), '_blank');
 }
