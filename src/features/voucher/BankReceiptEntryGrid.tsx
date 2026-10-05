@@ -1,4 +1,4 @@
-import { confirmDelete } from '../../components/deleteConfirmation';
+import { confirmDelete } from "../../components/deleteConfirmation";
 import { Dispatch, SetStateAction, useState } from "react";
 import {
   Box,
@@ -19,11 +19,14 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { WorkflowSection } from "../../components/WorkflowSection";
 import { NumberField } from "../../components/NumberField";
 import { DateField } from "../../components/DateField";
+import { SearchField } from "../../components/SearchField";
+import { getAnalysisCodeOptions } from "../../data/analysisCodeService";
 import { ReceiptEntryLine, Voucher } from "../../domain/voucher";
 import {
   getReceiptEntryLines,
   receiptLineComplete,
   withReceiptEntryLines,
+  addOppositeReceiptLine,
 } from "../../domain/receiptEntry";
 import {
   bankRepo,
@@ -56,18 +59,17 @@ export function BankReceiptEntryGrid({
       name: party.name,
       kind: "Party",
     })),
-    ...controlCodeRepo
-      .list()
-      .map((account) => ({
-        code: account.code,
-        name: account.name,
-        kind: "Account",
-      })),
+    ...controlCodeRepo.list().map((account) => ({
+      code: account.code,
+      name: account.name,
+      kind: "Account",
+    })),
   ].filter(
     (option, index, all) =>
       all.findIndex((item) => item.code === option.code) === index,
   );
   const currencies = currencyRepo.list();
+  const analysisOptions = getAnalysisCodeOptions();
   const changeLine = (id: string, patch: Partial<ReceiptEntryLine>) => {
     onChange((current) => {
       if (!current || current.id !== voucher.id) return current;
@@ -187,16 +189,18 @@ export function BankReceiptEntryGrid({
                       color="error"
                       disabled={!editable}
                       onClick={() =>
-                        confirmDelete(() => onChange((current) =>
-                          current
-                            ? withReceiptEntryLines(
-                                current,
-                                getReceiptEntryLines(current).filter(
-                                  (item) => item.id !== line.id,
-                                ),
-                              )
-                            : current,
-                        ))
+                        confirmDelete(() =>
+                          onChange((current) =>
+                            current
+                              ? withReceiptEntryLines(
+                                  current,
+                                  getReceiptEntryLines(current).filter(
+                                    (item) => item.id !== line.id,
+                                  ),
+                                )
+                              : current,
+                          ),
+                        )
                       }
                     >
                       <DeleteOutlineIcon />
@@ -282,14 +286,15 @@ export function BankReceiptEntryGrid({
                     />
                   </TableCell>
                   <TableCell sx={{ minWidth: 140 }}>
-                    <TextField
+                    <SearchField
                       label="Analysis Code"
                       fullWidth
                       value={line.analysisCode}
+                      options={analysisOptions}
                       disabled={!editable}
-                      onChange={(event) =>
+                      onChange={(value) =>
                         changeLine(line.id, {
-                          analysisCode: event.target.value,
+                          analysisCode: value,
                         })
                       }
                     />
@@ -376,6 +381,19 @@ export function BankReceiptEntryGrid({
                       onChange={(event) =>
                         changeLine(line.id, { amount: event.target.value })
                       }
+                      onBlur={() => {
+                        if (!editable) return;
+                        const counterpartId = crypto.randomUUID();
+                        onChange((current) =>
+                          current?.id === voucher.id
+                            ? addOppositeReceiptLine(
+                                current,
+                                line.id,
+                                counterpartId,
+                              )
+                            : current,
+                        );
+                      }}
                     />
                     <NumberField
                       label="PKR Amount"

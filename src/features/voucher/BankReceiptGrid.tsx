@@ -49,7 +49,7 @@ function values(v: Voucher) {
     v.voucherDate,
     v.accountCode ?? v.bankCode,
     v.receivedFrom ?? v.partyName,
-    v.analysisCode,
+    [...new Set([v.analysisCode, ...(v.receiptEntryLines ?? []).map(line => line.analysisCode)].filter(Boolean))].join(', '),
     v.chequeNo,
     v.chequeDate,
     ({ UNCLEARED: 'Un Cleared', CLEARED: 'Cleared', RETURNED: 'Returned', CANCELLED: 'Cancelled', BOUNCED: 'Bounced' })[v.chequeStatus ?? 'UNCLEARED'],

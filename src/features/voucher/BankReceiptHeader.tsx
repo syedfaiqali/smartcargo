@@ -228,13 +228,6 @@ export function BankReceiptHeader({
                 fullWidth
                 value={(debit - credit).toFixed(2)}
                 InputProps={{ readOnly: true }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "primary.main",
-                    color: "primary.contrastText",
-                  },
-                  "& .MuiInputLabel-root": { color: "primary.main" },
-                }}
               />
             </Box>
             <SectionHeader>Cleared Invoices Total</SectionHeader>

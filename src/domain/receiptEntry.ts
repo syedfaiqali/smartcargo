@@ -35,6 +35,65 @@ export function getReceiptEntryLines(voucher: Voucher): ReceiptEntryLine[] {
   }));
 }
 
+export function addOppositeReceiptLine(
+  voucher: Voucher,
+  sourceId: string,
+  newId: string,
+): Voucher {
+  const lines = getReceiptEntryLines(voucher);
+  const sourceIndex = lines.findIndex((line) => line.id === sourceId);
+  const source = lines[sourceIndex];
+  if (
+    !source ||
+    !source.amount.trim() ||
+    !Number.isFinite(Number(source.amount)) ||
+    Number(source.amount) <= 0 ||
+    !source.exchangeRate.trim() ||
+    !Number.isFinite(Number(source.exchangeRate)) ||
+    Number(source.exchangeRate) <= 0 ||
+    !source.currencyCode
+  )
+    return voucher;
+  if (
+    source.counterpartId &&
+    lines.some((line) => line.id === source.counterpartId)
+  )
+    return voucher;
+  const opposite = source.dc === "DEBIT" ? "CREDIT" : "DEBIT";
+  const existing = lines.find(
+    (line) =>
+      line.id !== sourceId &&
+      line.dc === opposite &&
+      !line.counterpartId &&
+      line.currencyCode === source.currencyCode &&
+      Number(line.exchangeRate) === Number(source.exchangeRate) &&
+      Number(line.amount) === Number(source.amount),
+  );
+  if (existing)
+    return withReceiptEntryLines(
+      voucher,
+      lines.map((line) =>
+        line.id === sourceId
+          ? { ...line, counterpartId: existing.id }
+          : line.id === existing.id
+            ? { ...line, counterpartId: sourceId }
+            : line,
+      ),
+    );
+  const counterpart: ReceiptEntryLine = {
+    ...source,
+    id: newId,
+    counterpartId: sourceId,
+    dc: opposite,
+    accountCode: "",
+    accountDescription: "",
+  };
+  const next = [...lines];
+  next[sourceIndex] = { ...source, counterpartId: newId };
+  next.splice(sourceIndex + 1, 0, counterpart);
+  return withReceiptEntryLines(voucher, next);
+}
+
 export function withReceiptEntryLines(
   voucher: Voucher,
   lines: ReceiptEntryLine[],

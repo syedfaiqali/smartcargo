@@ -64,6 +64,8 @@ export interface Voucher extends AuditFields {
 
 export interface ReceiptEntryLine {
   id: string;
+  /** Prevents duplicate automatic rows; deleting a row never deletes its counterpart. */
+  counterpartId?: string;
   dc: 'DEBIT' | 'CREDIT';
   accountCode: string;
   accountDescription: string;
@@ -85,6 +87,7 @@ export interface VoucherCostLine {
   station: string;
   houseJobNo: string;
   masterJobNo: string;
+  masterJobPrefix?: string;
   courierNo: string;
   houseBlNo: string;
   masterBlNo: string;

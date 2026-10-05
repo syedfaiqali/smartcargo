@@ -13,3 +13,8 @@ export interface ControlCode extends AuditFields {
   name: string;
   groupCode: string;
 }
+
+export interface AnalysisCode extends AuditFields {
+  code: string;
+  name: string;
+}
