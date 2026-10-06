@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import seaExportJobReducer from "./seaExportJobSlice";
 import journalVoucherReducer from "./journalVoucherSlice";
 import bankReceiptReducer from "./bankReceiptSlice";
+import bankPaymentReducer from "./bankPaymentSlice";
 
 export const createAppStore = () =>
   configureStore({
@@ -9,6 +10,7 @@ export const createAppStore = () =>
       seaExportJob: seaExportJobReducer,
       journalVoucher: journalVoucherReducer,
       bankReceipt: bankReceiptReducer,
+      bankPayment: bankPaymentReducer,
     },
   });
 

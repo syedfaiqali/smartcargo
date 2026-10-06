@@ -7,6 +7,7 @@ import { NumberField } from "../../components/NumberField";
 import { FormRow, FormField } from "../../components/FormGrid";
 import { WorkflowSection } from "../../components/WorkflowSection";
 import type { Voucher } from "../../domain/voucher";
+import { bankRepo } from "../../data/masterDataService";
 import {
   VoucherAttachment,
   VoucherDetailsTotals,
@@ -20,6 +21,8 @@ export function ReceiptDetails({
   onChange,
 }: VoucherDetailsProps) {
   const [open, setOpen] = useState(true);
+  const isPayment = voucher.kind === "PAYMENT";
+  const banks = bankRepo.list();
   const set = <K extends keyof Voucher>(key: K, value: Voucher[K]) =>
     onChange((current) =>
       current?.id === voucher.id ? { ...current, [key]: value } : current,
@@ -27,8 +30,8 @@ export function ReceiptDetails({
 
   return (
     <WorkflowSection
-      title="Receipt Details"
-      subtitle="Enter receipt and cheque details, and attach a supporting document"
+      title={isPayment ? "Payment Details" : "Receipt Details"}
+      subtitle={isPayment ? "Enter payment and cheque details, and attach a supporting document" : "Enter receipt and cheque details, and attach a supporting document"}
       open={open}
       onToggle={() => setOpen(!open)}
     >
@@ -78,7 +81,7 @@ export function ReceiptDetails({
           <FormRow>
             <FormField sm={12} md={12}>
               <TextField
-                label="Received From"
+                label={isPayment ? "Pay To" : "Received From"}
                 fullWidth
                 value={voucher.receivedFrom ?? voucher.partyName}
                 disabled={!editable}
@@ -86,6 +89,16 @@ export function ReceiptDetails({
               />
             </FormField>
           </FormRow>
+          {isPayment && (
+            <FormRow>
+              <FormField md={12}>
+                <TextField select label="Bank Account" fullWidth value={voucher.bankCode} disabled={!editable} onChange={(event) => set("bankCode", event.target.value)}>
+                  <MenuItem value="">Select Bank Account</MenuItem>
+                  {banks.map((bank) => <MenuItem key={bank.code} value={bank.code}>{bank.code} â€” {bank.name}</MenuItem>)}
+                </TextField>
+              </FormField>
+            </FormRow>
+          )}
           <FormRow>
             <FormField md={6}>
               <TextField

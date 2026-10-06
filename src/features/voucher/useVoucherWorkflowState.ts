@@ -4,18 +4,22 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import type { RootState } from "../../store/store";
 import { patchJournalVoucherState } from "../../store/journalVoucherSlice";
 import { patchBankReceiptState } from "../../store/bankReceiptSlice";
+import { patchBankPaymentState } from "../../store/bankPaymentSlice";
 import type {
   VoucherWorkflowKind,
   VoucherWorkflowState,
 } from "../../store/voucherWorkflowState";
 
 export function useVoucherWorkflowState(kind: VoucherWorkflowKind) {
-  const key = kind === "JOURNAL" ? "journalVoucher" : "bankReceipt";
+  const key = kind === "JOURNAL" ? "journalVoucher" : kind === "PAYMENT" ? "bankPayment" : "bankReceipt";
   const state = useAppSelector((root) => root[key]);
   const dispatch = useAppDispatch();
   const store = useStore<RootState>();
-  const patch =
-    kind === "JOURNAL" ? patchJournalVoucherState : patchBankReceiptState;
+  const patch = kind === "JOURNAL"
+    ? patchJournalVoucherState
+    : kind === "PAYMENT"
+      ? patchBankPaymentState
+      : patchBankReceiptState;
   const setter =
     <K extends keyof VoucherWorkflowState>(field: K) =>
     (update: SetStateAction<VoucherWorkflowState[K]>) => {
