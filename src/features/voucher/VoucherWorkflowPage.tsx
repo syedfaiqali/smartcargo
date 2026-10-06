@@ -424,7 +424,7 @@ export function VoucherWorkflowPage({
         <TransactionToolbar
           actions={
             voucher
-              ? kind === "PAYMENT"
+              ? (kind === "PAYMENT" || title.startsWith("CRV"))
                 ? [
                     "new",
                     "save",
@@ -515,6 +515,7 @@ export function VoucherWorkflowPage({
             voucher={voucher}
             editable={editable}
             clearedTotal={clearedTotal * voucher.exchangeRate}
+            paymentAccountLabel={title.startsWith("CPV") ? "Cash Account" : "Bank Account"}
             onChange={setVoucher}
           />
           <BankReceiptEntryGrid

@@ -18,6 +18,7 @@ export function ReceiptDetails({
   voucher,
   editable,
   clearedTotal,
+  paymentAccountLabel = "Bank Account",
   onChange,
 }: VoucherDetailsProps) {
   const [open, setOpen] = useState(true);
@@ -92,8 +93,8 @@ export function ReceiptDetails({
           {isPayment && (
             <FormRow>
               <FormField md={12}>
-                <TextField select label="Bank Account" fullWidth value={voucher.bankCode} disabled={!editable} onChange={(event) => set("bankCode", event.target.value)}>
-                  <MenuItem value="">Select Bank Account</MenuItem>
+                <TextField select label={paymentAccountLabel} fullWidth value={voucher.bankCode} disabled={!editable} onChange={(event) => set("bankCode", event.target.value)}>
+                  <MenuItem value="">Select {paymentAccountLabel}</MenuItem>
                   {banks.map((bank) => <MenuItem key={bank.code} value={bank.code}>{bank.code} â€” {bank.name}</MenuItem>)}
                 </TextField>
               </FormField>

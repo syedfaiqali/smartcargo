@@ -39,6 +39,8 @@ import { SeaExportJobPage } from './features/seaExportJob/SeaExportJobPage';
 import { ClearingVoucherPage } from './features/voucher/ClearingVoucherPage';
 import { BankReceiptPage } from './features/voucher/BankReceiptPage';
 import { BankPaymentPage } from './features/voucher/BankPaymentPage';
+import { CashPaymentPage } from './features/voucher/CashPaymentPage';
+import { CashReceiptPage } from './features/voucher/CashReceiptPage';
 import { JournalVoucherPage } from './features/voucher/JournalVoucherPage';
 import { AgingReportPage } from './features/financeReports/AgingReportPage';
 import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage';
@@ -84,8 +86,8 @@ function App() {
             />
             <Route path="/finance/bank-payment-voucher" element={<BankPaymentPage />} />
             <Route path="/finance/bank-receipt-voucher" element={<BankReceiptPage />} />
-            <Route path="/finance/cash-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" mode="CASH" title="CPV - Cash Payment Voucher" />} />
-            <Route path="/finance/cash-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="CASH" title="CRV - Cash Receipt Voucher" />} />
+            <Route path="/finance/cash-payment-voucher" element={<CashPaymentPage />} />
+            <Route path="/finance/cash-receipt-voucher" element={<CashReceiptPage />} />
             <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />
             <Route path="/finance/post-dated-cheques-received" element={<FinanceUtilityPage kind="post-dated-cheques" />} />
             <Route path="/finance/cheque-book" element={<FinanceUtilityPage kind="cheque-book" />} />

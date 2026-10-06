@@ -17,6 +17,7 @@ export interface VoucherDetailsProps {
   voucher: Voucher;
   editable: boolean;
   clearedTotal: number;
+  paymentAccountLabel?: string;
   onChange: Dispatch<SetStateAction<Voucher | null>>;
 }
 
