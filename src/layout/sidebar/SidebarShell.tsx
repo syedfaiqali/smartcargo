@@ -227,13 +227,20 @@ export function SidebarShell() {
     </Box>
   );
 
+  // Align the flyout beside whichever menu item triggered it (click or hover), instead of always
+  // pinning it to the top of the viewport. Clamped so panels for items near the bottom of the sidebar
+  // still fit on screen rather than overflowing past the viewport edge.
+  const flyoutMarginTop = isMobile
+    ? 0
+    : Math.max(8, Math.min(openFlyout?.anchorTop ?? 8, window.innerHeight - 420));
+
   const flyout =
     openFlyout && openFlyoutGroup ? (
       <Box
         ref={flyoutRef}
         sx={{
           position: 'fixed',
-          top: 8,
+          top: 0,
           left: isMobile ? 0 : SIDEBAR_WIDTH,
           right: isMobile ? 0 : undefined,
           bottom: isMobile ? 0 : undefined,
@@ -250,7 +257,7 @@ export function SidebarShell() {
         <Box
           onMouseEnter={clearFlyoutCloseTimer}
           onMouseLeave={() => !isMobile && scheduleFlyoutClose()}
-          sx={{ pointerEvents: 'auto', width: isMobile ? '100%' : 'auto' }}
+          sx={{ pointerEvents: 'auto', width: isMobile ? '100%' : 'auto', mt: `${flyoutMarginTop}px` }}
         >
           <FlyoutPanel
             title={openFlyoutGroup.label}

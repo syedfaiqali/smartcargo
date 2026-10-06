@@ -41,7 +41,7 @@ export function VoucherGrid({ vouchers, onOpen, onEdit, onDelete, onPrint }: Vou
     const line = accountLines[0];
     const invoiceAmount = clearingLines.reduce((total, item) => total + item.amountCleared, 0);
     const costAmount = accountLines.reduce((total, item) => total + item.amount, 0);
-    return [voucher.voucherDate, line?.accountCode || voucher.accountCode || voucher.bankCode || '—', line?.debitCredit || '—', line?.particulars || voucher.remarks || '—', line?.analysis || '—', voucher.chequeNo || '—', voucher.chequeDate || '—', voucher.chequeStatus || '—', voucher.currencyCode, String(voucher.exchangeRate), voucher.amount.toFixed(2), (voucher.amount * voucher.exchangeRate).toFixed(2), invoiceAmount.toFixed(2), costAmount.toFixed(2), voucher.final ? 'Y' : 'N', 'N', 'N', voucher.chequeStatus === 'Cleared' ? 'Y' : 'N'];
+    return [voucher.voucherDate, line?.accountCode || voucher.accountCode || voucher.bankCode || '—', line?.debitCredit || '—', line?.particulars || voucher.remarks || '—', line?.analysis || '—', voucher.chequeNo || '—', voucher.chequeDate || '—', voucher.chequeStatus || '—', voucher.currencyCode, String(voucher.exchangeRate), voucher.amount.toFixed(2), (voucher.amount * voucher.exchangeRate).toFixed(2), invoiceAmount.toFixed(2), costAmount.toFixed(2), voucher.final ? 'Y' : 'N', 'N', 'N', voucher.chequeStatus === 'CLEARED' ? 'Y' : 'N'];
   };
   const filtered = useMemo(
     () => [...vouchers]

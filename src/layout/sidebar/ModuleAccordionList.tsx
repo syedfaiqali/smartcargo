@@ -54,11 +54,11 @@ export function ModuleAccordionList({
               onSetExpandedModuleKey(mod.key);
               onSetOpenFlyout({ moduleKey: mod.key, groupLabel: firstGroup.label });
             }}
-            onGroupClick={(groupLabel) => {
+            onGroupClick={(groupLabel, anchorTop) => {
               onSetOpenFlyout(
                 openFlyout?.moduleKey === mod.key && openFlyout.groupLabel === groupLabel
                   ? null
-                  : { moduleKey: mod.key, groupLabel }
+                  : { moduleKey: mod.key, groupLabel, anchorTop }
               );
             }}
             onGroupHover={(groupLabel, anchorTop) => {

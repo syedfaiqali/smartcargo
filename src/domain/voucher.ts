@@ -78,13 +78,6 @@ export interface Voucher extends AuditFields {
   exchangeRate: number;
   clearingLines: VoucherClearingLine[];
   accountLines: VoucherAccountLine[];
-  entryDate: IsoDate;
-  chequeNo: string;
-  chequeDate: IsoDate | '';
-  chequeStatus: 'Un Cleared' | 'Cleared';
-  clearingDate: IsoDate | '';
-  chequeType: 'Open' | 'Crossed';
-  accountCode: string;
 
   // Journal specific
   journalLines: JournalLine[];

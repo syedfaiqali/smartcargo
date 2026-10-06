@@ -45,6 +45,7 @@ import { JournalVoucherPage } from './features/voucher/JournalVoucherPage';
 import { AgingReportPage } from './features/financeReports/AgingReportPage';
 import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage';
 import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
+import { BankReconciliationPage } from './features/financeReports/BankReconciliationPage';
 import { GroupCodesPage } from './features/financeSetup/GroupCodesPage';
 import { ControlCodesPage } from './features/financeSetup/ControlCodesPage';
 import { ComingSoonPage } from './features/common/ComingSoonPage';
@@ -91,7 +92,7 @@ function App() {
             <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />
             <Route path="/finance/post-dated-cheques-received" element={<FinanceUtilityPage kind="post-dated-cheques" />} />
             <Route path="/finance/cheque-book" element={<FinanceUtilityPage kind="cheque-book" />} />
-            <Route path="/finance/bank-reconciliation" element={<FinanceUtilityPage kind="bank-reconciliation" />} />
+            <Route path="/finance/bank-reconciliation" element={<BankReconciliationPage />} />
             {/* Legacy voucher routes kept for backward compatibility with any saved links. */}
             <Route path="/finance/receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="BANK" title="BRV - Bank Receipt Voucher" />} />
             <Route path="/finance/payment-voucher" element={<BankPaymentPage />} />

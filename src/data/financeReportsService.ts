@@ -4,6 +4,7 @@ import { payableRepo } from './otherChargesPayableService';
 import { voucherRepo, findReceivableSources, findPayableSources } from './voucherService';
 import { jobRepo } from './jobService';
 import { seaExportJobRepo } from './seaExportJobService';
+import { Voucher } from '../domain/voucher';
 
 export interface AgingRow {
   docNo: string;
@@ -161,4 +162,73 @@ export function getJobProfitability(): JobProfitabilityRow[] {
   });
 
   return rows.sort((a, b) => b.profit - a.profit);
+}
+
+/** One un-cleared BPV/BRV cheque row shown in the Bank Reconciliation worksheet. */
+export interface ReconciliationChequeRow {
+  voucherId: string;
+  branch: string;
+  type: 'BPV' | 'BRV';
+  voucherNo: string;
+  voucherDate: string;
+  particulars: string;
+  chequeNo: string;
+  chequeDate: string;
+  amount: number;
+}
+
+export interface BankReconciliationData {
+  /** Balance per books = all finalized Receipts minus Payments for this bank, up to the As On date. */
+  bookBalance: number;
+  /** Cheques issued (BPV) but not yet presented/debited by the bank — added back to the bank statement balance. */
+  issuedUncleared: ReconciliationChequeRow[];
+  /** Cheques deposited (BRV) but not yet credited by the bank — subtracted from the bank statement balance. */
+  depositedUncleared: ReconciliationChequeRow[];
+}
+
+function voucherToRow(v: Voucher, type: 'BPV' | 'BRV'): ReconciliationChequeRow {
+  return {
+    voucherId: v.id,
+    branch: v.branch,
+    type,
+    voucherNo: v.voucherNo,
+    voucherDate: v.voucherDate,
+    particulars: v.accountLines?.[0]?.particulars || v.remarks || v.partyName || '—',
+    chequeNo: v.chequeNo || '',
+    chequeDate: v.chequeDate || '',
+    amount: v.amount,
+  };
+}
+
+/** Builds the Bank Reconciliation worksheet for one bank, as of a given date. */
+export function getBankReconciliation(bankCode: string, asOnDate: string, branches?: string[]): BankReconciliationData {
+  const inScope = (v: Voucher) =>
+    v.final &&
+    v.bankCode === bankCode &&
+    v.voucherDate <= asOnDate &&
+    (!branches?.length || branches.includes(v.branch));
+
+  const finalizedForBank = voucherRepo.find((v) => inScope(v) && (v.kind === 'RECEIPT' || v.kind === 'PAYMENT'));
+  const bookBalance = finalizedForBank.reduce((sum, v) => sum + (v.kind === 'RECEIPT' ? v.amount : -v.amount), 0);
+
+  const issuedUncleared = finalizedForBank
+    .filter((v) => v.kind === 'PAYMENT' && v.chequeStatus !== 'CLEARED')
+    .map((v) => voucherToRow(v, 'BPV'))
+    .sort((a, b) => a.voucherDate.localeCompare(b.voucherDate));
+
+  const depositedUncleared = finalizedForBank
+    .filter((v) => v.kind === 'RECEIPT' && v.chequeStatus !== 'CLEARED')
+    .map((v) => voucherToRow(v, 'BRV'))
+    .sort((a, b) => a.voucherDate.localeCompare(b.voucherDate));
+
+  return { bookBalance, issuedUncleared, depositedUncleared };
+}
+
+/** Marks the given vouchers' cheques as cleared with the supplied clearing date — used by the Update action. */
+export function markChequesCleared(voucherIds: string[], clearingDate: string): void {
+  for (const id of voucherIds) {
+    const v = voucherRepo.get(id);
+    if (!v) continue;
+    voucherRepo.save({ ...v, chequeStatus: 'CLEARED', clearingDate });
+  }
 }
