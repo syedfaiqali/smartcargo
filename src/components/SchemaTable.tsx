@@ -73,6 +73,8 @@ export interface SchemaTableProps<T> {
   onSelect?: (ids: string[]) => void;
   selectionLabel?: string;
   initialPageSize?: number;
+  columnGroups?: { label: string; keys: string[] }[];
+  allowAllRows?: boolean;
 }
 
 const displayDate = (value: CellValue) =>
@@ -98,6 +100,8 @@ export function SchemaTable<T>({
   onSelect,
   selectionLabel = "records",
   initialPageSize = 10,
+  columnGroups = [],
+  allowAllRows = false,
 }: SchemaTableProps<T>) {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -158,12 +162,12 @@ export function SchemaTable<T>({
     });
   const currentPage = Math.min(
     page,
-    Math.max(0, Math.ceil(sorted.length / pageSize) - 1),
+    pageSize === -1 ? 0 : Math.max(0, Math.ceil(sorted.length / pageSize) - 1),
   );
-  const visible = sorted.slice(
-    currentPage * pageSize,
-    (currentPage + 1) * pageSize,
-  );
+  const visible =
+    pageSize === -1
+      ? sorted
+      : sorted.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
   const selectedSet = new Set(selected);
   const selectedCount = rows.filter((row) =>
     selectedSet.has(getRowId(row)),
@@ -398,6 +402,60 @@ export function SchemaTable<T>({
                 lighten(theme.palette.primary.main, 0.955),
             }}
           >
+            {columnGroups.length > 0 && (
+              <TableRow>
+                {onSelect && (
+                  <TableCell
+                    padding="checkbox"
+                    sx={sticky(0, !actions.length)}
+                  />
+                )}
+                {actions.length > 0 && (
+                  <TableCell sx={sticky(selectionWidth, true)} />
+                )}
+                {columns.map((column) => {
+                  const group = columnGroups.find((item) =>
+                    item.keys.includes(column.key),
+                  );
+                  if (group && group.keys[0] !== column.key) return null;
+                  return (
+                    <TableCell
+                      key={column.key}
+                      colSpan={group?.keys.length || 1}
+                      rowSpan={group ? 1 : 2}
+                      align="center"
+                      scope={group ? "colgroup" : "col"}
+                    >
+                      {group ? (
+                        group.label
+                      ) : column.sortable === false ? (
+                        column.label
+                      ) : (
+                        <TableSortLabel
+                          active={sort?.key === column.key}
+                          direction={
+                            sort?.key === column.key ? sort.direction : "asc"
+                          }
+                          onClick={() => {
+                            setSort({
+                              key: column.key,
+                              direction:
+                                sort?.key === column.key &&
+                                sort.direction === "asc"
+                                  ? "desc"
+                                  : "asc",
+                            });
+                            setPage(0);
+                          }}
+                        >
+                          {column.label}
+                        </TableSortLabel>
+                      )}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            )}
             <TableRow>
               {onSelect && (
                 <TableCell padding="checkbox" sx={sticky(0, !actions.length)}>
@@ -422,42 +480,51 @@ export function SchemaTable<T>({
               {actions.length > 0 && (
                 <TableCell sx={sticky(selectionWidth, true)}>Actions</TableCell>
               )}
-              {columns.map((column) => (
-                <TableCell
-                  key={column.key}
-                  align={
-                    column.align ||
-                    (column.type === "number" ? "right" : "left")
-                  }
-                  sortDirection={
-                    sort?.key === column.key ? sort.direction : false
-                  }
-                  sx={{ whiteSpace: "nowrap" }}
-                >
-                  {column.sortable === false ? (
-                    column.label
-                  ) : (
-                    <TableSortLabel
-                      active={sort?.key === column.key}
-                      direction={
-                        sort?.key === column.key ? sort.direction : "asc"
-                      }
-                      onClick={() => {
-                        setSort({
-                          key: column.key,
-                          direction:
-                            sort?.key === column.key && sort.direction === "asc"
-                              ? "desc"
-                              : "asc",
-                        });
-                        setPage(0);
-                      }}
-                    >
-                      {column.label}
-                    </TableSortLabel>
-                  )}
-                </TableCell>
-              ))}
+              {columns
+                .filter(
+                  (column) =>
+                    !columnGroups.length ||
+                    columnGroups.some((group) =>
+                      group.keys.includes(column.key),
+                    ),
+                )
+                .map((column) => (
+                  <TableCell
+                    key={column.key}
+                    align={
+                      column.align ||
+                      (column.type === "number" ? "right" : "left")
+                    }
+                    sortDirection={
+                      sort?.key === column.key ? sort.direction : false
+                    }
+                    sx={{ whiteSpace: "nowrap" }}
+                  >
+                    {column.sortable === false ? (
+                      column.label
+                    ) : (
+                      <TableSortLabel
+                        active={sort?.key === column.key}
+                        direction={
+                          sort?.key === column.key ? sort.direction : "asc"
+                        }
+                        onClick={() => {
+                          setSort({
+                            key: column.key,
+                            direction:
+                              sort?.key === column.key &&
+                              sort.direction === "asc"
+                                ? "desc"
+                                : "asc",
+                          });
+                          setPage(0);
+                        }}
+                      >
+                        {column.label}
+                      </TableSortLabel>
+                    )}
+                  </TableCell>
+                ))}
             </TableRow>
             {showFilters && (
               <TableRow
@@ -725,7 +792,11 @@ export function SchemaTable<T>({
             setPageSize(Number(event.target.value));
             setPage(0);
           }}
-          rowsPerPageOptions={[5, 10, 25, 50]}
+          rowsPerPageOptions={
+            allowAllRows
+              ? [5, 10, 25, 50, { label: "All", value: -1 }]
+              : [5, 10, 25, 50]
+          }
           sx={{
             border: 0,
             "& .MuiTablePagination-toolbar": { pl: 0 },

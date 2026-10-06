@@ -41,7 +41,9 @@ import { BankReceiptPage } from './features/voucher/BankReceiptPage';
 import { BankPaymentPage } from './features/voucher/BankPaymentPage';
 import { CashPaymentPage } from './features/voucher/CashPaymentPage';
 import { CashReceiptPage } from './features/voucher/CashReceiptPage';
+import { ChequeBookPage } from './features/financeSetup/ChequeBookPage';
 import { JournalVoucherPage } from './features/voucher/JournalVoucherPage';
+import { PostDatedChequesPage } from './features/postDatedCheques/PostDatedChequesPage';
 import { AgingReportPage } from './features/financeReports/AgingReportPage';
 import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage';
 import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
@@ -90,8 +92,8 @@ function App() {
             <Route path="/finance/cash-payment-voucher" element={<CashPaymentPage />} />
             <Route path="/finance/cash-receipt-voucher" element={<CashReceiptPage />} />
             <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />
-            <Route path="/finance/post-dated-cheques-received" element={<FinanceUtilityPage kind="post-dated-cheques" />} />
-            <Route path="/finance/cheque-book" element={<FinanceUtilityPage kind="cheque-book" />} />
+            <Route path="/finance/post-dated-cheques-received" element={<PostDatedChequesPage />} />
+            <Route path="/finance/cheque-book" element={<ChequeBookPage />} />
             <Route path="/finance/bank-reconciliation" element={<BankReconciliationPage />} />
             {/* Legacy voucher routes kept for backward compatibility with any saved links. */}
             <Route path="/finance/receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="BANK" title="BRV - Bank Receipt Voucher" />} />
