@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TableViewIcon from '@mui/icons-material/TableView';
 import { SeaImportQuotation } from '../../domain/seaImportQuotation';
+import { printSeaImportQuotation } from './seaImportQuotationReport';
 
 export function SeaImportQuotationPrintingTab({ quotation }: { quotation: SeaImportQuotation }) {
   const [print, setPrint] = useState<'QUOTATION' | 'EXTRA_SHEET'>('QUOTATION');
@@ -69,7 +70,7 @@ export function SeaImportQuotationPrintingTab({ quotation }: { quotation: SeaImp
         </Paper>
         <Box sx={{ display: 'flex', gap: 1.5, pt: 0.5 }}>
           <ButtonBase
-            onClick={() => window.print()}
+            onClick={() => printSeaImportQuotation(quotation)}
             sx={{ width: 60, height: 60, borderRadius: 1.5, bgcolor: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <PictureAsPdfIcon sx={{ color: 'white', fontSize: 32 }} />

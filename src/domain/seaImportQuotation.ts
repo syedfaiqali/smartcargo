@@ -11,6 +11,54 @@ export interface QuotationJobInfoRow {
   type: string;
 }
 
+/** One Airline Rate comparison row — lets a quotation carry multiple carriers' quoted rates (PIA, ETH, ...). */
+export interface QuotationAirlineRateLine {
+  id: string;
+  airlineCode: string;
+  rate: number;
+  currencyCode: string;
+}
+
+/** One routed carrier option on a vendor rate quotation (e.g. "TK - Turkish Airlines", "QR - Qatar Airways"). */
+export interface QuotationCarrierOption {
+  id: string;
+  optionCode: string;
+  carrierName: string;
+  routing: string;
+  scheduleNote: string;
+  ratePerKg: number;
+  currencyCode: string;
+}
+
+/** A local/handling charge line shown ahead of carrier options on a vendor rate quotation. */
+export interface QuotationLocalCharge {
+  id: string;
+  description: string;
+  amount: number;
+  currencyCode: string;
+}
+
+/** Sender/receiver + compliance details for a vendor rate quotation received (e.g. from Cargomind). */
+export interface QuotationVendorInfo {
+  serviceSolicitorName: string;
+  serviceSolicitorAddress: string;
+  serviceSolicitorContact: string;
+  serviceProviderName: string;
+  serviceProviderAddress: string;
+  issuedByName: string;
+  issuedByCompany: string;
+  issuedByPhone: string;
+  issuedByEmail: string;
+  co2EmissionsKg: number;
+  originCity: string;
+  destinationCity: string;
+  placeOfAcceptance: string;
+  /** Free-text points shown under "Not included in this quotation" on the vendor-quote print. */
+  notIncluded: string[];
+  /** Free-text "Terms and Conditions" paragraph shown on the vendor-quote print. */
+  termsText: string;
+}
+
 /** Service Charges At Origin / At Destination grid line — Buying & Selling side by side. */
 export interface QuotationServiceChargeLine {
   id: string;
@@ -37,9 +85,11 @@ export interface QuotationDimensionRow {
 }
 
 /** Quotations (Sea-Import) */
+export type QuotationTransportMode = 'AIR' | 'SEA' | '';
+
 export interface SeaImportQuotation extends AuditFields {
   branch: string;
-  transportMode: string;
+  transportMode: QuotationTransportMode;
   date: IsoDate;
   validity: string;
   quotationNo: string;
@@ -67,6 +117,7 @@ export interface SeaImportQuotation extends AuditFields {
 
   noOfPkgs: number;
   uom: string;
+  packageType: string;
   grossWeight: number;
   chWeight: number;
   incoTerm: string;
@@ -89,6 +140,12 @@ export interface SeaImportQuotation extends AuditFields {
 
   currencies: QuotationCurrencyRow[];
   jobInfo: QuotationJobInfoRow[];
+  airlineRates: QuotationAirlineRateLine[];
+
+  /** Present only on quotations received FROM a vendor (e.g. Cargomind) rather than issued to a customer. */
+  localCharges: QuotationLocalCharge[];
+  carrierOptions: QuotationCarrierOption[];
+  vendorInfo: QuotationVendorInfo | null;
 
   termsAndConditions: string;
   extraSheet: string;
