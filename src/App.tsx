@@ -39,6 +39,7 @@ import { SeaExportJobPage } from './features/seaExportJob/SeaExportJobPage';
 import { ClearingVoucherPage } from './features/voucher/ClearingVoucherPage';
 import { BankReceiptPage } from './features/voucher/BankReceiptPage';
 import { JournalVoucherPage } from './features/voucher/JournalVoucherPage';
+import { PostDatedChequesPage } from './features/postDatedCheques/PostDatedChequesPage';
 import { AgingReportPage } from './features/financeReports/AgingReportPage';
 import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage';
 import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
@@ -81,7 +82,7 @@ function App() {
             <Route path="/finance/cash-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="CPV - Cash Payment Voucher" />} />
             <Route path="/finance/cash-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" title="CRV - Cash Receipt Voucher" />} />
             <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />
-            <Route path="/finance/post-dated-cheques-received" element={<FinanceUtilityPage kind="post-dated-cheques" />} />
+            <Route path="/finance/post-dated-cheques-received" element={<PostDatedChequesPage />} />
             <Route path="/finance/cheque-book" element={<FinanceUtilityPage kind="cheque-book" />} />
             <Route path="/finance/bank-reconciliation" element={<FinanceUtilityPage kind="bank-reconciliation" />} />
             <Route path="/finance/reports/ar-aging" element={<AgingReportPage kind="AR" />} />

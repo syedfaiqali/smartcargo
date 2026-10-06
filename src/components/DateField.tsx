@@ -36,7 +36,12 @@ export function DateField({
         format="dd/MM/yyyy"
         disabled={disabled}
         slotProps={{
-          textField: { fullWidth, required, variant },
+          textField: {
+            fullWidth,
+            required,
+            variant,
+            InputLabelProps: { shrink: true },
+          },
           actionBar: { actions: ["clear", "today"] },
           popper: {
             sx: {
