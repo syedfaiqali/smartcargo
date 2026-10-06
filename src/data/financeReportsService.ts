@@ -1,10 +1,13 @@
+import { v4 as uuid } from 'uuid';
 import { localInvoiceRepo } from './localInvoiceService';
 import { foreignAgentInvoiceRepo } from './foreignAgentInvoiceService';
 import { payableRepo } from './otherChargesPayableService';
-import { voucherRepo, findReceivableSources, findPayableSources } from './voucherService';
+import { voucherRepo, nextVoucherNo, findReceivableSources, findPayableSources } from './voucherService';
+import { createEmptyVoucher } from '../domain/voucherFactory';
 import { jobRepo } from './jobService';
 import { seaExportJobRepo } from './seaExportJobService';
 import { Voucher } from '../domain/voucher';
+import { isSeeded, markSeeded } from './localStore';
 
 export interface AgingRow {
   docNo: string;
@@ -231,4 +234,47 @@ export function markChequesCleared(voucherIds: string[], clearingDate: string): 
     if (!v) continue;
     voucherRepo.save({ ...v, chequeStatus: 'CLEARED', clearingDate });
   }
+}
+
+/**
+ * One-time top-up: adds a handful of extra finalized BPV/BRV vouchers (with cheque numbers, split across
+ * both demo banks, some already cleared) so the Bank Reconciliation worksheet has realistic sample data to
+ * browse, beyond the single Receipt/Payment voucher already seeded by demoDataService.
+ */
+export function ensureBankReconciliationSampleVouchers(): void {
+  if (isSeeded('bankReconciliationSample')) return;
+  markSeeded('bankReconciliationSample');
+
+  const branch = 'KHI';
+  const makeVoucher = (
+    kind: 'RECEIPT' | 'PAYMENT',
+    opts: { date: string; partyCode: string; partyName: string; bankCode: string; amount: number; chequeNo: string; chequeDate: string; cleared?: boolean; clearingDate?: string; remarks: string }
+  ) => {
+    const v = createEmptyVoucher(kind, branch);
+    v.voucherNo = nextVoucherNo(kind, branch);
+    v.voucherDate = opts.date;
+    v.partyCode = opts.partyCode;
+    v.partyName = opts.partyName;
+    v.bankCode = opts.bankCode;
+    v.amount = opts.amount;
+    v.chequeNo = opts.chequeNo;
+    v.chequeDate = opts.chequeDate;
+    v.remarks = opts.remarks;
+    v.final = true;
+    if (opts.cleared) {
+      v.chequeStatus = 'CLEARED';
+      v.clearingDate = opts.clearingDate ?? opts.date;
+    }
+    return voucherRepo.save(v);
+  };
+
+  // BNK-01 — Habib Bank Limited
+  makeVoucher('PAYMENT', { date: '2026-08-20', partyCode: 'P-2001', partyName: 'Gulf Cargo Partners LLC', bankCode: 'BNK-01', amount: 85000, chequeNo: '0441201', chequeDate: '2026-08-20', remarks: 'Payment for Aug freight charges' });
+  makeVoucher('PAYMENT', { date: '2026-08-25', partyCode: 'P-2002', partyName: 'Speedy Logistics Services', bankCode: 'BNK-01', amount: 42500, chequeNo: '0441202', chequeDate: '2026-08-25', remarks: 'Clearing agent charges settlement' });
+  makeVoucher('RECEIPT', { date: '2026-08-18', partyCode: 'P-1002', partyName: 'Indus Garments (Pvt) Ltd', bankCode: 'BNK-01', amount: 128000, chequeNo: '8812045', chequeDate: '2026-08-18', cleared: true, clearingDate: '2026-08-28', remarks: 'Receipt against invoice settlement' });
+
+  // BNK-02 — MCB Bank Limited
+  makeVoucher('RECEIPT', { date: '2026-08-19', partyCode: 'P-1003', partyName: 'Noorani Traders', bankCode: 'BNK-02', amount: 67500, chequeNo: '5567890', chequeDate: '2026-08-19', remarks: 'Receipt against local invoice' });
+  makeVoucher('PAYMENT', { date: '2026-08-22', partyCode: 'P-2003', partyName: 'Falcon Shipping Lines', bankCode: 'BNK-02', amount: 31000, chequeNo: '7723341', chequeDate: '2026-08-22', remarks: 'Payment for sea freight charges' });
+  makeVoucher('PAYMENT', { date: '2026-08-10', partyCode: 'P-2004', partyName: 'City Transport Co.', bankCode: 'BNK-02', amount: 15750, chequeNo: '7723330', chequeDate: '2026-08-10', cleared: true, clearingDate: '2026-08-15', remarks: 'Local transport charges' });
 }

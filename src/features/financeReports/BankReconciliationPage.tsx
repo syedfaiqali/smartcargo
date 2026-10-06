@@ -19,7 +19,8 @@ import { PageShell } from '../../layout/PageShell';
 import { DateField } from '../../components/DateField';
 import { NumberField } from '../../components/NumberField';
 import { bankRepo } from '../../data/masterDataService';
-import { getBankReconciliation, markChequesCleared, ReconciliationChequeRow } from '../../data/financeReportsService';
+import { getBankReconciliation, markChequesCleared, ensureBankReconciliationSampleVouchers, ReconciliationChequeRow } from '../../data/financeReportsService';
+import { printBankReconciliation } from './bankReconciliationReport';
 
 const BRANCHES = ['KHI', 'LHE', 'ISB'];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -116,6 +117,7 @@ function ChequeGrid({
 }
 
 export function BankReconciliationPage() {
+  ensureBankReconciliationSampleVouchers();
   const banks = bankRepo.list();
 
   const [branches, setBranches] = useState<string[]>(['KHI']);
@@ -186,6 +188,19 @@ export function BankReconciliationPage() {
     setIssuedSelected([]);
     setDepositedSelected([]);
     setVersion((v) => v + 1);
+  };
+
+  const handlePrint = () => {
+    if (!data) return;
+    const bank = banks.find((b) => b.code === bankCode);
+    printBankReconciliation(data, {
+      branch: branches[0] ?? 'KHI',
+      bankCode,
+      bankName: bank?.name ?? '',
+      asOnDate,
+      currencyCode: 'PKR',
+      userName: 'Supervisor',
+    });
   };
 
   return (
@@ -318,7 +333,7 @@ export function BankReconciliationPage() {
                 <Button variant="contained" onClick={handleUpdate}>
                   Update
                 </Button>
-                <Button variant="outlined" onClick={() => window.print()}>
+                <Button variant="outlined" onClick={handlePrint}>
                   Print
                 </Button>
               </Box>
