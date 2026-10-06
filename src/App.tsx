@@ -38,6 +38,9 @@ import { LetterOfIssuancePage } from './features/letters/LetterOfIssuancePage';
 import { SeaExportJobPage } from './features/seaExportJob/SeaExportJobPage';
 import { ClearingVoucherPage } from './features/voucher/ClearingVoucherPage';
 import { BankReceiptPage } from './features/voucher/BankReceiptPage';
+import { BankPaymentPage } from './features/voucher/BankPaymentPage';
+import { CashPaymentPage } from './features/voucher/CashPaymentPage';
+import { CashReceiptPage } from './features/voucher/CashReceiptPage';
 import { JournalVoucherPage } from './features/voucher/JournalVoucherPage';
 import { PostDatedChequesPage } from './features/postDatedCheques/PostDatedChequesPage';
 import { AgingReportPage } from './features/financeReports/AgingReportPage';
@@ -45,6 +48,7 @@ import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage
 import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
 import { GroupCodesPage } from './features/financeSetup/GroupCodesPage';
 import { ControlCodesPage } from './features/financeSetup/ControlCodesPage';
+import { ComingSoonPage } from './features/common/ComingSoonPage';
 import { FinanceUtilityPage } from './features/financeSetup/FinanceUtilityPage';
 import { SeaOtherChargesPayablePage } from './features/seaOtherChargesPayable/SeaOtherChargesPayablePage';
 import { SeaRefundPage } from './features/seaRefundFromShippingLines/SeaRefundPage';
@@ -74,17 +78,24 @@ function App() {
         <DeleteConfirmationDialog />
         <AppShell>
           <Routes>
-            <Route path="/finance" element={<ClearingVoucherPage kind="PAYMENT" title="BPV - Bank Payment Voucher" />} />
+            <Route path="/finance" element={<BankPaymentPage />} />
             <Route path="/finance/initial-setup/group-codes" element={<GroupCodesPage />} />
             <Route path="/finance/initial-setup/control-codes" element={<ControlCodesPage />} />
-            <Route path="/finance/bank-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="BPV - Bank Payment Voucher" />} />
+            <Route
+              path="/finance/initial-setup/chart-of-accounts"
+              element={<ComingSoonPage breadcrumbs={['Finance', 'Initial Setup', 'Chart of Accounts']} title="Chart of Accounts" />}
+            />
+            <Route path="/finance/bank-payment-voucher" element={<BankPaymentPage />} />
             <Route path="/finance/bank-receipt-voucher" element={<BankReceiptPage />} />
-            <Route path="/finance/cash-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="CPV - Cash Payment Voucher" />} />
-            <Route path="/finance/cash-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" title="CRV - Cash Receipt Voucher" />} />
+            <Route path="/finance/cash-payment-voucher" element={<CashPaymentPage />} />
+            <Route path="/finance/cash-receipt-voucher" element={<CashReceiptPage />} />
             <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />
             <Route path="/finance/post-dated-cheques-received" element={<PostDatedChequesPage />} />
             <Route path="/finance/cheque-book" element={<FinanceUtilityPage kind="cheque-book" />} />
             <Route path="/finance/bank-reconciliation" element={<FinanceUtilityPage kind="bank-reconciliation" />} />
+            {/* Legacy voucher routes kept for backward compatibility with any saved links. */}
+            <Route path="/finance/receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="BANK" title="BRV - Bank Receipt Voucher" />} />
+            <Route path="/finance/payment-voucher" element={<BankPaymentPage />} />
             <Route path="/finance/reports/ar-aging" element={<AgingReportPage kind="AR" />} />
             <Route path="/finance/reports/ap-aging" element={<AgingReportPage kind="AP" />} />
             <Route path="/finance/reports/bank-cash-ledger" element={<BankCashLedgerPage />} />

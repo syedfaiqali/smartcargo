@@ -28,6 +28,10 @@ export interface JournalLine {
 /** Manual accounting detail entered on a payment/receipt voucher. */
 export interface VoucherAccountLine {
   id: string;
+  /** ID of the automatically created opposite-D/C line, when this row is balanced as a pair. */
+  counterpartId?: string;
+  /** Marks a line created by the BPV amount blur balancing behaviour. */
+  isAutoBalanceLine?: boolean;
   action: string;
   debitCredit: 'D' | 'C';
   accountCode: string;

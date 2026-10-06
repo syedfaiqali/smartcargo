@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { Voucher, VoucherCostLine } from "../domain/voucher";
 
-export type VoucherWorkflowKind = "JOURNAL" | "RECEIPT";
+export type VoucherWorkflowKind = "JOURNAL" | "RECEIPT" | "PAYMENT";
 
 export interface VoucherWorkflowState {
   voucher: Voucher | null;
@@ -37,7 +37,7 @@ const initialState = (): VoucherWorkflowState => ({
 
 /** Each slice owns its state and action namespace; only the reducer logic is shared. */
 export function createVoucherWorkflowSlice(
-  name: "journalVoucher" | "bankReceipt",
+  name: "journalVoucher" | "bankReceipt" | "bankPayment",
   kind: VoucherWorkflowKind,
 ) {
   return createSlice({

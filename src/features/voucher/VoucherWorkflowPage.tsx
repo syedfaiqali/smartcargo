@@ -43,6 +43,7 @@ import {
   voucherRepo,
   nextVoucherNo,
   findReceivableSources,
+  findPayableSources,
   finalizeVoucher,
   unfinalizeVoucher,
 } from "../../data/voucherService";
@@ -59,7 +60,7 @@ export function VoucherWorkflowPage({
   kind = "RECEIPT",
   title = "BRV - Bank Receipt Voucher",
 }: {
-  kind?: Extract<VoucherKind, "RECEIPT" | "JOURNAL">;
+  kind?: Extract<VoucherKind, "RECEIPT" | "PAYMENT" | "JOURNAL">;
   title?: string;
 }) {
   const {
@@ -126,7 +127,7 @@ export function VoucherWorkflowPage({
     0,
   );
   const sources = voucher
-    ? findReceivableSources(voucher.partyCode || undefined)
+    ? (kind === "PAYMENT" ? findPayableSources(voucher.partyCode || undefined) : findReceivableSources(voucher.partyCode || undefined))
     : [];
   const allocatedSources = voucher?.clearingLines ?? [];
   // Retain saved allocations even when finalization removes the invoice from the outstanding list.
@@ -239,7 +240,7 @@ export function VoucherWorkflowPage({
       throw new Error(
         `Voucher ${v.voucherNo} needs a party and valid invoice allocations.`,
       );
-    const available = findReceivableSources(v.partyCode);
+    const available = v.kind === "PAYMENT" ? findPayableSources(v.partyCode) : findReceivableSources(v.partyCode);
     if (
       v.clearingLines.some(
         (l) =>
@@ -423,7 +424,17 @@ export function VoucherWorkflowPage({
         <TransactionToolbar
           actions={
             voucher
-              ? [
+              ? (kind === "PAYMENT" || title.startsWith("CRV"))
+                ? [
+                    "new",
+                    "save",
+                    "edit",
+                    "delete",
+                    "final",
+                    "void",
+                    "copy",
+                  ]
+                : [
                   "search",
                   "top",
                   "bottom",
@@ -504,6 +515,7 @@ export function VoucherWorkflowPage({
             voucher={voucher}
             editable={editable}
             clearedTotal={clearedTotal * voucher.exchangeRate}
+            paymentAccountLabel={title.startsWith("CPV") ? "Cash Account" : "Bank Account"}
             onChange={setVoucher}
           />
           <BankReceiptEntryGrid

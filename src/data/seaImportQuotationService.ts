@@ -1,6 +1,8 @@
 import { v4 as uuid } from 'uuid';
 import { SeaImportQuotation } from '../domain/seaImportQuotation';
 import { createEmptySeaImportQuotation } from '../domain/seaImportQuotationFactory';
+import { recomputeQuotationTotals } from '../features/seaImportQuotation/quotationCalculations';
+import { isSeeded, markSeeded } from './localStore';
 import { Repository } from './repository';
 
 export const seaImportQuotationRepo = new Repository<SeaImportQuotation>('seaImportQuotations');
@@ -17,63 +19,161 @@ export function nextSeaImportQuotationNo(branch: string): string {
   return `${branch}-SIQ-${quotationSequence}`;
 }
 
-/** Adds a couple of sample rows only while the Sea-Import quotations list is empty. */
+let relatedQuoteSequence = 100;
+
+/** Auto-generates a unique Related Quote No. (branch-scoped, REL-prefixed) for a new quotation. */
+export function nextRelatedQuoteNo(branch: string): string {
+  const existing = seaImportQuotationRepo.list();
+  const maxSeq = existing.reduce((max, q) => {
+    const seq = parseInt(q.relatedQuoteNo.split('-').pop() ?? '', 10);
+    return Number.isFinite(seq) ? Math.max(max, seq) : max;
+  }, relatedQuoteSequence);
+  relatedQuoteSequence = maxSeq + 1;
+  return `${branch}-REL-${relatedQuoteSequence}`;
+}
+
+/** Backfills fields/shapes added after some browsers already had quotations saved. */
+function backfillMissingFields(): void {
+  const items = seaImportQuotationRepo.list();
+  let changed = false;
+  const patched = items.map((q) => {
+    const normalizedMode = q.transportMode?.toUpperCase();
+    const needsAirlineRates = !q.airlineRates;
+    const needsModeFix = normalizedMode !== q.transportMode && (normalizedMode === 'AIR' || normalizedMode === 'SEA');
+    const needsRelatedQuoteNo = !q.relatedQuoteNo;
+    const needsLocalCharges = !q.localCharges;
+    const needsCarrierOptions = !q.carrierOptions;
+    const needsPackageType = q.packageType === undefined;
+    if (!needsAirlineRates && !needsModeFix && !needsRelatedQuoteNo && !needsLocalCharges && !needsCarrierOptions && !needsPackageType) return q;
+    changed = true;
+    const fixed: SeaImportQuotation = {
+      ...q,
+      airlineRates: q.airlineRates ?? [],
+      transportMode: needsModeFix ? (normalizedMode as 'AIR' | 'SEA') : q.transportMode,
+      relatedQuoteNo: needsRelatedQuoteNo ? nextRelatedQuoteNo(q.branch) : q.relatedQuoteNo,
+      localCharges: q.localCharges ?? [],
+      carrierOptions: q.carrierOptions ?? [],
+      packageType: q.packageType ?? '',
+    };
+    return recomputeQuotationTotals(fixed);
+  });
+  if (changed) seaImportQuotationRepo.replaceAll(patched);
+}
+
+export const CARGOMIND_SAMPLE_QUOTATION_NO = 'BUH-Q26000854';
+
+/**
+ * Builds the Cargomind (Romania) "Pricing Air Export" sample quotation — the exact dataset shown in the
+ * reference PDF (BUH-Q26000854 / Masum Logistics / 15 pcs Chips / TK, QR, QY carrier options). Kept as a
+ * single builder so the record can always be restored on demand via `restoreCargomindSampleQuotation()`,
+ * whether it was deleted, edited, or never seeded in this browser.
+ */
+function buildCargomindSampleQuotation(): SeaImportQuotation {
+  const demo = createEmptySeaImportQuotation('KHI');
+  demo.quotationNo = CARGOMIND_SAMPLE_QUOTATION_NO;
+  demo.transportMode = 'AIR';
+  demo.date = '2026-09-22';
+  demo.validity = '22 Sep 2026 - 29 Sep 2026';
+  demo.localIntl = "Int'l";
+  demo.partyCode = 'MSL-01';
+  demo.name = 'Masum Logistics';
+  demo.address = '815 8th Floor Park Avenue, Block-6, Pechs, Shahrah-e-Faisal, Karachi, Pakistan';
+  demo.origin = 'BUH';
+  demo.destination = 'KHI';
+  demo.commodity = 'Chips (food)';
+  demo.ccPort = 'Bucharest';
+  demo.noOfPkgs = 15;
+  demo.uom = 'PCS';
+  demo.packageType = '';
+  demo.grossWeight = 2622;
+  demo.chWeight = 3600;
+  demo.incoTerm = 'FOB Bucharest';
+  demo.cbm = 21.6;
+  demo.currencies = [{ currencyCode: 'EUR', exRate: 1 }, { currencyCode: '', exRate: 0 }, { currencyCode: '', exRate: 0 }];
+  demo.jobInfo = [];
+  demo.airlineRates = [];
+  demo.dimensions = [
+    { length: 120, width: 80, height: 150, noOfCtns: 15, total: 21.6 },
+    ...demo.dimensions.slice(1),
+  ];
+  demo.localCharges = [
+    { id: uuid(), description: 'Freight Booking Commission', amount: 95, currencyCode: 'EUR' },
+    { id: uuid(), description: 'Airwaybill Fee', amount: 25, currencyCode: 'EUR' },
+  ];
+  demo.carrierOptions = [
+    {
+      id: uuid(),
+      optionCode: 'TK - Turkish Airlines',
+      carrierName: 'Turkish Airlines',
+      routing: 'OTP-IST-KHI',
+      scheduleNote: 'DEP TK1040/30.09-OTP-IST\nETA TK0708/05.10-IST-KHI',
+      ratePerKg: 1.95,
+      currencyCode: 'EUR',
+    },
+    {
+      id: uuid(),
+      optionCode: 'QR - Qatar Airways',
+      carrierName: 'Qatar Airways',
+      routing: 'OTP-BUD-DOH-KHI',
+      scheduleNote: '5-6 days as TT -subj to booking cfm',
+      ratePerKg: 1.74,
+      currencyCode: 'EUR',
+    },
+    {
+      id: uuid(),
+      optionCode: 'QY - European Air Transport',
+      carrierName: 'European Air Transport',
+      routing: 'OTP-LEJ-MXP-KHI',
+      scheduleNote: '5-6 days as TT -subj to booking cfm',
+      ratePerKg: 1.98,
+      currencyCode: 'EUR',
+    },
+  ];
+  demo.vendorInfo = {
+    serviceSolicitorName: 'Masum Logistics',
+    serviceSolicitorAddress: '815 8th Floor Park Avenue, Block-6, Pechs, Shahrah-e-Faisal, Karachi, Pakistan',
+    serviceSolicitorContact: 'Muharram Ali',
+    serviceProviderName: 'Masum Logistics',
+    serviceProviderAddress: '815 8th Floor Park Avenue, Block-6, Pechs, Shahrah-e-Faisal, Karachi, Pakistan',
+    issuedByName: 'Irina Leu',
+    issuedByCompany: 'Cargomind (Romania) S.R.L.',
+    issuedByPhone: '+40 (373) 7600 14',
+    issuedByEmail: 'irina.leu@cargomind.com',
+    co2EmissionsKg: 11301,
+    originCity: 'Bucharest',
+    destinationCity: 'Karachi',
+    placeOfAcceptance: '',
+    notIncluded: ['waiting times during loading/unloading', 'Storage charges caused by delays beyond our reasonable control'],
+    termsText:
+      'All business undertaken is subject to the General conditions of transport and services governing the activity of freight forwarding companies (Uniunea Societăților de Expediții din România, USER) ' +
+      'International conventions limit the liability subject to the transport mode (air, sea, road, rail). These limits can be raised by explicit request against payment of a valuation charge. ' +
+      'As a preferable solution, we offer transport insurance for an attractive premium. Goods must be properly packed to withstand cargo handling and stacking, unless quoted otherwise. ' +
+      'This quotation is non-binding until final booking confirmation.',
+  };
+  demo.serviceChargesOrigin = [];
+  demo.serviceChargesDestination = [];
+  demo.status = { final: false };
+  return recomputeQuotationTotals(demo);
+}
+
+/**
+ * Restores the Cargomind sample quotation (BUH-Q26000854) on demand — call this any time the user wants that
+ * exact dataset back, whether it was deleted, edited away, or never existed in this browser. Replaces any
+ * existing record with that quotation number so re-running it is always safe (no duplicates).
+ */
+export function restoreCargomindSampleQuotation(): SeaImportQuotation {
+  const sample = buildCargomindSampleQuotation();
+  const others = seaImportQuotationRepo.list().filter((q) => q.quotationNo !== CARGOMIND_SAMPLE_QUOTATION_NO);
+  seaImportQuotationRepo.replaceAll([...others, sample]);
+  return sample;
+}
+
+/** One-time migration: replaces all quotations with the single Cargomind (Romania) vendor rate quote BUH-Q26000854. */
 export function ensureSeaImportQuotationDemo(): void {
-  if (seaImportQuotationRepo.list().length) return;
-
-  const demo1 = createEmptySeaImportQuotation('KHI');
-  demo1.quotationNo = 'KHI-SIQ-101';
-  demo1.transportMode = 'SEA';
-  demo1.date = '2026-09-14';
-  demo1.validity = '30 Days';
-  demo1.localIntl = "Int'l";
-  demo1.partyCode = 'P-1003';
-  demo1.name = 'Sindh Rice Exporters';
-  demo1.address = 'Korangi, Karachi';
-  demo1.origin = 'AEJEA';
-  demo1.destination = 'PKKHI';
-  demo1.commodity = 'Rice';
-  demo1.noOfPkgs = 120;
-  demo1.uom = 'PCS';
-  demo1.grossWeight = 18000;
-  demo1.chWeight = 18000;
-  demo1.cbm = 28.5;
-  demo1.currencies = [{ currencyCode: 'USD', exRate: 278.5 }, { currencyCode: '', exRate: 0 }, { currencyCode: '', exRate: 0 }];
-  demo1.jobInfo = [{ jobNo: 'KHI-SI-101', date: '2026-09-15', type: 'FCL' }];
-  demo1.serviceChargesOrigin = [{ id: uuid(), description: 'Ocean Freight', buyingCurr: 'USD', buyingAmount: 900, sellingCurr: 'USD', sellingAmount: 1100 }];
-  demo1.serviceChargesDestination = [{ id: uuid(), description: 'Terminal Handling', buyingCurr: 'PKR', buyingAmount: 25000, sellingCurr: 'PKR', sellingAmount: 32000 }];
-  demo1.grandTotalBuying = 275650;
-  demo1.grandTotalSelling = 338350;
-  demo1.difference = 62700;
-  demo1.status = { final: true };
-  seaImportQuotationRepo.save(demo1);
-
-  const demo2 = createEmptySeaImportQuotation('KHI');
-  demo2.quotationNo = 'KHI-SIQ-102';
-  demo2.transportMode = 'SEA';
-  demo2.date = '2026-09-16';
-  demo2.validity = '15 Days';
-  demo2.localIntl = 'Local';
-  demo2.partyCode = 'P-1001';
-  demo2.name = 'Al Baraka Textiles Ltd';
-  demo2.address = 'Site Area, Karachi';
-  demo2.origin = 'CNSHA';
-  demo2.destination = 'PKKHI';
-  demo2.commodity = 'Textiles';
-  demo2.noOfPkgs = 60;
-  demo2.uom = 'PCS';
-  demo2.grossWeight = 9200;
-  demo2.chWeight = 9200;
-  demo2.cbm = 14.2;
-  demo2.currencies = [{ currencyCode: 'USD', exRate: 278.5 }, { currencyCode: '', exRate: 0 }, { currencyCode: '', exRate: 0 }];
-  demo2.jobInfo = [];
-  demo2.serviceChargesOrigin = [{ id: uuid(), description: 'Ocean Freight', buyingCurr: 'USD', buyingAmount: 400, sellingCurr: 'USD', sellingAmount: 520 }];
-  demo2.serviceChargesDestination = [];
-  demo2.grandTotalBuying = 111400;
-  demo2.grandTotalSelling = 144820;
-  demo2.difference = 33420;
-  demo2.status = { final: false };
-  seaImportQuotationRepo.save(demo2);
+  backfillMissingFields();
+  if (isSeeded('seaImportQuotationsCargomindResetV2')) return;
+  markSeeded('seaImportQuotationsCargomindResetV2');
+  seaImportQuotationRepo.replaceAll([buildCargomindSampleQuotation()]);
 }
 
 export interface SeaImportQuotationFilter {

@@ -162,6 +162,7 @@ export const financeInitialSetupMenu: NavGroup = {
   items: [
     { label: 'Group Codes', path: '/finance/initial-setup/group-codes' },
     { label: 'Control Codes', path: '/finance/initial-setup/control-codes' },
+    { label: 'Chart of Accounts', path: '/finance/initial-setup/chart-of-accounts' },
   ],
 };
 

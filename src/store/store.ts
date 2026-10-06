@@ -3,6 +3,7 @@ import seaExportJobReducer from "./seaExportJobSlice";
 import journalVoucherReducer from "./journalVoucherSlice";
 import bankReceiptReducer from "./bankReceiptSlice";
 import postDatedChequesReducer from "./postDatedChequesSlice";
+import bankPaymentReducer from "./bankPaymentSlice";
 
 export const createAppStore = () =>
   configureStore({
@@ -11,6 +12,7 @@ export const createAppStore = () =>
       journalVoucher: journalVoucherReducer,
       bankReceipt: bankReceiptReducer,
       postDatedCheques: postDatedChequesReducer,
+      bankPayment: bankPaymentReducer,
     },
   });
 

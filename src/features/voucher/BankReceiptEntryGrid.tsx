@@ -80,7 +80,7 @@ export function BankReceiptEntryGrid({
       const changed = next.find((line) => line.id === id);
       if (patch.accountCode && changed) {
         if (
-          changed.dc === "DEBIT" &&
+          (changed.dc === "DEBIT" || current.kind === "PAYMENT") &&
           banks.some((bank) => bank.code === patch.accountCode)
         )
           updated.bankCode = patch.accountCode;
@@ -191,7 +191,7 @@ export function BankReceiptEntryGrid({
                       aria-label={`Delete row ${index + 1}`}
                       size="small"
                       color="error"
-                      disabled={!editable}
+                      disabled={!editable || !line.accountCode}
                       onClick={() =>
                         confirmDelete(() =>
                           onChange((current) =>
@@ -376,7 +376,7 @@ export function BankReceiptEntryGrid({
                       fullWidth
                       required
                       value={line.amount}
-                      disabled={!editable}
+                      disabled={!editable || !line.accountCode}
                       error={
                         !!line.amount &&
                         (!Number.isFinite(Number(line.amount)) ||

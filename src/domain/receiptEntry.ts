@@ -15,6 +15,22 @@ export function receiptLineComplete(line: ReceiptEntryLine): boolean {
 
 export function getReceiptEntryLines(voucher: Voucher): ReceiptEntryLine[] {
   if (voucher.receiptEntryLines) return voucher.receiptEntryLines;
+  if (voucher.accountLines.length) {
+    return voucher.accountLines.map((line) => ({
+      id: line.id,
+      counterpartId: line.counterpartId,
+      dc: line.debitCredit === "D" ? "DEBIT" : "CREDIT",
+      accountCode: line.accountCode,
+      accountDescription: "",
+      particulars: line.particulars,
+      analysisCode: line.analysis,
+      billNo: line.billNo,
+      billDate: line.billDate,
+      currencyCode: line.currencyCode,
+      exchangeRate: String(line.exchangeRate),
+      amount: String(line.amount),
+    }));
+  }
   return voucher.journalLines.map((line) => ({
     id: line.id,
     dc: line.debit > 0 ? "DEBIT" : "CREDIT",
@@ -85,7 +101,7 @@ export function addOppositeReceiptLine(
     id: newId,
     counterpartId: sourceId,
     dc: opposite,
-    accountCode: "",
+    accountCode: voucher.kind === "PAYMENT" ? voucher.bankCode : "",
     accountDescription: "",
   };
   const next = [...lines];
