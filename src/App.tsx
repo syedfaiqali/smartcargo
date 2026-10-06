@@ -46,6 +46,7 @@ import { JournalVoucherPage } from './features/voucher/JournalVoucherPage';
 import { PostDatedChequesPage } from './features/postDatedCheques/PostDatedChequesPage';
 import { AgingReportPage } from './features/financeReports/AgingReportPage';
 import { BankCashLedgerPage } from './features/financeReports/BankCashLedgerPage';
+import { AccountsLedgerPage } from './features/financeReports/AccountsLedgerPage';
 import { JobProfitabilityPage } from './features/financeReports/JobProfitabilityPage';
 import { BankReconciliationPage } from './features/financeReports/BankReconciliationPage';
 import { GroupCodesPage } from './features/financeSetup/GroupCodesPage';
@@ -101,6 +102,7 @@ function App() {
             <Route path="/finance/reports/ar-aging" element={<AgingReportPage kind="AR" />} />
             <Route path="/finance/reports/ap-aging" element={<AgingReportPage kind="AP" />} />
             <Route path="/finance/reports/bank-cash-ledger" element={<BankCashLedgerPage />} />
+            <Route path="/finance/reports/accounts-ledger" element={<AccountsLedgerPage />} />
             <Route path="/finance/reports/job-profitability" element={<JobProfitabilityPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/freight/initial-setup/airline-codes" element={<AirlineCodesPage />} />

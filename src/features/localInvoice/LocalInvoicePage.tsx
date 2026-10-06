@@ -9,6 +9,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { LocalInvoice } from '../../domain/localInvoice';
@@ -169,6 +170,20 @@ export function LocalInvoicePage() {
     setMessage({ severity: 'success', text: `Invoice ${saved.invoiceNo} saved.` });
   };
 
+  const handleUnfinal = () => {
+    if (!invoice) return;
+    if (!invoice.status.final || invoice.status.posted || invoice.status.void) {
+      setMessage({ severity: 'warning', text: 'Only finalized, unposted, non-void invoices can be un-finalized.' });
+      return;
+    }
+    const previous = localInvoiceRepo.get(invoice.id);
+    const saved = localInvoiceRepo.save({ ...invoice, status: { ...invoice.status, final: false } });
+    syncLocalInvoiceLinks(saved, previous);
+    setInvoice(saved);
+    setEditable(true);
+    setMessage({ severity: 'success', text: `Invoice ${saved.invoiceNo} un-finalized and reopened for editing.` });
+  };
+
   const disabledActions: ToolbarAction[] = [];
   if (!invoice) disabledActions.push('edit', 'delete', 'final', 'void');
   if (invoice?.status.final) disabledActions.push('edit', 'delete', 'final');
@@ -202,6 +217,17 @@ export function LocalInvoicePage() {
             >
               Void
             </Button>
+            {invoice?.status.final && (
+              <Button
+                variant="outlined"
+                startIcon={<LockOpenOutlinedIcon fontSize="small" />}
+                disabled={!!invoice.status.posted || invoice.status.void}
+                onClick={handleUnfinal}
+                sx={{ fontFamily: navyTrustFontFamily }}
+              >
+                Unfinal
+              </Button>
+            )}
             <Button
               variant="contained"
               startIcon={<DescriptionOutlinedIcon fontSize="small" />}

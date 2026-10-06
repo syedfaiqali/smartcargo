@@ -101,7 +101,8 @@ export function addOppositeReceiptLine(
     id: newId,
     counterpartId: sourceId,
     dc: opposite,
-    accountCode: voucher.kind === "PAYMENT" ? voucher.bankCode : "",
+    accountCode:
+      voucher.kind === "PAYMENT" ? voucher.bankCode : voucher.partyCode,
     accountDescription: "",
   };
   const next = [...lines];

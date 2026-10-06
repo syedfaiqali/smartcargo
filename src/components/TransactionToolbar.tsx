@@ -10,6 +10,7 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import BlockIcon from '@mui/icons-material/Block';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
@@ -29,6 +30,7 @@ export type ToolbarAction =
   | 'edit'
   | 'delete'
   | 'final'
+  | 'unfinal'
   | 'void'
   | 'copy'
   | 'check'
@@ -53,6 +55,7 @@ const ALL_BUTTONS: ToolbarButtonDef[] = [
   { action: 'edit', label: 'Edit', icon: <EditIcon fontSize="small" /> },
   { action: 'delete', label: 'Delete', icon: <DeleteIcon fontSize="small" />, color: 'error' },
   { action: 'final', label: 'Final', icon: <LockIcon fontSize="small" /> },
+  { action: 'unfinal', label: 'Unfinal', icon: <LockOpenIcon fontSize="small" /> },
   { action: 'check', label: 'Check', icon: <TaskAltIcon fontSize="small" /> },
   { action: 'close', label: 'Close', icon: <TaskAltIcon fontSize="small" /> },
   { action: 'void', label: 'Void', icon: <BlockIcon fontSize="small" /> },
@@ -86,6 +89,7 @@ const ACTION_COLORS: Partial<Record<ToolbarAction, { color: string; borderColor:
   new: { color: '#1d4ed8', borderColor: '#93c5fd', hover: '#eff6ff' },
   save: { color: '#15803d', borderColor: '#86efac', hover: '#f0fdf4' },
   final: { color: '#b45309', borderColor: '#fcd34d', hover: '#fffbeb' },
+  unfinal: { color: '#0f766e', borderColor: '#99f6e4', hover: '#f0fdfa' },
   void: { color: '#b91c1c', borderColor: '#fca5a5', hover: '#fef2f2' },
   copy: { color: '#6d28d9', borderColor: '#c4b5fd', hover: '#f5f3ff' },
 };

@@ -36,6 +36,7 @@ import { BankReceiptEntryGrid } from "./BankReceiptEntryGrid";
 import {
   getReceiptEntryLines,
   receiptLineComplete,
+  withReceiptEntryLines,
 } from "../../domain/receiptEntry";
 import { Voucher, VoucherKind } from "../../domain/voucher";
 import { createEmptyVoucher } from "../../domain/voucherFactory";
@@ -299,6 +300,16 @@ export function VoucherWorkflowPage({
       } catch (error) {
         setMessage({ severity: "error", text: (error as Error).message });
       }
+    } else if (a === "unfinal" && voucher && voucher.final && !voucher.posted) {
+      const reopened = unfinalizeVoucher(voucher.id);
+      if (reopened) {
+        open(reopened, true);
+        refresh();
+        setMessage({
+          severity: "success",
+          text: `Voucher ${reopened.voucherNo} un-finalized and reopened for editing.`,
+        });
+      }
     } else if (a === "copy" && voucher) {
       const draft = {
         ...voucher,
@@ -371,10 +382,11 @@ export function VoucherWorkflowPage({
   const disabled: ToolbarAction[] = [];
   const Details = kind === "JOURNAL" ? JournalDetails : ReceiptDetails;
   if (!voucher)
-    disabled.push("edit", "delete", "save", "final", "void", "copy");
+    disabled.push("edit", "delete", "save", "final", "unfinal", "void", "copy");
   if (!editable || voucher?.final || voucher?.void) disabled.push("save");
   if (voucher?.final || voucher?.void)
     disabled.push("edit", "delete", "final", "void");
+  if (voucher?.posted || voucher?.void || !voucher?.final) disabled.push("unfinal");
 
   return (
     <PageShell
@@ -445,6 +457,9 @@ export function VoucherWorkflowPage({
                   "edit",
                   "delete",
                   "final",
+                  ...(kind === "RECEIPT" && title.startsWith("BRV") && voucher.final
+                    ? ["unfinal" as ToolbarAction]
+                    : []),
                   ...(kind === "JOURNAL" ? ["check" as ToolbarAction] : []),
                   "void",
                   "copy",
@@ -545,12 +560,28 @@ export function VoucherWorkflowPage({
                   const party = parties.find(
                     (item) => item.code === event.target.value,
                   );
-                  setVoucher({
+                  const nextVoucher = {
                     ...voucher,
                     partyCode: event.target.value,
                     partyName: party?.name ?? "",
                     clearingLines: [],
-                  });
+                  };
+                  // BRV amount blur creates the customer-side credit row. Once
+                  // a party is chosen, complete any still-blank credit side.
+                  setVoucher(
+                    withReceiptEntryLines(
+                      nextVoucher,
+                      getReceiptEntryLines(nextVoucher).map((line) =>
+                        line.dc === "CREDIT" && !line.accountCode
+                          ? {
+                              ...line,
+                              accountCode: event.target.value,
+                              accountDescription: party?.name ?? "",
+                            }
+                          : line,
+                      ),
+                    ),
+                  );
                 }}
               >
                 <MenuItem value="">Select Party</MenuItem>

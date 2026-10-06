@@ -186,6 +186,7 @@ export const financeReportsMenu: NavGroup = {
     { label: 'AR Aging', path: '/finance/reports/ar-aging' },
     { label: 'AP Aging', path: '/finance/reports/ap-aging' },
     { label: 'Bank/Cash Ledger', path: '/finance/reports/bank-cash-ledger' },
+    { label: 'Accounts Ledger', path: '/finance/reports/accounts-ledger' },
     { label: 'Job Profitability', path: '/finance/reports/job-profitability' },
   ],
 };

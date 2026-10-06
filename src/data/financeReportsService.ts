@@ -110,6 +110,75 @@ export interface LedgerEntry {
   amount: number;
 }
 
+export interface AccountsLedgerEntry {
+  date: string;
+  type: 'LOCAL INV' | 'BRV';
+  no: string;
+  branch: string;
+  particulars: string;
+  jobNo: string;
+  debit: number;
+  credit: number;
+  balance: number;
+  dc: 'Dr' | 'Cr';
+}
+
+/**
+ * Accounts Ledger postings: finalized Local Invoices are debits, while
+ * finalized Bank Receipt Vouchers (receipt vouchers) are credits.
+ */
+export function getAccountsLedger(filter: { branch?: string; fromDate?: string; toDate?: string; associateCode?: string } = {}): AccountsLedgerEntry[] {
+  const inScope = (date: string, branch: string, partyCode: string) =>
+    (!filter.branch || branch === filter.branch) &&
+    (!filter.associateCode || partyCode === filter.associateCode);
+
+  const entries: Omit<AccountsLedgerEntry, 'balance' | 'dc'>[] = [
+    ...localInvoiceRepo
+      .find((invoice) => invoice.status.final && !invoice.status.void && inScope(invoice.invoiceDate, invoice.branch, invoice.partyCode))
+      .map((invoice) => ({
+        date: invoice.invoiceDate,
+        type: 'LOCAL INV' as const,
+        no: invoice.invoiceNo,
+        branch: invoice.branch,
+        particulars: `Local Invoice ${invoice.invoiceNo} — ${invoice.partyName}`,
+        jobNo: invoice.master.jobNo || invoice.house.jobNo,
+        debit: invoice.invoiceTotal,
+        credit: 0,
+      })),
+    ...voucherRepo
+      .find((voucher) => voucher.final && !voucher.void && voucher.kind === 'RECEIPT' && inScope(voucher.voucherDate, voucher.branch, voucher.partyCode))
+      .map((voucher) => ({
+        date: voucher.voucherDate,
+        type: 'BRV' as const,
+        no: voucher.voucherNo,
+        branch: voucher.branch,
+        particulars: voucher.remarks || voucher.receivedFrom || voucher.partyName || `Bank Receipt Voucher ${voucher.voucherNo}`,
+        jobNo: voucher.clearingLines[0]?.jobNo || '',
+        debit: 0,
+        credit: voucher.amount,
+      })),
+  ].sort((left, right) => left.date.localeCompare(right.date) || left.type.localeCompare(right.type) || left.no.localeCompare(right.no));
+
+  let runningBalance = 0;
+  return entries.map((entry) => {
+    runningBalance += entry.debit - entry.credit;
+    return { ...entry, balance: runningBalance, dc: runningBalance >= 0 ? 'Dr' : 'Cr' };
+  }).filter((entry) =>
+    (!filter.fromDate || entry.date >= filter.fromDate) &&
+    (!filter.toDate || entry.date <= filter.toDate),
+  );
+}
+
+/** Balance brought forward from finalized postings before the report start date. */
+export function getAccountsLedgerOpeningBalance(filter: { branch?: string; fromDate?: string; associateCode?: string } = {}): number {
+  if (!filter.fromDate) return 0;
+  const priorEntries = getAccountsLedger({
+    branch: filter.branch,
+    associateCode: filter.associateCode,
+  }).filter((entry) => entry.date < filter.fromDate!);
+  return priorEntries.at(-1)?.balance ?? 0;
+}
+
 /** Bank/Cash Ledger — every finalized Receipt (inflow) and Payment (outflow) voucher. */
 export function getBankCashLedger(): LedgerEntry[] {
   return voucherRepo
