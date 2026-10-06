@@ -1,70 +1,202 @@
-import { confirmDelete } from '../../components/deleteConfirmation';
-import { useState } from "react";
-import {
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  TextField,
-  IconButton,
-  Checkbox,
-} from "@mui/material";
+import { Button, Chip } from "@mui/material";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
+import {
+  SchemaTable,
+  SchemaTableColumn,
+  SchemaTableAction,
+} from "../../components/SchemaTable";
 import { Voucher } from "../../domain/voucher";
-import { DateField } from "../../components/DateField";
+import { getReceiptEntryLines } from "../../domain/receiptEntry";
 
-const columns = [
-  "Voucher No.",
-  "Branch",
-  "Voucher Date",
-  "Account",
-  "Received From",
-  "Analysis Code",
-  "Cheque No.",
-  "Cheque Date",
-  "Cheque Status",
-  "Currency",
-  "Ex. Rate",
-  "FC Amount",
-  "PKR Amount",
-  "Invoice Amount",
-  "Cost Amount",
-  "Final",
-  "Posted",
-  "Void",
-  "Check",
+const chequeStatuses: Record<string, string> = {
+  UNCLEARED: "Un Cleared",
+  CLEARED: "Cleared",
+  RETURNED: "Returned",
+  CANCELLED: "Cancelled",
+  BOUNCED: "Bounced",
+};
+const status = (
+  label: string,
+  color: "success" | "error" | "primary" | "default" = "default",
+) => (
+  <Chip
+    size="small"
+    label={label}
+    color={color}
+    variant="outlined"
+    sx={{ height: 24, fontSize: 11, fontWeight: 600, borderRadius: 1.5 }}
+  />
+);
+const analysis = (voucher: Voucher) =>
+  [
+    ...new Set(
+      [
+        voucher.analysisCode,
+        ...(voucher.receiptEntryLines || []).map((line) => line.analysisCode),
+      ].filter(Boolean),
+    ),
+  ].join(", ");
+const chequeStatus = (voucher: Voucher) =>
+  chequeStatuses[voucher.chequeStatus || "UNCLEARED"] ||
+  voucher.chequeStatus ||
+  "Un Cleared";
+const columns: SchemaTableColumn<Voucher>[] = [
+  {
+    key: "voucherNo",
+    label: "Voucher No.",
+    value: (v) => v.voucherNo,
+    width: 150,
+  },
+  {
+    key: "branch",
+    label: "Branch",
+    value: (v) => v.branch,
+    width: 110,
+    render: (v) => status(v.branch, "primary"),
+  },
+  {
+    key: "voucherDate",
+    label: "Voucher Date",
+    type: "date",
+    value: (v) => v.voucherDate,
+    width: 160,
+  },
+  {
+    key: "account",
+    label: "Account",
+    value: (v) => v.accountCode || v.bankCode,
+    width: 145,
+  },
+  {
+    key: "receivedFrom",
+    label: "Received From",
+    value: (v) => v.receivedFrom || v.partyName,
+    width: 220,
+  },
+  { key: "analysis", label: "Analysis Code", value: analysis, width: 155 },
+  {
+    key: "chequeNo",
+    label: "Cheque No.",
+    value: (v) => v.chequeNo,
+    width: 150,
+  },
+  {
+    key: "chequeDate",
+    label: "Cheque Date",
+    type: "date",
+    value: (v) => v.chequeDate,
+    width: 160,
+  },
+  {
+    key: "chequeStatus",
+    label: "Cheque Status",
+    value: chequeStatus,
+    width: 165,
+    filterOptions: Object.values(chequeStatuses).map((label) => ({
+      value: label,
+      label,
+    })),
+    render: (v) =>
+      status(
+        chequeStatus(v),
+        v.chequeStatus === "CLEARED"
+          ? "success"
+          : ["BOUNCED", "RETURNED", "CANCELLED"].includes(v.chequeStatus || "")
+            ? "error"
+            : "default",
+      ),
+  },
+  {
+    key: "currency",
+    label: "Currency",
+    value: (v) => v.currencyCode,
+    width: 120,
+  },
+  {
+    key: "exchangeRate",
+    label: "Ex. Rate",
+    type: "number",
+    value: (v) => v.exchangeRate,
+    width: 130,
+    render: (v) =>
+      v.exchangeRate.toLocaleString("en-US", {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 8,
+      }),
+  },
+  {
+    key: "fcAmount",
+    label: "FC Amount",
+    type: "number",
+    value: (v) => v.amount,
+    width: 145,
+  },
+  {
+    key: "pkrAmount",
+    label: "PKR Amount",
+    type: "number",
+    value: (v) => v.amount * v.exchangeRate,
+    width: 145,
+  },
+  {
+    key: "invoiceAmount",
+    label: "Invoice Amount",
+    type: "number",
+    value: (v) =>
+      v.clearingLines.reduce((sum, line) => sum + line.amountCleared, 0),
+    width: 155,
+  },
+  {
+    key: "costAmount",
+    label: "Cost Amount",
+    type: "number",
+    value: (v) =>
+      (v.costLines || []).reduce((sum, line) => sum + line.amount, 0),
+    width: 145,
+  },
+  {
+    key: "final",
+    label: "Final",
+    type: "boolean",
+    value: (v) => v.final,
+    width: 115,
+    searchValue: (v) => (v.final ? "Final" : "Draft"),
+    render: (v) =>
+      status(v.final ? "Final" : "Draft", v.final ? "success" : "default"),
+  },
+  {
+    key: "posted",
+    label: "Posted",
+    type: "boolean",
+    value: (v) => !!v.posted,
+    width: 120,
+    render: (v) =>
+      status(
+        v.posted ? "Posted" : "Unposted",
+        v.posted ? "success" : "default",
+      ),
+  },
+  {
+    key: "void",
+    label: "Void",
+    type: "boolean",
+    value: (v) => !!v.void,
+    width: 110,
+    render: (v) => status(v.void ? "Void" : "No", v.void ? "error" : "default"),
+  },
+  {
+    key: "checked",
+    label: "Check",
+    type: "boolean",
+    value: (v) => !!v.checked,
+    width: 115,
+    render: (v) =>
+      status(v.checked ? "Checked" : "No", v.checked ? "success" : "default"),
+  },
 ];
-function values(v: Voucher) {
-  return [
-    v.voucherNo,
-    v.branch,
-    v.voucherDate,
-    v.accountCode ?? v.bankCode,
-    v.receivedFrom ?? v.partyName,
-    [...new Set([v.analysisCode, ...(v.receiptEntryLines ?? []).map(line => line.analysisCode)].filter(Boolean))].join(', '),
-    v.chequeNo,
-    v.chequeDate,
-    ({ UNCLEARED: 'Un Cleared', CLEARED: 'Cleared', RETURNED: 'Returned', CANCELLED: 'Cancelled', BOUNCED: 'Bounced' })[v.chequeStatus ?? 'UNCLEARED'],
-    v.currencyCode,
-    v.exchangeRate,
-    v.amount.toFixed(2),
-    (v.amount * v.exchangeRate).toFixed(2),
-    v.clearingLines.reduce((s, l) => s + l.amountCleared, 0).toFixed(2),
-    (v.costLines ?? []).reduce((s, l) => s + l.amount, 0).toFixed(2),
-    v.final ? "Yes" : "No",
-    v.posted ? "Yes" : "No",
-    v.void ? "Yes" : "No",
-    v.checked ? "Yes" : "No",
-  ].map((value) => String(value ?? ""));
-}
 
 export function BankReceiptGrid({
   vouchers,
@@ -74,6 +206,7 @@ export function BankReceiptGrid({
   onPrint,
   selected,
   onSelect,
+  kind = "RECEIPT",
 }: {
   vouchers: Voucher[];
   onOpen: (v: Voucher) => void;
@@ -82,206 +215,147 @@ export function BankReceiptGrid({
   onPrint: (v: Voucher) => void;
   selected?: string[];
   onSelect?: (ids: string[]) => void;
+  kind?: "RECEIPT" | "JOURNAL";
 }) {
-  const [filters, setFilters] = useState<Record<number, string>>({});
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const filtered = vouchers.filter((v) => {
-    const row = values(v);
-    return (
-      row.join(" ").toLowerCase().includes(search.toLowerCase()) &&
-      row.every((value, index) =>
-        value.toLowerCase().includes((filters[index] ?? "").toLowerCase()),
-      )
-    );
-  });
-  const currentPage = Math.min(
-    page,
-    Math.max(0, Math.ceil(filtered.length / pageSize) - 1),
+  const actions: SchemaTableAction<Voucher>[] = [
+    {
+      key: "open",
+      label: "Open voucher",
+      icon: <VisibilityOutlinedIcon />,
+      onClick: onOpen,
+    },
+    {
+      key: "edit",
+      label: "Edit voucher",
+      icon: <EditOutlinedIcon />,
+      onClick: onEdit,
+      disabled: (v) => v.final || !!v.void,
+    },
+    {
+      key: "delete",
+      label: "Delete voucher",
+      icon: <DeleteOutlineIcon />,
+      onClick: onDelete,
+      disabled: (v) => v.final || !!v.void,
+      color: "error",
+      confirmDelete: (v) =>
+        "Are you sure you want to delete voucher " + v.voucherNo + "?",
+    },
+    {
+      key: "print",
+      label: "Print voucher",
+      icon: <PrintOutlinedIcon />,
+      onClick: onPrint,
+    },
+  ];
+  const journalColumns: SchemaTableColumn<Voucher>[] = [
+    ...columns.filter((column) =>
+      ["voucherNo", "branch", "voucherDate"].includes(column.key),
+    ),
+    {
+      key: "accountDescription",
+      label: "Account Description",
+      width: 220,
+      value: (v) =>
+        getReceiptEntryLines(v)
+          .map((line) => line.accountDescription || line.accountCode)
+          .join(", "),
+    },
+    {
+      key: "dc",
+      label: "D/C",
+      width: 140,
+      value: (v) =>
+        [
+          ...new Set(
+            getReceiptEntryLines(v).map((line) =>
+              line.dc === "DEBIT" ? "Debit" : "Credit",
+            ),
+          ),
+        ].join(" / "),
+    },
+    {
+      key: "particulars",
+      label: "Particulars",
+      width: 240,
+      value: (v) =>
+        [
+          ...new Set(
+            getReceiptEntryLines(v)
+              .map((line) => line.particulars)
+              .filter(Boolean),
+          ),
+        ].join("; "),
+    },
+    ...columns.filter((column) =>
+      [
+        "analysis",
+        "currency",
+        "exchangeRate",
+        "fcAmount",
+        "pkrAmount",
+        "invoiceAmount",
+        "costAmount",
+        "final",
+        "posted",
+        "void",
+        "checked",
+      ].includes(column.key),
+    ),
+  ];
+  const schema = (kind === "JOURNAL" ? journalColumns : columns).map(
+    (column) =>
+      column.key === "voucherNo"
+        ? {
+            ...column,
+            render: (voucher: Voucher) => (
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => onOpen(voucher)}
+                sx={{
+                  p: 0,
+                  minWidth: 0,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  whiteSpace: "nowrap",
+                  "&:hover": {
+                    bgcolor: "transparent",
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                {voucher.voucherNo}
+              </Button>
+            ),
+          }
+        : column,
   );
   return (
-    <Box>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1.5 }}>
-        <TextField
-          label="Search vouchers"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
-        />
-      </Box>
-      <TableContainer component={Paper} variant="outlined">
-        <Table
-          size="small"
-          sx={{
-            minWidth: 2300,
-            "& .MuiTableCell-root": {
-              borderRight: "1px solid",
-              borderColor: "divider",
-              whiteSpace: "nowrap",
-            },
-            "& .MuiTableHead-root": { bgcolor: "background.default" },
-          }}
-        >
-          <TableHead>
-            <TableRow>
-              {onSelect && (
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    size="small"
-                    aria-label="Select all filtered vouchers"
-                    checked={
-                      filtered.length > 0 &&
-                      filtered.every((v) => selected?.includes(v.id))
-                    }
-                    indeterminate={
-                      filtered.some((v) => selected?.includes(v.id)) &&
-                      !filtered.every((v) => selected?.includes(v.id))
-                    }
-                    onChange={(e) =>
-                      onSelect(
-                        e.target.checked
-                          ? Array.from(
-                              new Set([
-                                ...(selected ?? []),
-                                ...filtered.map((v) => v.id),
-                              ]),
-                            )
-                          : (selected ?? []).filter(
-                              (id) => !filtered.some((v) => v.id === id),
-                            ),
-                      )
-                    }
-                  />
-                </TableCell>
-              )}
-              <TableCell>Action</TableCell>
-              {columns.map((c) => (
-                <TableCell key={c} sx={{ fontWeight: 700 }}>
-                  {c}
-                </TableCell>
-              ))}
-            </TableRow>
-            <TableRow>
-              {onSelect && <TableCell />}
-              <TableCell />
-              {columns.map((c, i) => (
-                <TableCell key={c}>
-                  {c === "Voucher Date" || c === "Cheque Date" ? (
-                    <Box sx={{ minWidth: 165 }}>
-                      <DateField
-                        label={c}
-                        value={filters[i] ?? ""}
-                        onChange={(value) => {
-                          setFilters({ ...filters, [i]: value });
-                          setPage(0);
-                        }}
-                      />
-                    </Box>
-                  ) : (
-                    <TextField
-                      size="small"
-                      placeholder={c}
-                      inputProps={{ "aria-label": `Filter ${c}` }}
-                      value={filters[i] ?? ""}
-                      onChange={(e) => {
-                        setFilters({ ...filters, [i]: e.target.value });
-                        setPage(0);
-                      }}
-                      sx={{ minWidth: 100 }}
-                    />
-                  )}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filtered
-              .slice(currentPage * pageSize, (currentPage + 1) * pageSize)
-              .map((v) => (
-                <TableRow key={v.id} hover selected={selected?.includes(v.id)}>
-                  {onSelect && (
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        size="small"
-                        aria-label={`Select ${v.voucherNo}`}
-                        checked={selected?.includes(v.id) ?? false}
-                        onChange={(e) =>
-                          onSelect(
-                            e.target.checked
-                              ? [...(selected ?? []), v.id]
-                              : (selected ?? []).filter((id) => id !== v.id),
-                          )
-                        }
-                      />
-                    </TableCell>
-                  )}
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      aria-label="Open voucher"
-                      onClick={() => onOpen(v)}
-                    >
-                      <VisibilityOutlinedIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      aria-label="Edit voucher"
-                      disabled={v.final || v.void}
-                      onClick={() => onEdit(v)}
-                    >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      aria-label="Delete voucher"
-                      color="error"
-                      disabled={v.final || v.void}
-                      onClick={() => confirmDelete(() => onDelete(v))}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      aria-label="Print voucher"
-                      onClick={() => onPrint(v)}
-                    >
-                      <PrintOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                  {values(v).map((value, i) => (
-                    <TableCell key={i}>{value || "—"}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            {filtered.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length + (onSelect ? 2 : 1)}
-                  align="center"
-                  sx={{ py: 3 }}
-                >
-                  No bank receipt vouchers found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        component="div"
-        count={filtered.length}
-        page={currentPage}
-        rowsPerPage={pageSize}
-        onPageChange={(_, p) => setPage(p)}
-        onRowsPerPageChange={(e) => {
-          setPageSize(Number(e.target.value));
-          setPage(0);
-        }}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-      />
-    </Box>
+    <SchemaTable
+      title={kind === "JOURNAL" ? "Journal Vouchers" : "Bank Receipts"}
+      subtitle={
+        kind === "JOURNAL"
+          ? "View, manage and print your journal vouchers"
+          : "View, manage and print your receipt vouchers"
+      }
+      rows={vouchers}
+      columns={schema}
+      getRowId={(v) => v.id}
+      getRowLabel={(v) => v.voucherNo}
+      actions={actions}
+      onRowDoubleClick={(voucher) =>
+        voucher.final || voucher.void ? onOpen(voucher) : onEdit(voucher)
+      }
+      searchLabel="Search vouchers"
+      emptyMessage={
+        kind === "JOURNAL"
+          ? "No journal vouchers found."
+          : "No bank receipt vouchers found."
+      }
+      selected={selected}
+      onSelect={onSelect}
+      selectionLabel="vouchers"
+    />
   );
 }

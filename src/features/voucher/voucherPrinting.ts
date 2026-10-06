@@ -28,6 +28,7 @@ export interface VoucherPrintReport {
   metadata: WorkbookCell[][];
   tables: PrintTable[];
   layout: {
+    journal: boolean;
     type: VoucherPrintType;
     branch: string;
     voucherDate: string;
@@ -139,7 +140,14 @@ export function buildVoucherPrintReport(
       0,
     );
   const report: VoucherPrintReport = {
-    title: settings.type === "Voucher" ? "BANK PAYMENT VOUCHER" : settings.type === "Cheque" ? "Payee's Account Only" : `${settings.type.toUpperCase()} - ${voucher.branch}`,
+    title:
+      settings.type === "Voucher"
+        ? voucher.kind === "JOURNAL"
+          ? "JOURNAL VOUCHER"
+          : "BANK PAYMENT VOUCHER"
+        : settings.type === "Cheque"
+          ? "Payee's Account Only"
+          : `${settings.type.toUpperCase()} - ${voucher.branch}`,
     reference: voucher.voucherNo,
     metadata: [
       ["Voucher No.", voucher.voucherNo],
@@ -152,8 +160,15 @@ export function buildVoucherPrintReport(
     ],
     tables: [],
     layout: {
+      journal: voucher.kind === "JOURNAL",
       type: settings.type,
-      branch: ({ KHI: "Karachi", LHE: "Lahore", ISB: "Islamabad" } as Record<string, string>)[voucher.branch] || voucher.branch,
+      branch:
+        (
+          { KHI: "Karachi", LHE: "Lahore", ISB: "Islamabad" } as Record<
+            string,
+            string
+          >
+        )[voucher.branch] || voucher.branch,
       voucherDate: date(voucher.voucherDate),
       chequeNo: voucher.chequeNo || "",
       chequeDate: date(voucher.chequeDate || ""),
@@ -164,7 +179,14 @@ export function buildVoucherPrintReport(
       lines,
     },
   };
+  if (voucher.kind === "JOURNAL")
+    report.metadata = report.metadata.filter(
+      ([label]) =>
+        !["Received From", "Cheque No.", "Cheque Date"].includes(String(label)),
+    );
   if (settings.type === "Cheque") {
+    if (voucher.kind === "JOURNAL")
+      throw new Error("Cheque printing is not available for journal vouchers.");
     if (!settings.payTo.trim())
       throw new Error("Enter Pay To before printing a cheque.");
     if (
@@ -309,40 +331,108 @@ export function voucherReportSheets(
 ): WorkbookSheet[] {
   const layout = report.layout;
   if (layout.type === "Voucher") {
-    const entries: WorkbookCell[][] = layout.lines.map(line => [
-      line.accountCode, line.accountDescription, line.particulars,
-      line.dc === "DEBIT" ? Number(line.amount) * Number(line.exchangeRate) : "",
-      line.dc === "CREDIT" ? Number(line.amount) * Number(line.exchangeRate) : "",
+    const entries: WorkbookCell[][] = layout.lines.map((line) => [
+      line.accountCode,
+      line.accountDescription,
+      line.particulars,
+      line.dc === "DEBIT"
+        ? Number(line.amount) * Number(line.exchangeRate)
+        : "",
+      line.dc === "CREDIT"
+        ? Number(line.amount) * Number(line.exchangeRate)
+        : "",
     ]);
     const totals = report.tables[1].rows[0];
-    return [{
-      name: "Bank Payment Voucher",
-      rows: [["Masum Logistics"], [report.title], ["Branch", layout.branch, "Cheque No.", layout.chequeNo],
-        ["Voucher No.", report.reference, "Cheque Date", layout.chequeDate], ["Voucher Date", layout.voucherDate, "Pay To", layout.payTo], [],
-        ["Account Code", "Account Description", "Particulars", "Debit", "Credit"], ...entries,
-        ["PKR : " + amountInWords(Number(totals[0])).replace(" Rupees", ""), "", "", totals[0], totals[1]], [],
-        ["Prepared By", "Checked By", "Approved By", "Received By"]],
-      headerRows: [0, 1, 6, 7 + entries.length],
-    }];
+    return [
+      {
+        name: layout.journal ? "Journal Voucher" : "Bank Payment Voucher",
+        rows: [
+          ["Masum Logistics"],
+          [report.title],
+          [
+            "Branch",
+            layout.branch,
+            ...(layout.journal ? [] : ["Cheque No.", layout.chequeNo]),
+          ],
+          [
+            "Voucher No.",
+            report.reference,
+            ...(layout.journal ? [] : ["Cheque Date", layout.chequeDate]),
+          ],
+          [
+            "Voucher Date",
+            layout.voucherDate,
+            ...(layout.journal ? [] : ["Pay To", layout.payTo]),
+          ],
+          [],
+          [
+            "Account Code",
+            "Account Description",
+            "Particulars",
+            "Debit",
+            "Credit",
+          ],
+          ...entries,
+          [
+            "PKR : " + amountInWords(Number(totals[0])).replace(" Rupees", ""),
+            "",
+            "",
+            totals[0],
+            totals[1],
+          ],
+          [],
+          ["Prepared By", "Checked By", "Approved By", "Received By"],
+        ],
+        headerRows: [0, 1, 6, 7 + entries.length],
+      },
+    ];
   }
   if (layout.type.includes("Note")) {
     const groups = new Map<string, WorkbookCell[][]>();
-    report.tables[0].rows.forEach(row => {
+    report.tables[0].rows.forEach((row) => {
       const key = `${row[0]}|${row[5]}`;
       groups.set(key, [...(groups.get(key) || []), row]);
     });
     return [...groups.values()].map((group, i) => {
       const currency = String(group[0][5]);
       const total = group.reduce((sum, row) => sum + Number(row[6]), 0);
-      return { name: `${layout.type} ${i + 1}`, rows: [
-        ["Masum Logistics"], [report.title], [String(group[0][1]), "", `${layout.type} No.`, report.reference],
-        [layout.type === "Debit Note" ? layout.partyAddress : layout.bankDetail, "", "Date", layout.voucherDate],
-        ["", "", "Branch", layout.branch], [], ["Particulars", `Amount ${currency}`],
-        ...group.map(row => [String(row[2] || layout.remarks), Number(row[6])]),
-        ["Pay To", layout.payTo], ["Cheque No.", layout.chequeNo], ["Cheque Date", layout.chequeDate],
-        [currency + " : " + amountInWords(total).replace(" Rupees", ""), total], [],
-        ["Prepared By", "Checked By", "Manager Finance"],
-      ], headerRows: [0, 1, 6] };
+      return {
+        name: `${layout.type} ${i + 1}`,
+        rows: [
+          ["Masum Logistics"],
+          [report.title],
+          [String(group[0][1]), "", `${layout.type} No.`, report.reference],
+          [
+            layout.type === "Debit Note"
+              ? layout.partyAddress
+              : layout.bankDetail,
+            "",
+            "Date",
+            layout.voucherDate,
+          ],
+          ["", "", "Branch", layout.branch],
+          [],
+          ["Particulars", `Amount ${currency}`],
+          ...group.map((row) => [
+            String(row[2] || layout.remarks),
+            Number(row[6]),
+          ]),
+          ...(layout.journal
+            ? []
+            : [
+                ["Pay To", layout.payTo],
+                ["Cheque No.", layout.chequeNo],
+                ["Cheque Date", layout.chequeDate],
+              ]),
+          [
+            currency + " : " + amountInWords(total).replace(" Rupees", ""),
+            total,
+          ],
+          [],
+          ["Prepared By", "Checked By", "Manager Finance"],
+        ],
+        headerRows: [0, 1, 6],
+      };
     });
   }
   return [

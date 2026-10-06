@@ -124,7 +124,11 @@ export function BankReceiptEntryGrid({
   };
   return (
     <WorkflowSection
-      title="Account & Receipt Amount"
+      title={
+        voucher.kind === "JOURNAL"
+          ? "Journal Account Entries"
+          : "Account & Receipt Amount"
+      }
       subtitle="Add account entries. Complete Account Code and Amount before adding another row."
       open={open}
       onToggle={() => setOpen(!open)}

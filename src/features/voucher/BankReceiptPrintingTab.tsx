@@ -56,19 +56,35 @@ export function BankReceiptPrintingTab({ voucher }: { voucher: Voucher }) {
   const [preview, setPreview] = useState<VoucherPrintReport | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [busy, setBusy] = useState(false);
-  const pdf = async (result: VoucherPrintReport) => createVoucherPdf(result,
-    result.layout.type.includes("Note") ? await loadVoucherReportHeader() : undefined);
+  const pdf = async (result: VoucherPrintReport) =>
+    createVoucherPdf(
+      result,
+      result.layout.type.includes("Note")
+        ? await loadVoucherReportHeader()
+        : undefined,
+    );
   useEffect(() => {
-    if (!preview) { setPreviewUrl(""); return; }
+    if (!preview) {
+      setPreviewUrl("");
+      return;
+    }
     let active = true;
     let url = "";
     setPreviewUrl("");
-    pdf(preview).then(document => {
-      if (!active) return;
-      url = URL.createObjectURL(document.output("blob"));
-      setPreviewUrl(url);
-    }).catch(() => { if (active) setError("The report preview could not be loaded. Please try again."); });
-    return () => { active = false; if (url) URL.revokeObjectURL(url); };
+    pdf(preview)
+      .then((document) => {
+        if (!active) return;
+        url = URL.createObjectURL(document.output("blob"));
+        setPreviewUrl(url);
+      })
+      .catch(() => {
+        if (active)
+          setError("The report preview could not be loaded. Please try again.");
+      });
+    return () => {
+      active = false;
+      if (url) URL.revokeObjectURL(url);
+    };
   }, [preview]);
   const change = <K extends keyof VoucherPrintSettings>(
     key: K,
@@ -81,8 +97,12 @@ export function BankReceiptPrintingTab({ voucher }: { voucher: Voucher }) {
   const report = () => {
     try {
       const result = buildVoucherPrintReport(voucher, settings, {
-        partyAddress: partyRepo.list().find(party => party.code === voucher.partyCode)?.address,
-        bankDetail: bankRepo.list().find(bank => bank.code === voucher.bankCode)?.accountDetail,
+        partyAddress: partyRepo
+          .list()
+          .find((party) => party.code === voucher.partyCode)?.address,
+        bankDetail: bankRepo
+          .list()
+          .find((bank) => bank.code === voucher.bankCode)?.accountDetail,
       });
       setError("");
       return result;
@@ -127,7 +147,12 @@ export function BankReceiptPrintingTab({ voucher }: { voucher: Voucher }) {
     // Open synchronously during the click so loading the letterhead cannot
     // cause the browser to reject the later print window as an unsolicited popup.
     const tab = window.open("", "_blank");
-    if (!tab) { setError("Allow popups to open the print document, or download the PDF and print it."); return; }
+    if (!tab) {
+      setError(
+        "Allow popups to open the print document, or download the PDF and print it.",
+      );
+      return;
+    }
     tab.opener = null;
     setBusy(true);
     try {
@@ -174,7 +199,12 @@ export function BankReceiptPrintingTab({ voucher }: { voucher: Voucher }) {
       >
         Export Excel
       </Button>
-      <Button disabled={busy} variant="outlined" startIcon={<PrintIcon />} onClick={print}>
+      <Button
+        disabled={busy}
+        variant="outlined"
+        startIcon={<PrintIcon />}
+        onClick={print}
+      >
         Print
       </Button>
     </Stack>
@@ -212,31 +242,61 @@ export function BankReceiptPrintingTab({ voucher }: { voucher: Voucher }) {
           <FormControl fullWidth sx={{ mb: 3 }}>
             <FormLabel>Print</FormLabel>
             <RadioGroup
-              sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: 1.5, mt: 1 }}
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  lg:
+                    voucher.kind === "JOURNAL"
+                      ? "repeat(3, 1fr)"
+                      : "repeat(4, 1fr)",
+                },
+                gap: 1.5,
+                mt: 1,
+              }}
               value={settings.type}
               onChange={(event) =>
                 change("type", event.target.value as VoucherPrintType)
               }
             >
-              {["Voucher", "Debit Note", "Credit Note", "Cheque"].map(
-                (type) => (
-                  <FormControlLabel
-                    sx={{
-                      m: 0, p: 1.5, minHeight: 66, border: "1px solid", borderRadius: 2,
-                      borderColor: settings.type === type ? "primary.main" : "divider",
-                      bgcolor: settings.type === type ? "action.selected" : "background.paper",
-                      transition: "border-color 160ms, background-color 160ms",
-                      "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
-                      "&:focus-within": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
-                      "& .MuiFormControlLabel-label": { fontWeight: settings.type === type ? 700 : 500 },
-                    }}
-                    key={type}
-                    value={type}
-                    control={<Radio />}
-                    label={type}
-                  />
-                ),
-              )}
+              {(voucher.kind === "JOURNAL"
+                ? ["Voucher", "Debit Note", "Credit Note"]
+                : ["Voucher", "Debit Note", "Credit Note", "Cheque"]
+              ).map((type) => (
+                <FormControlLabel
+                  sx={{
+                    m: 0,
+                    p: 1.5,
+                    minHeight: 66,
+                    border: "1px solid",
+                    borderRadius: 2,
+                    borderColor:
+                      settings.type === type ? "primary.main" : "divider",
+                    bgcolor:
+                      settings.type === type
+                        ? "action.selected"
+                        : "background.paper",
+                    transition: "border-color 160ms, background-color 160ms",
+                    "&:hover": {
+                      borderColor: "primary.main",
+                      bgcolor: "action.hover",
+                    },
+                    "&:focus-within": {
+                      outline: "2px solid",
+                      outlineColor: "primary.main",
+                      outlineOffset: 2,
+                    },
+                    "& .MuiFormControlLabel-label": {
+                      fontWeight: settings.type === type ? 700 : 500,
+                    },
+                  }}
+                  key={type}
+                  value={type}
+                  control={<Radio />}
+                  label={type}
+                />
+              ))}
             </RadioGroup>
           </FormControl>
           {(settings.type === "Debit Note" ||
@@ -358,10 +418,32 @@ export function BankReceiptPrintingTab({ voucher }: { voucher: Voucher }) {
               {error}
             </Alert>
           )}
-          <Box sx={{ mt: 2, pt: 2.5, borderTop: "1px solid", borderColor: "divider", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+          <Box
+            sx={{
+              mt: 2,
+              pt: 2.5,
+              borderTop: "1px solid",
+              borderColor: "divider",
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
             <Box>
-              <Typography sx={{ fontWeight: 700, color: "primary.main" }}>{settings.type === "Voucher" ? "Bank Payment Voucher" : settings.type === "Cheque" ? "Payee's Account Only" : `${settings.type} - ${voucher.branch}`}</Typography>
-              <Typography variant="body2" color="text.secondary">Preview the report, then print or download.</Typography>
+              <Typography sx={{ fontWeight: 700, color: "primary.main" }}>
+                {settings.type === "Voucher"
+                  ? voucher.kind === "JOURNAL"
+                    ? "Journal Voucher"
+                    : "Bank Payment Voucher"
+                  : settings.type === "Cheque"
+                    ? "Payee's Account Only"
+                    : `${settings.type} - ${voucher.branch}`}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Preview the report, then print or download.
+              </Typography>
             </Box>
             {actions}
           </Box>
@@ -377,11 +459,29 @@ export function BankReceiptPrintingTab({ voucher }: { voucher: Voucher }) {
           {preview?.title} — {preview?.reference}
         </DialogTitle>
         <DialogContent dividers>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          {previewUrl ? <Box component="iframe" title="Report PDF preview" src={previewUrl} sx={{ width: "100%", height: "70vh", border: 0 }} /> : <Typography sx={{ mb: 2 }}>Loading report preview…</Typography>}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          {previewUrl ? (
+            <Box
+              component="iframe"
+              title="Report PDF preview"
+              src={previewUrl}
+              sx={{ width: "100%", height: "70vh", border: 0 }}
+            />
+          ) : (
+            <Typography sx={{ mb: 2 }}>Loading report preview…</Typography>
+          )}
           {preview && (
             <Box component="details" sx={{ mt: 2 }}>
-              <Box component="summary" sx={{ cursor: "pointer", fontWeight: 600 }}>Report data</Box>
+              <Box
+                component="summary"
+                sx={{ cursor: "pointer", fontWeight: 600 }}
+              >
+                Report data
+              </Box>
               <Typography variant="h6" sx={{ mb: 2 }}>
                 Masum Logistics
               </Typography>
