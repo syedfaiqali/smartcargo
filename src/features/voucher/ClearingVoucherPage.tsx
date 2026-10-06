@@ -133,6 +133,60 @@ export function ClearingVoucherPage({ kind, title: titleOverride }: ClearingVouc
     if (!voucher) return;
     setVoucher({ ...voucher, accountLines: accountLines.map((line) => line.id === id ? { ...line, ...patch } : line) });
   };
+  /**
+   * Completing an amount in BPV creates the bank-side posting required to
+   * balance the voucher.  Re-visiting the amount updates that same posting,
+   * rather than adding a duplicate row.
+   */
+  const balanceAccountLine = (id: string) => {
+    if (!voucher || kind !== 'PAYMENT') return;
+    setVoucher((current) => {
+      if (!current || current.id !== voucher.id) return current;
+      const lines = current.accountLines ?? [];
+      const sourceIndex = lines.findIndex((line) => line.id === id);
+      const source = lines[sourceIndex];
+      if (!source || source.isAutoBalanceLine || !Number.isFinite(source.amount) || source.amount <= 0 || !Number.isFinite(source.exchangeRate) || source.exchangeRate <= 0) return current;
+
+      const oppositeDebitCredit = source.debitCredit === 'D' ? 'C' : 'D';
+      const counterpartIndex = source.counterpartId
+        ? lines.findIndex((line) => line.id === source.counterpartId)
+        : -1;
+      if (counterpartIndex >= 0) {
+        const counterpart = lines[counterpartIndex];
+        const updated = [...lines];
+        updated[sourceIndex] = { ...source, counterpartId: counterpart.id };
+        updated[counterpartIndex] = {
+          ...counterpart,
+          debitCredit: oppositeDebitCredit,
+          currencyCode: source.currencyCode,
+          exchangeRate: source.exchangeRate,
+          amount: source.amount,
+          // A manually selected account should not be overwritten on later edits.
+          accountCode: counterpart.accountCode || current.bankCode,
+        };
+        return { ...current, accountLines: updated };
+      }
+
+      const counterpartId = uuid();
+      const counterpart: VoucherAccountLine = {
+        ...source,
+        id: counterpartId,
+        counterpartId: source.id,
+        isAutoBalanceLine: true,
+        action: 'AUTO_BALANCE',
+        debitCredit: oppositeDebitCredit,
+        accountCode: current.bankCode || '',
+        particulars: '',
+        analysis: '',
+        billNo: '',
+        billDate: '',
+      };
+      const updated = [...lines];
+      updated[sourceIndex] = { ...source, counterpartId };
+      updated.splice(sourceIndex + 1, 0, counterpart);
+      return { ...current, accountLines: updated };
+    });
+  };
   const removeAccountLine = (id: string) => {
     if (!voucher) return;
     setVoucher({ ...voucher, accountLines: accountLines.filter((line) => line.id !== id) });
@@ -362,7 +416,7 @@ export function ClearingVoucherPage({ kind, title: titleOverride }: ClearingVouc
                   <TableCell sx={{ minWidth: 160 }}><Stack spacing={0.5}><TextField size="small" fullWidth placeholder="Bill No." value={line.billNo ?? ''} disabled={!editable} onChange={(e) => updateAccountLine(line.id, { billNo: e.target.value })} /><TextField size="small" fullWidth type="date" InputLabelProps={{ shrink: true }} value={line.billDate ?? line.bill ?? ''} disabled={!editable} onChange={(e) => updateAccountLine(line.id, { billDate: e.target.value })} /></Stack></TableCell>
                   <TableCell sx={{ minWidth: 145 }}><TextField select size="small" fullWidth value={line.currencyCode} disabled={!editable} onChange={(e) => updateAccountLine(line.id, { currencyCode: e.target.value })}>{currencies.map((currency) => <MenuItem key={currency.code} value={currency.code}>{currency.code}</MenuItem>)}</TextField></TableCell>
                   <TableCell sx={{ minWidth: 130 }}><TextField size="small" type="number" inputProps={{ min: 0, step: '0.0001' }} fullWidth value={line.exchangeRate} disabled={!editable} onChange={(e) => updateAccountLine(line.id, { exchangeRate: Number(e.target.value) })} /></TableCell>
-                  <TableCell sx={{ minWidth: 175 }}><Stack spacing={0.5}><TextField size="small" type="number" inputProps={{ min: 0, step: '0.01' }} fullWidth value={line.amount} disabled={!editable} onChange={(e) => updateAccountLine(line.id, { amount: Number(e.target.value) })} /><TextField size="small" fullWidth value={(line.amount * line.exchangeRate).toFixed(2)} disabled inputProps={{ style: { textAlign: 'right', fontWeight: 700 } }} /></Stack></TableCell>
+                  <TableCell sx={{ minWidth: 175 }}><Stack spacing={0.5}><TextField size="small" type="number" inputProps={{ min: 0, step: '0.01' }} fullWidth value={line.amount} disabled={!editable || !line.accountCode} onChange={(e) => updateAccountLine(line.id, { amount: Number(e.target.value) })} onBlur={() => balanceAccountLine(line.id)} /><TextField size="small" fullWidth value={(line.amount * line.exchangeRate).toFixed(2)} disabled inputProps={{ style: { textAlign: 'right', fontWeight: 700 } }} /></Stack></TableCell>
                 </TableRow>)}</TableBody>
               </Table>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 1, py: 0.5, bgcolor: '#f4f4f5', borderTop: 1, borderColor: 'divider' }}><Typography variant="body2">Showing {accountLines.length ? `1 to ${accountLines.length}` : '0 to 0'} of {accountLines.length} entries</Typography><Button size="small" variant="contained" startIcon={<AddIcon />} disabled={!editable} onClick={addAccountLine}>Add</Button></Box>
