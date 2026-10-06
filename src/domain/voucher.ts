@@ -25,11 +25,45 @@ export interface JournalLine {
   credit: number;
 }
 
+/** Manual accounting detail entered on a payment/receipt voucher. */
+export interface VoucherAccountLine {
+  id: string;
+  action: string;
+  debitCredit: 'D' | 'C';
+  accountCode: string;
+  particulars: string;
+  analysis: string;
+  /** Supplier/customer bill reference entered on the voucher detail row. */
+  billNo: string;
+  /** Date of the referenced bill. */
+  billDate: IsoDate | '';
+  /** Allows vouchers saved before the Bill No./Bill Date split to continue loading. */
+  bill?: string;
+  currencyCode: string;
+  exchangeRate: number;
+  amount: number;
+}
+
 export interface Voucher extends AuditFields {
   kind: VoucherKind;
   branch: string;
   voucherNo: string;
   voucherDate: IsoDate;
+  entryDate?: IsoDate;
+  receivedFrom?: string;
+  chequeNo?: string;
+  chequeDate?: IsoDate;
+  chequeStatus?: 'UNCLEARED' | 'CLEARED' | 'RETURNED' | 'CANCELLED' | 'BOUNCED';
+  clearingDate?: IsoDate;
+  chequeType?: 'OPEN' | 'CROSSED' | 'PAYEE_ACCOUNT_ONLY' | 'BANK_TRANSFER' | 'ONLINE_TRANSFER' | 'CREDIT_CARD' | 'PO' | 'TT' | 'CASH' | 'PERSONAL_CHEQUE' | 'ONLINE_PERSONAL' | 'DIGITAL_WALLET' | 'ATM_TRANSFER' | 'RTGS' | 'IBFT';
+  attachment?: { name: string; dataUrl: string };
+  accountCode?: string;
+  analysisCode?: string;
+  posted?: boolean;
+  void?: boolean;
+  checked?: boolean;
+  costLines?: VoucherCostLine[];
+  receiptEntryLines?: ReceiptEntryLine[];
 
   // Receipt / Payment specific
   partyCode: string;
@@ -39,10 +73,51 @@ export interface Voucher extends AuditFields {
   currencyCode: string;
   exchangeRate: number;
   clearingLines: VoucherClearingLine[];
+  accountLines: VoucherAccountLine[];
+  entryDate: IsoDate;
+  chequeNo: string;
+  chequeDate: IsoDate | '';
+  chequeStatus: 'Un Cleared' | 'Cleared';
+  clearingDate: IsoDate | '';
+  chequeType: 'Open' | 'Crossed';
+  accountCode: string;
 
   // Journal specific
   journalLines: JournalLine[];
 
   remarks: string;
   final: boolean;
+}
+
+export interface ReceiptEntryLine {
+  id: string;
+  dc: 'DEBIT' | 'CREDIT';
+  accountCode: string;
+  accountDescription: string;
+  particulars: string;
+  analysisCode: string;
+  billNo: string;
+  billDate: IsoDate;
+  currencyCode: string;
+  exchangeRate: string;
+  amount: string;
+}
+
+export interface VoucherCostLine {
+  id: string;
+  accountCode: string;
+  description: string;
+  jobType: string;
+  jobYear: string;
+  station: string;
+  houseJobNo: string;
+  masterJobNo: string;
+  courierNo: string;
+  houseBlNo: string;
+  masterBlNo: string;
+  amount: number;
+  partyName: string;
+  invoiceNo: string;
+  invoiceYear: string;
+  invoiceAmount: number;
 }

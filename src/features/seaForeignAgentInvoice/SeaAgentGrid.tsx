@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useMemo, useState } from 'react';
 import Paper from '@mui/material/Paper';
 import { IconButton, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField } from '@mui/material';
@@ -86,7 +87,7 @@ export function SeaAgentGrid({ items, onOpen, onEdit, onDelete, onPrint }: Props
               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                 <IconButton size="small" aria-label="View invoice" onClick={() => onOpen(item)}><VisibilityOutlinedIcon fontSize="small" /></IconButton>
                 <IconButton size="small" aria-label="Edit invoice" onClick={() => onEdit(item)}><EditOutlinedIcon fontSize="small" /></IconButton>
-                <IconButton size="small" aria-label="Delete invoice" color="error" onClick={() => onDelete(item)}><DeleteOutlineIcon fontSize="small" /></IconButton>
+                <IconButton size="small" aria-label="Delete invoice" color="error" onClick={() => confirmDelete(() => onDelete(item))}><DeleteOutlineIcon fontSize="small" /></IconButton>
                 <IconButton size="small" aria-label="Print invoice" onClick={() => onPrint(item)}><PrintOutlinedIcon fontSize="small" /></IconButton>
               </TableCell>
               {values(item).map((value, index) => <TableCell key={`${item.id}-${columns[index]}`}>{value || '—'}</TableCell>)}

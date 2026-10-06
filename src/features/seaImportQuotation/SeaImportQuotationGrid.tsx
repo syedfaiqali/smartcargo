@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -137,7 +138,7 @@ export function SeaImportQuotationGrid({ quotations, onOpen, onEdit, onDelete, o
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                   <Tooltip title="Open"><IconButton size="small" color="primary" onClick={() => onOpen(q)}><VisibilityOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Edit"><span><IconButton size="small" color="primary" disabled={q.status.final} onClick={() => onEdit(q)}><EditOutlinedIcon fontSize="small" /></IconButton></span></Tooltip>
-                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={q.status.final} onClick={() => onDelete(q)}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
+                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={q.status.final} onClick={() => confirmDelete(() => onDelete(q))}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
                   <Tooltip title="Print"><IconButton size="small" color="primary" onClick={() => onPrint(q)}><PrintOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                 </TableCell>
                 <TableCell>{q.branch}</TableCell>

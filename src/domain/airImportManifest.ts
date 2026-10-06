@@ -34,6 +34,7 @@ export interface AirImportManifest extends AuditFields {
   chargeWeight: number;
 
   foreignAgent: string;
+  commodity: string;
   origin: string;
   destination: string;
 

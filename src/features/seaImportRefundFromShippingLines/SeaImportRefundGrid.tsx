@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -135,7 +136,7 @@ export function SeaImportRefundGrid({ refunds, onOpen, onEdit, onDelete, onPrint
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                   <Tooltip title="Open"><IconButton size="small" color="primary" onClick={() => onOpen(refund)}><VisibilityOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Edit"><span><IconButton size="small" color="primary" disabled={refund.status.final} onClick={() => onEdit(refund)}><EditOutlinedIcon fontSize="small" /></IconButton></span></Tooltip>
-                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={refund.status.final} onClick={() => onDelete(refund)}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
+                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={refund.status.final} onClick={() => confirmDelete(() => onDelete(refund))}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
                   <Tooltip title="Print"><IconButton size="small" color="primary" onClick={() => onPrint(refund)}><PrintOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                 </TableCell>
                 <TableCell>{refund.documentNo}</TableCell>

@@ -21,6 +21,7 @@ export function createEmptyAirImportManifest(branch = 'KHI'): AirImportManifest 
     grossWeight: 0,
     chargeWeight: 0,
     foreignAgent: '',
+    commodity: '',
     origin: '',
     destination: '',
     airlineDoNo: '',

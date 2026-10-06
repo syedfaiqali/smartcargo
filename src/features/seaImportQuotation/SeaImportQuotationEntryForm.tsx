@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -185,7 +186,7 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
                 <TextField variant="standard" type="number" value={line.sellingAmount} disabled={!editable} onChange={(e) => updateServiceChargeLine(side, line.id, { sellingAmount: Number(e.target.value) })} />
               </TableCell>
               <TableCell>
-                <IconButton size="small" disabled={!editable} onClick={() => removeServiceChargeLine(side, line.id)}>
+                <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeServiceChargeLine(side, line.id))}>
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </TableCell>
@@ -614,7 +615,7 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
                       </TableCell>
                       <TableCell>
                         <TextField variant="standard" value={row.type} disabled={!editable} onChange={(e) => updateJobInfoRow(i, { type: e.target.value })} />
-                        <IconButton size="small" disabled={!editable} onClick={() => removeJobInfoRow(i)}>
+                        <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeJobInfoRow(i))}>
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </TableCell>
@@ -975,7 +976,7 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
                     <TextField variant="standard" type="number" value={line.amount} disabled={!editable} onChange={(e) => updateRefundLine(line.id, { amount: Number(e.target.value) })} />
                   </TableCell>
                   <TableCell>
-                    <IconButton size="small" disabled={!editable} onClick={() => removeRefundLine(line.id)}>
+                    <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeRefundLine(line.id))}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>

@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -688,7 +689,7 @@ export function JobEntryForm({ job, editable, onChange }: JobEntryFormProps) {
                         <TextField variant="standard" value={line.containers} disabled={!editable} onChange={(e) => updateHblLine(line.id, { containers: e.target.value })} />
                       </TableCell>
                       <TableCell>
-                        <IconButton size="small" disabled={!editable} onClick={() => removeHblLine(line.id)}>
+                        <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeHblLine(line.id))}>
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </TableCell>
@@ -793,7 +794,7 @@ export function JobEntryForm({ job, editable, onChange }: JobEntryFormProps) {
                       <TextField variant="standard" type="number" value={line.amount} disabled={!editable} onChange={(e) => updateSecurityLine(line.id, { amount: Number(e.target.value) })} />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeSecurityLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeSecurityLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -857,7 +858,7 @@ export function JobEntryForm({ job, editable, onChange }: JobEntryFormProps) {
                         <TextField variant="standard" value={line.containers} disabled={!editable} onChange={(e) => updateConsoleContainerLine(line.id, { containers: e.target.value })} />
                       </TableCell>
                       <TableCell>
-                        <IconButton size="small" disabled={!editable} onClick={() => removeConsoleContainerLine(line.id)}>
+                        <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeConsoleContainerLine(line.id))}>
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </TableCell>

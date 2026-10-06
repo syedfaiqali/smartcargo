@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import Box from '@mui/material/Box';
@@ -33,7 +34,7 @@ const COMMON_ACCOUNT_HEADS = [
   'Bank/Cash',
 ];
 
-export function JournalVoucherPage() {
+export function JournalVoucherPage({ title = 'JVR - Journal Voucher' }: { title?: string }) {
   const [voucher, setVoucher] = useState<Voucher | null>(null);
   const [editable, setEditable] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -124,7 +125,7 @@ export function JournalVoucherPage() {
   if (voucher?.final) disabledActions.push('edit', 'delete', 'final');
 
   return (
-    <PageShell breadcrumbs={['Finance', 'JVR - Journal Voucher']} title="JVR - Journal Voucher">
+    <PageShell breadcrumbs={['Finance', title]} title={title}>
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}
@@ -278,7 +279,7 @@ export function JournalVoucherPage() {
                           <TextField variant="standard" type="number" value={line.credit} disabled={!editable} onChange={(e) => updateLine(line.id, { credit: Number(e.target.value) })} />
                         </TableCell>
                         <TableCell>
-                          <IconButton size="small" disabled={!editable} onClick={() => removeLine(line.id)}>
+                          <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeLine(line.id))}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </TableCell>

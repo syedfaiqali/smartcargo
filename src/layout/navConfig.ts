@@ -166,16 +166,19 @@ export const financeInitialSetupMenu: NavGroup = {
   ],
 };
 
-export const financeTransactionsMenu: NavLeaf[] = [
-  { label: 'BPV - Bank Payment Voucher', path: '/finance/bank-payment-voucher' },
-  { label: 'BRV - Bank Receipt Voucher', path: '/finance/bank-receipt-voucher' },
-  { label: 'CPV - Cash Payment Voucher', path: '/finance/cash-payment-voucher' },
-  { label: 'CRV - Cash Receipt Voucher', path: '/finance/cash-receipt-voucher' },
-  { label: 'JVR - Journal Voucher', path: '/finance/journal-voucher' },
-  { label: 'Post Dated Cheques Received', path: '/finance/post-dated-cheques-received' },
-  { label: 'Cheque Book', path: '/finance/cheque-book' },
-  { label: 'Bank Reconciliation', path: '/finance/bank-reconciliation' },
-];
+export const financeTransactionsMenu: NavGroup = {
+  label: 'Finance Transactions',
+  items: [
+    { label: 'BPV - Bank Payment Voucher', path: '/finance/bank-payment-voucher' },
+    { label: 'BRV - Bank Receipt Voucher', path: '/finance/bank-receipt-voucher' },
+    { label: 'CPV - Cash Payment Voucher', path: '/finance/cash-payment-voucher' },
+    { label: 'CRV - Cash Receipt Voucher', path: '/finance/cash-receipt-voucher' },
+    { label: 'JVR - Journal Voucher', path: '/finance/journal-voucher' },
+    { label: 'Post Dated Cheques Received', path: '/finance/post-dated-cheques-received' },
+    { label: 'Cheque Book', path: '/finance/cheque-book' },
+    { label: 'Bank Reconciliation', path: '/finance/bank-reconciliation' },
+  ],
+};
 
 export const financeReportsMenu: NavGroup = {
   label: 'Reports (Finance)',
@@ -187,7 +190,7 @@ export const financeReportsMenu: NavGroup = {
   ],
 };
 
-export const financeMenu: NavMenuEntry[] = [financeInitialSetupMenu, ...financeTransactionsMenu];
+export const financeMenu: NavGroup[] = [financeInitialSetupMenu, financeTransactionsMenu, financeReportsMenu];
 
 export const topNavItems = [
   'Freight',

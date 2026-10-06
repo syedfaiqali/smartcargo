@@ -37,6 +37,15 @@ export const theme = createTheme({
     MuiFormControl: {
       defaultProps: { size: 'small' },
     },
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          '&.Mui-disabled, &.Mui-disabled input, &.Mui-disabled textarea, &.Mui-disabled .MuiSelect-select, &.MuiInputBase-readOnly, &.Mui-readOnly, &:has(input[readonly]), &:has(textarea[readonly]), & input[readonly], & textarea[readonly]': {
+            cursor: 'not-allowed',
+          },
+        },
+      },
+    },
     MuiInputLabel: {
       styleOverrides: {
         root: {

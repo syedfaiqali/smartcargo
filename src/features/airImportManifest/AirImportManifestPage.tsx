@@ -10,7 +10,7 @@ import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { AirImportManifest } from '../../domain/airImportManifest';
 import { createEmptyAirImportManifest } from '../../domain/airImportManifestFactory';
-import { airImportManifestRepo, ensureAirImportManifestDemo } from '../../data/airImportManifestService';
+import { airImportManifestRepo, ensureAirImportManifestDemo, findAirImportManifestByMawbNo, findAirImportJobsByMawbNo, findMasterJobByMawbNo, populateManifestFromAirImportJobs, populateManifestFromMasterJob } from '../../data/airImportManifestService';
 import { ManifestEntryForm } from './ManifestEntryForm';
 import { PrintingTab } from './PrintingTab';
 import { AirImportManifestGrid } from './AirImportManifestGrid';
@@ -30,6 +30,28 @@ export function AirImportManifestPage() {
     setTab(0);
     setPrintingOnly(false);
     setShowList(false);
+  };
+
+  const loadSavedMawb = (mawbNo: string) => {
+    const saved = findAirImportManifestByMawbNo(mawbNo);
+    if (saved && saved.id !== manifest?.id) {
+      setManifest(saved);
+      setEditable(true);
+      setMessage({ severity: 'success', text: `Loaded saved manifest ${saved.mawbNo}.` });
+      return;
+    }
+
+    const jobs = findAirImportJobsByMawbNo(mawbNo);
+    if (jobs.length && manifest) {
+      setManifest(populateManifestFromAirImportJobs(manifest, jobs));
+      setMessage({ severity: 'success', text: `Loaded ${jobs.length} Air-Import job record${jobs.length === 1 ? '' : 's'} for MAWB ${jobs[0].mawbNo}.` });
+      return;
+    }
+
+    const masterJob = findMasterJobByMawbNo(mawbNo);
+    if (!masterJob || !manifest) return;
+    setManifest(populateManifestFromMasterJob(manifest, masterJob));
+    setMessage({ severity: 'success', text: `Loaded MAWB job ${masterJob.jobNo} and its linked HAWB records.` });
   };
 
   const handleAction = (action: ToolbarAction) => {
@@ -116,7 +138,7 @@ export function AirImportManifestPage() {
       {!manifest ? (
         <Alert severity="info">Click New to create a manifest.</Alert>
       ) : (
-        printingOnly ? <PrintingTab manifest={manifest} /> : <ManifestEntryForm manifest={manifest} editable={editable} onChange={setManifest} />
+        printingOnly ? <PrintingTab manifest={manifest} /> : <ManifestEntryForm manifest={manifest} editable={editable} onChange={setManifest} onSavedMawbEntered={loadSavedMawb} />
       )}
         </>
       )}

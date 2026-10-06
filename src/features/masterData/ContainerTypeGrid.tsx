@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useMemo, useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -103,7 +104,7 @@ export function ContainerTypeGrid({ version, onChange, onEdit, onView }: Contain
                     <IconButton size="small" onClick={() => onEdit(row)}>
                       <EditOutlinedIcon fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDelete(row.id)}>
+                    <IconButton size="small" color="error" onClick={() => confirmDelete(() => handleDelete(row.id))}>
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
                   </Stack>

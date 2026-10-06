@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../components/deleteConfirmation';
 import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -143,7 +144,7 @@ export function SeaImportPayableGrid({ payables, onOpen, onEdit, onDelete, onPri
                 <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                   <Tooltip title="Open"><IconButton size="small" color="primary" onClick={() => onOpen(payable)}><VisibilityOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                   <Tooltip title="Edit"><span><IconButton size="small" color="primary" disabled={payable.status.final} onClick={() => onEdit(payable)}><EditOutlinedIcon fontSize="small" /></IconButton></span></Tooltip>
-                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={payable.status.final} onClick={() => onDelete(payable)}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
+                  <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={payable.status.final} onClick={() => confirmDelete(() => onDelete(payable))}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>
                   <Tooltip title="Print"><IconButton size="small" color="primary" onClick={() => onPrint(payable)}><PrintOutlinedIcon fontSize="small" /></IconButton></Tooltip>
                 </TableCell>
                 <TableCell>{payable.creditNoteNo}</TableCell>

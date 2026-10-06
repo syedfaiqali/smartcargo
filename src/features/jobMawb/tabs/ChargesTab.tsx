@@ -204,7 +204,11 @@ export function ChargesTab({ job, editable, onChange }: ChargesTabProps) {
                 {job.charges.dueAgentLines.map((line) => (
                   <TableRow key={line.id}>
                     <TableCell sx={{ minWidth: 140 }}>
-                      {line.label}
+                      {line.editableLabel && editable ? (
+                        <TextField variant="standard" value={line.label} placeholder="Charge description" onChange={(e) => updateDueAgent(line.id, { label: e.target.value })} />
+                      ) : (
+                        line.label
+                      )}
                       {line.manualInput && (
                         <Typography variant="caption" display="block" color="text.secondary">
                           (Local Currency Not Calculated with Ex.Rate)

@@ -1,3 +1,4 @@
+import { confirmDelete } from '../../../components/deleteConfirmation';
 import { useEffect, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -319,7 +320,18 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                       fullWidth
                       value={job.party.agentParty}
                       disabled={!editable}
-                      onChange={(e) => onChange({ ...job, party: { ...job.party, agentParty: e.target.value } })}
+                      onChange={(e) => {
+                        const agentParty = parties.find((party) => party.code === e.target.value);
+                        onChange({
+                          ...job,
+                          party: {
+                            ...job.party,
+                            agentParty: e.target.value,
+                            name: agentParty?.name ?? '',
+                            address: agentParty?.address ?? '',
+                          },
+                        });
+                      }}
                     >
                       <MenuItem value="">— Select Agent Party —</MenuItem>
                       {parties.map((party) => (
@@ -764,7 +776,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
               </TableHead>
               <TableBody>
                 {job.chargeLines.map((line, index) => (
-                  <TableRow key={line.id} onClick={() => setDimensionTargetLineId(line.id)} onBlur={() => updateChargeLine(line.id, {})}>
+                  <TableRow key={line.id} onClick={() => confirmDelete(() => setDimensionTargetLineId(line.id))} onBlur={() => updateChargeLine(line.id, {})}>
                     <TableCell sx={{ minWidth: 70 }}>
                       {index === 0 ? (
                         <TextField
@@ -854,7 +866,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                       />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small" disabled={!editable} onClick={() => removeChargeLine(line.id)}>
+                      <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeChargeLine(line.id))}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
@@ -1155,7 +1167,7 @@ function DimensionCalculatorDialog({ open, onClose, onWeightChange }: { open: bo
                 const cbm = weight / 1000;
                 return (
                   <TableRow key={line.id}>
-                    <TableCell><IconButton size="small" color="error" onClick={() => setLines((current) => current.filter((item) => item.id !== line.id))}><DeleteIcon fontSize="small" /></IconButton></TableCell>
+                    <TableCell><IconButton size="small" color="error" onClick={() => confirmDelete(() => setLines((current) => current.filter((item) => item.id !== line.id)))}><DeleteIcon fontSize="small" /></IconButton></TableCell>
                     {(['pcs', 'length', 'width', 'height'] as const).map((field) => <TableCell key={field}><TextField size="small" type="number" value={line[field]} inputProps={{ min: 0 }} onChange={(event) => updateLine(line.id, { [field]: Number(event.target.value) })} /></TableCell>)}
                     <TableCell>{formatNumber(volume, 2)}</TableCell>
                     <TableCell>{formatNumber(weight, 2)}</TableCell>
