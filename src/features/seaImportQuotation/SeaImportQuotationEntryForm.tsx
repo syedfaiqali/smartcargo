@@ -18,8 +18,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { FormField } from '../../components/FormGrid';
-import { SeaImportQuotation } from '../../domain/seaImportQuotation';
+import { SeaImportQuotation, QuotationVendorInfo } from '../../domain/seaImportQuotation';
 import {
+  airlineRepo,
   chargeableRepo,
   currencyRepo,
   foreignAgentRepo,
@@ -48,6 +49,7 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
   const chargeableCodes = chargeableRepo.list();
   const signatories = signatoryRepo.list();
   const terms = termsRepo.list();
+  const airlines = airlineRepo.list();
 
   const apply = (patch: Partial<SeaImportQuotation>) => onChange(recomputeQuotationTotals({ ...quotation, ...patch }));
 
@@ -66,6 +68,63 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
     apply({ jobInfo: quotation.jobInfo.map((row, i) => (i === index ? { ...row, ...patch } : row)) });
   };
   const removeJobInfoRow = (index: number) => apply({ jobInfo: quotation.jobInfo.filter((_, i) => i !== index) });
+
+  // --- Airline Rate Grid ---
+  const addAirlineRateRow = () => apply({ airlineRates: [...quotation.airlineRates, { id: uuid(), airlineCode: '', rate: 0, currencyCode: '' }] });
+  const updateAirlineRateRow = (id: string, patch: Partial<SeaImportQuotation['airlineRates'][number]>) => {
+    apply({ airlineRates: quotation.airlineRates.map((row) => (row.id === id ? { ...row, ...patch } : row)) });
+  };
+  const removeAirlineRateRow = (id: string) => apply({ airlineRates: quotation.airlineRates.filter((row) => row.id !== id) });
+
+  // --- Vendor Quote Details (Service Solicitor/Provider, Place of Acceptance, CO2, Issued By, Not Included, Terms) ---
+  const emptyVendorInfo = (): QuotationVendorInfo => ({
+    serviceSolicitorName: '',
+    serviceSolicitorAddress: '',
+    serviceSolicitorContact: '',
+    serviceProviderName: '',
+    serviceProviderAddress: '',
+    issuedByName: '',
+    issuedByCompany: '',
+    issuedByPhone: '',
+    issuedByEmail: '',
+    co2EmissionsKg: 0,
+    originCity: '',
+    destinationCity: '',
+    placeOfAcceptance: '',
+    notIncluded: [],
+    termsText: '',
+  });
+  const vendorInfo: QuotationVendorInfo = quotation.vendorInfo ?? emptyVendorInfo();
+  const setVendorInfo = (patch: Partial<QuotationVendorInfo>) => {
+    apply({ vendorInfo: { ...vendorInfo, ...patch } });
+  };
+
+  // --- Not Included list (one point per line) ---
+  const notIncludedText = vendorInfo.notIncluded.join('\n');
+  const setNotIncludedText = (text: string) => {
+    setVendorInfo({ notIncluded: text.split('\n') });
+  };
+
+  // --- Local Charges Grid ---
+  const addLocalCharge = () => apply({ localCharges: [...quotation.localCharges, { id: uuid(), description: '', amount: 0, currencyCode: quotation.currencies[0]?.currencyCode || 'EUR' }] });
+  const updateLocalCharge = (id: string, patch: Partial<SeaImportQuotation['localCharges'][number]>) => {
+    apply({ localCharges: quotation.localCharges.map((row) => (row.id === id ? { ...row, ...patch } : row)) });
+  };
+  const removeLocalCharge = (id: string) => apply({ localCharges: quotation.localCharges.filter((row) => row.id !== id) });
+  const localChargesSubtotal = quotation.localCharges.reduce((sum, l) => sum + (l.amount || 0), 0);
+
+  // --- Carrier Options Grid ---
+  const addCarrierOption = () =>
+    apply({
+      carrierOptions: [
+        ...quotation.carrierOptions,
+        { id: uuid(), optionCode: '', carrierName: '', routing: '', scheduleNote: '', ratePerKg: 0, currencyCode: quotation.currencies[0]?.currencyCode || 'EUR' },
+      ],
+    });
+  const updateCarrierOption = (id: string, patch: Partial<SeaImportQuotation['carrierOptions'][number]>) => {
+    apply({ carrierOptions: quotation.carrierOptions.map((row) => (row.id === id ? { ...row, ...patch } : row)) });
+  };
+  const removeCarrierOption = (id: string) => apply({ carrierOptions: quotation.carrierOptions.filter((row) => row.id !== id) });
 
   // --- Service Charges (Origin / Destination) ---
   const addServiceChargeLine = (side: 'serviceChargesOrigin' | 'serviceChargesDestination') => {
@@ -163,7 +222,11 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
               <TextField label="Branch" fullWidth value={quotation.branch} disabled={!editable} onChange={(e) => apply({ branch: e.target.value })} />
             </FormField>
             <FormField md={6}>
-              <TextField label="Transport Mode" fullWidth value={quotation.transportMode} disabled={!editable} onChange={(e) => apply({ transportMode: e.target.value })} />
+              <TextField select label="Transport Mode" fullWidth value={quotation.transportMode} disabled={!editable} onChange={(e) => apply({ transportMode: e.target.value as SeaImportQuotation['transportMode'] })}>
+                <MenuItem value="">(none)</MenuItem>
+                <MenuItem value="AIR">Air</MenuItem>
+                <MenuItem value="SEA">Sea</MenuItem>
+              </TextField>
             </FormField>
             <FormField md={6}>
               <TextField
@@ -195,7 +258,7 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
               <TextField label="Suppl.Quote No." fullWidth value={quotation.supplQuoteNo} disabled={!editable} onChange={(e) => apply({ supplQuoteNo: e.target.value })} />
             </FormField>
             <FormField md={6}>
-              <TextField label="Related Quote No." fullWidth value={quotation.relatedQuoteNo} disabled={!editable} onChange={(e) => apply({ relatedQuoteNo: e.target.value })} />
+              <TextField label="Related Quote No." fullWidth value={quotation.relatedQuoteNo} disabled />
             </FormField>
             <FormField md={12}>
               <TextField select label="Local/Int'l Quotation" fullWidth value={quotation.localIntl} disabled={!editable} onChange={(e) => apply({ localIntl: e.target.value as 'Local' | "Int'l" })}>
@@ -302,10 +365,21 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
               <TextField label="UOM" fullWidth value={quotation.uom} disabled={!editable} onChange={(e) => apply({ uom: e.target.value })} />
             </FormField>
             <FormField md={6}>
+              <TextField label="Package Type" fullWidth value={quotation.packageType} disabled={!editable} onChange={(e) => apply({ packageType: e.target.value })} />
+            </FormField>
+            <FormField md={6}>
               <TextField label="Gross Weight" type="number" fullWidth value={quotation.grossWeight} disabled={!editable} onChange={(e) => apply({ grossWeight: Number(e.target.value) })} />
             </FormField>
             <FormField md={6}>
-              <TextField label="Ch. Weight" type="number" fullWidth value={quotation.chWeight} disabled={!editable} onChange={(e) => apply({ chWeight: Number(e.target.value) })} />
+              <TextField
+                label="Ch. Weight"
+                type="number"
+                fullWidth
+                value={quotation.chWeight}
+                disabled={!editable}
+                helperText={quotation.dimensions[0]?.length ? 'Auto-calculated from Dimension Calculation (IATA volumetric vs. Gross Weight)' : undefined}
+                onChange={(e) => apply({ chWeight: Number(e.target.value) })}
+              />
             </FormField>
             <FormField md={6}>
               <TextField label="Inco Term" fullWidth value={quotation.incoTerm} disabled={!editable} onChange={(e) => apply({ incoTerm: e.target.value })} />
@@ -331,7 +405,15 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
               </TextField>
             </FormField>
             <FormField md={6}>
-              <TextField label="C.B.M" type="number" fullWidth value={quotation.cbm} disabled={!editable} onChange={(e) => apply({ cbm: Number(e.target.value) })} />
+              <TextField
+                label="C.B.M"
+                type="number"
+                fullWidth
+                value={quotation.cbm}
+                disabled={!editable}
+                helperText={quotation.dimensions[0]?.length ? 'Auto-calculated: Pieces × (L × W × H)' : undefined}
+                onChange={(e) => apply({ cbm: Number(e.target.value) })}
+              />
             </FormField>
             <FormField md={6}>
               <TextField select label="Charge Code" fullWidth value={quotation.chargeCode} disabled={!editable} onChange={(e) => apply({ chargeCode: e.target.value })}>
@@ -545,6 +627,266 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
               </Button>
             </Grid>
           </Grid>
+
+          <Box sx={{ mb: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ '& .MuiTableCell-root': { bgcolor: '#dcfce7', fontWeight: 700 } }}>
+                  <TableCell colSpan={4}>Airline Rate</TableCell>
+                </TableRow>
+                <TableRow sx={{ '& .MuiTableCell-root': { bgcolor: '#dcfce7', fontWeight: 700 } }}>
+                  <TableCell>Airline</TableCell>
+                  <TableCell>Rate</TableCell>
+                  <TableCell>Curr</TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {quotation.airlineRates.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell sx={{ minWidth: 150 }}>
+                      <TextField select variant="standard" fullWidth value={row.airlineCode} disabled={!editable} onChange={(e) => updateAirlineRateRow(row.id, { airlineCode: e.target.value })}>
+                        <MenuItem value="">(none)</MenuItem>
+                        {airlines.map((a) => (
+                          <MenuItem key={a.code} value={a.code}>
+                            {a.code} — {a.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 90 }}>
+                      <TextField variant="standard" type="number" value={row.rate} disabled={!editable} onChange={(e) => updateAirlineRateRow(row.id, { rate: Number(e.target.value) })} />
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 65 }}>
+                      <TextField select variant="standard" fullWidth value={row.currencyCode} disabled={!editable} onChange={(e) => updateAirlineRateRow(row.id, { currencyCode: e.target.value })}>
+                        <MenuItem value="">(none)</MenuItem>
+                        {currencies.map((cur) => (
+                          <MenuItem key={cur.code} value={cur.code}>
+                            {cur.code}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </TableCell>
+                    <TableCell>
+                      <IconButton size="small" disabled={!editable} onClick={() => removeAirlineRateRow(row.id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Button size="small" startIcon={<AddIcon />} disabled={!editable} onClick={addAirlineRateRow} sx={{ mt: 0.5 }}>
+              Add Airline Rate
+            </Button>
+          </Box>
+
+          <Accordion defaultExpanded sx={{ mb: 1, '&:before': { display: 'none' } }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: '#075a9d', color: 'white', fontWeight: 700, '& .MuiSvgIcon-root': { color: 'white' } }}>
+              Pricing Air Export — Vendor Quote Details
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={1.5}>
+                <Grid item xs={12}>
+                  <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5 }}>Service Solicitor</Box>
+                </Grid>
+                <FormField md={6}>
+                  <TextField label="Name" fullWidth value={vendorInfo.serviceSolicitorName} disabled={!editable} onChange={(e) => setVendorInfo({ serviceSolicitorName: e.target.value })} />
+                </FormField>
+                <FormField md={6}>
+                  <TextField label="Contact Person" fullWidth value={vendorInfo.serviceSolicitorContact} disabled={!editable} onChange={(e) => setVendorInfo({ serviceSolicitorContact: e.target.value })} />
+                </FormField>
+                <FormField md={12}>
+                  <TextField label="Address" fullWidth multiline minRows={2} value={vendorInfo.serviceSolicitorAddress} disabled={!editable} onChange={(e) => setVendorInfo({ serviceSolicitorAddress: e.target.value })} />
+                </FormField>
+
+                <Grid item xs={12}>
+                  <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5, mt: 1 }}>Service Provider</Box>
+                </Grid>
+                <FormField md={12}>
+                  <TextField label="Name" fullWidth value={vendorInfo.serviceProviderName} disabled={!editable} onChange={(e) => setVendorInfo({ serviceProviderName: e.target.value })} />
+                </FormField>
+                <FormField md={12}>
+                  <TextField label="Address" fullWidth multiline minRows={2} value={vendorInfo.serviceProviderAddress} disabled={!editable} onChange={(e) => setVendorInfo({ serviceProviderAddress: e.target.value })} />
+                </FormField>
+
+                <Grid item xs={12}>
+                  <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5, mt: 1 }}>Transport Details</Box>
+                </Grid>
+                <FormField md={6}>
+                  <TextField label="Departure City" fullWidth value={vendorInfo.originCity} disabled={!editable} onChange={(e) => setVendorInfo({ originCity: e.target.value })} helperText={`Shown as "${quotation.origin || 'CODE'} - ${vendorInfo.originCity || 'City'}"`} />
+                </FormField>
+                <FormField md={6}>
+                  <TextField label="Destination City" fullWidth value={vendorInfo.destinationCity} disabled={!editable} onChange={(e) => setVendorInfo({ destinationCity: e.target.value })} helperText={`Shown as "${quotation.destination || 'CODE'} - ${vendorInfo.destinationCity || 'City'}"`} />
+                </FormField>
+                <FormField md={6}>
+                  <TextField label="Place of Acceptance" fullWidth value={vendorInfo.placeOfAcceptance} disabled={!editable} onChange={(e) => setVendorInfo({ placeOfAcceptance: e.target.value })} />
+                </FormField>
+                <FormField md={6}>
+                  <TextField label="Total CO2 Emissions (kg)" type="number" fullWidth value={vendorInfo.co2EmissionsKg} disabled={!editable} onChange={(e) => setVendorInfo({ co2EmissionsKg: Number(e.target.value) })} />
+                </FormField>
+
+                <Grid item xs={12}>
+                  <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5, mt: 1 }}>Issued By</Box>
+                </Grid>
+                <FormField md={6}>
+                  <TextField label="Name" fullWidth value={vendorInfo.issuedByName} disabled={!editable} onChange={(e) => setVendorInfo({ issuedByName: e.target.value })} />
+                </FormField>
+                <FormField md={6}>
+                  <TextField label="Company" fullWidth value={vendorInfo.issuedByCompany} disabled={!editable} onChange={(e) => setVendorInfo({ issuedByCompany: e.target.value })} />
+                </FormField>
+                <FormField md={6}>
+                  <TextField label="Phone" fullWidth value={vendorInfo.issuedByPhone} disabled={!editable} onChange={(e) => setVendorInfo({ issuedByPhone: e.target.value })} />
+                </FormField>
+                <FormField md={6}>
+                  <TextField label="Email" fullWidth value={vendorInfo.issuedByEmail} disabled={!editable} onChange={(e) => setVendorInfo({ issuedByEmail: e.target.value })} />
+                </FormField>
+
+                <Grid item xs={12}>
+                  <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5, mt: 1 }}>Not Included in this Quotation</Box>
+                </Grid>
+                <FormField md={12}>
+                  <TextField
+                    label="One point per line"
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    value={notIncludedText}
+                    disabled={!editable}
+                    onChange={(e) => setNotIncludedText(e.target.value)}
+                  />
+                </FormField>
+
+                <Grid item xs={12}>
+                  <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5, mt: 1 }}>Terms and Conditions</Box>
+                </Grid>
+                <FormField md={12}>
+                  <TextField
+                    label="Terms text"
+                    fullWidth
+                    multiline
+                    minRows={4}
+                    value={vendorInfo.termsText}
+                    disabled={!editable}
+                    onChange={(e) => setVendorInfo({ termsText: e.target.value })}
+                  />
+                </FormField>
+              </Grid>
+
+              {/* Local Charges grid */}
+              <Box sx={{ mt: 2 }}>
+                <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5 }}>Local Charges</Box>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ '& .MuiTableCell-root': { bgcolor: '#dcfce7', fontWeight: 700 } }}>
+                      <TableCell>Description</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Curr</TableCell>
+                      <TableCell />
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {quotation.localCharges.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell sx={{ minWidth: 150 }}>
+                          <TextField variant="standard" fullWidth value={row.description} disabled={!editable} onChange={(e) => updateLocalCharge(row.id, { description: e.target.value })} />
+                        </TableCell>
+                        <TableCell sx={{ minWidth: 90 }}>
+                          <TextField variant="standard" type="number" value={row.amount} disabled={!editable} onChange={(e) => updateLocalCharge(row.id, { amount: Number(e.target.value) })} />
+                        </TableCell>
+                        <TableCell sx={{ minWidth: 65 }}>
+                          <TextField select variant="standard" fullWidth value={row.currencyCode} disabled={!editable} onChange={(e) => updateLocalCharge(row.id, { currencyCode: e.target.value })}>
+                            <MenuItem value="">(none)</MenuItem>
+                            {currencies.map((cur) => (
+                              <MenuItem key={cur.code} value={cur.code}>
+                                {cur.code}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton size="small" disabled={!editable} onClick={() => removeLocalCharge(row.id)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700 }}>Subtotal</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>{localChargesSubtotal.toFixed(2)}</TableCell>
+                      <TableCell colSpan={2} />
+                    </TableRow>
+                  </TableBody>
+                </Table>
+                <Button size="small" startIcon={<AddIcon />} disabled={!editable} onClick={addLocalCharge} sx={{ mt: 0.5 }}>
+                  Add Local Charge
+                </Button>
+              </Box>
+
+              {/* Carrier Options grid */}
+              <Box sx={{ mt: 2 }}>
+                <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5 }}>Carrier Options</Box>
+                {quotation.carrierOptions.map((opt, i) => (
+                  <Paper key={opt.id} variant="outlined" sx={{ p: 1.5, mb: 1 }}>
+                    <Grid container spacing={1}>
+                      <Grid item xs={11}>
+                        <Box sx={{ fontWeight: 700, fontSize: 12, color: '#5a6270' }}>Option {i + 1}</Box>
+                      </Grid>
+                      <Grid item xs={1} sx={{ textAlign: 'right' }}>
+                        <IconButton size="small" disabled={!editable} onClick={() => removeCarrierOption(opt.id)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Grid>
+                      <FormField md={6}>
+                        <TextField
+                          label="Option Code & Carrier (e.g. TK - Turkish Airlines)"
+                          fullWidth
+                          size="small"
+                          value={opt.optionCode}
+                          disabled={!editable}
+                          onChange={(e) => updateCarrierOption(opt.id, { optionCode: e.target.value })}
+                        />
+                      </FormField>
+                      <FormField md={6}>
+                        <TextField label="Carrier Name" fullWidth size="small" value={opt.carrierName} disabled={!editable} onChange={(e) => updateCarrierOption(opt.id, { carrierName: e.target.value })} />
+                      </FormField>
+                      <FormField md={6}>
+                        <TextField label="Routing (e.g. OTP-IST-KHI)" fullWidth size="small" value={opt.routing} disabled={!editable} onChange={(e) => updateCarrierOption(opt.id, { routing: e.target.value })} />
+                      </FormField>
+                      <FormField md={3}>
+                        <TextField label="Rate / kg" type="number" fullWidth size="small" value={opt.ratePerKg} disabled={!editable} onChange={(e) => updateCarrierOption(opt.id, { ratePerKg: Number(e.target.value) })} />
+                      </FormField>
+                      <FormField md={3}>
+                        <TextField select label="Curr" fullWidth size="small" value={opt.currencyCode} disabled={!editable} onChange={(e) => updateCarrierOption(opt.id, { currencyCode: e.target.value })}>
+                          <MenuItem value="">(none)</MenuItem>
+                          {currencies.map((cur) => (
+                            <MenuItem key={cur.code} value={cur.code}>
+                              {cur.code}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </FormField>
+                      <FormField md={12}>
+                        <TextField
+                          label="Routing remarks (DEP / ETA / transit note)"
+                          fullWidth
+                          size="small"
+                          multiline
+                          minRows={2}
+                          value={opt.scheduleNote}
+                          disabled={!editable}
+                          onChange={(e) => updateCarrierOption(opt.id, { scheduleNote: e.target.value })}
+                        />
+                      </FormField>
+                    </Grid>
+                  </Paper>
+                ))}
+                <Button size="small" startIcon={<AddIcon />} disabled={!editable} onClick={addCarrierOption}>
+                  Add Carrier Option
+                </Button>
+              </Box>
+            </AccordionDetails>
+          </Accordion>
 
           <Accordion defaultExpanded={false} sx={{ mb: 1, '&:before': { display: 'none' } }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: '#d97706', color: 'white', fontWeight: 700, '& .MuiSvgIcon-root': { color: 'white' } }}>

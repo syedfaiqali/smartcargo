@@ -34,10 +34,18 @@ import { partyRepo, bankRepo, currencyRepo } from '../../data/masterDataService'
 
 interface ClearingVoucherPageProps {
   kind: Extract<VoucherKind, 'RECEIPT' | 'PAYMENT'>;
+  mode: 'BANK' | 'CASH';
 }
 
-export function ClearingVoucherPage({ kind }: ClearingVoucherPageProps) {
-  const title = kind === 'RECEIPT' ? 'Receipt Voucher' : 'Payment Voucher';
+const TITLES: Record<string, string> = {
+  RECEIPT_BANK: 'BRV - Bank Receipt Voucher',
+  RECEIPT_CASH: 'CRV - Cash Receipt Voucher',
+  PAYMENT_BANK: 'BPV - Bank Payment Voucher',
+  PAYMENT_CASH: 'CPV - Cash Payment Voucher',
+};
+
+export function ClearingVoucherPage({ kind, mode }: ClearingVoucherPageProps) {
+  const title = TITLES[`${kind}_${mode}`];
   const parties = partyRepo.list();
   const banks = bankRepo.list();
   const currencies = currencyRepo.list();
@@ -86,6 +94,7 @@ export function ClearingVoucherPage({ kind }: ClearingVoucherPageProps) {
       case 'new': {
         const draft = createEmptyVoucher(kind);
         draft.voucherNo = nextVoucherNo(kind, draft.branch);
+        if (mode === 'CASH') draft.bankCode = '';
         setVoucher(draft);
         setEditable(true);
         setSearching(false);
@@ -117,6 +126,10 @@ export function ClearingVoucherPage({ kind }: ClearingVoucherPageProps) {
         if (!voucher) return;
         if (!voucher.partyCode || voucher.clearingLines.length === 0) {
           setMessage({ severity: 'error', text: 'Party and at least one cleared source line are required before finalizing.' });
+          return;
+        }
+        if (mode === 'BANK' && !voucher.bankCode) {
+          setMessage({ severity: 'error', text: 'Bank Code is required before finalizing.' });
           return;
         }
         const saved = finalizeVoucher(voucher.id);
@@ -278,18 +291,19 @@ export function ClearingVoucherPage({ kind }: ClearingVoucherPageProps) {
                   </TextField>
                 </FormField>
               </FormRow>
-              <FormRow>
-                <FormField md={12}>
-                  <TextField select label="Bank Code" fullWidth value={voucher.bankCode} disabled={!editable} onChange={(e) => setVoucher({ ...voucher, bankCode: e.target.value })}>
-                    <MenuItem value="">(cash)</MenuItem>
-                    {banks.map((b) => (
-                      <MenuItem key={b.code} value={b.code}>
-                        {b.code} — {b.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </FormField>
-              </FormRow>
+              {mode === 'BANK' && (
+                <FormRow>
+                  <FormField md={12}>
+                    <TextField select label="Bank Code" fullWidth value={voucher.bankCode} disabled={!editable} onChange={(e) => setVoucher({ ...voucher, bankCode: e.target.value })}>
+                      {banks.map((b) => (
+                        <MenuItem key={b.code} value={b.code}>
+                          {b.code} — {b.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </FormField>
+                </FormRow>
+              )}
               <FormRow>
                 <FormField md={6}>
                   <TextField select label="Currency" fullWidth value={voucher.currencyCode} disabled={!editable} onChange={(e) => setVoucher({ ...voucher, currencyCode: e.target.value })}>

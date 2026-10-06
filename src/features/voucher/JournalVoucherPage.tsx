@@ -124,7 +124,7 @@ export function JournalVoucherPage() {
   if (voucher?.final) disabledActions.push('edit', 'delete', 'final');
 
   return (
-    <PageShell breadcrumbs={['Finance', 'Journal Voucher']} title="Journal Voucher">
+    <PageShell breadcrumbs={['Finance', 'JVR - Journal Voucher']} title="JVR - Journal Voucher">
       {message && (
         <Alert severity={message.severity} onClose={() => setMessage(null)} sx={{ mb: 2 }}>
           {message.text}

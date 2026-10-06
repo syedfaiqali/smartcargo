@@ -162,17 +162,20 @@ export const financeInitialSetupMenu: NavGroup = {
   items: [
     { label: 'Group Codes', path: '/finance/initial-setup/group-codes' },
     { label: 'Control Codes', path: '/finance/initial-setup/control-codes' },
+    { label: 'Chart of Accounts', path: '/finance/initial-setup/chart-of-accounts' },
   ],
 };
 
-export const vouchersMenu: NavGroup = {
-  label: 'Vouchers',
-  items: [
-    { label: 'Receipt Voucher', path: '/finance/receipt-voucher' },
-    { label: 'Payment Voucher', path: '/finance/payment-voucher' },
-    { label: 'Journal Voucher', path: '/finance/journal-voucher' },
-  ],
-};
+export const financeTransactionsMenu: NavLeaf[] = [
+  { label: 'BPV - Bank Payment Voucher', path: '/finance/bank-payment-voucher' },
+  { label: 'BRV - Bank Receipt Voucher', path: '/finance/bank-receipt-voucher' },
+  { label: 'CPV - Cash Payment Voucher', path: '/finance/cash-payment-voucher' },
+  { label: 'CRV - Cash Receipt Voucher', path: '/finance/cash-receipt-voucher' },
+  { label: 'JVR - Journal Voucher', path: '/finance/journal-voucher' },
+  { label: 'Post Dated Cheques Received', path: '/finance/post-dated-cheques-received' },
+  { label: 'Cheque Book', path: '/finance/cheque-book' },
+  { label: 'Bank Reconciliation', path: '/finance/bank-reconciliation' },
+];
 
 export const financeReportsMenu: NavGroup = {
   label: 'Reports (Finance)',
@@ -184,7 +187,7 @@ export const financeReportsMenu: NavGroup = {
   ],
 };
 
-export const financeMenu: NavGroup[] = [vouchersMenu, financeReportsMenu, financeInitialSetupMenu];
+export const financeMenu: NavMenuEntry[] = [financeInitialSetupMenu, ...financeTransactionsMenu];
 
 export const topNavItems = [
   'Freight',

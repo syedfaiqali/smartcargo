@@ -4,11 +4,19 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import RestoreIcon from '@mui/icons-material/Restore';
 import { PageShell } from '../../layout/PageShell';
 import { TransactionToolbar, ToolbarAction } from '../../components/TransactionToolbar';
 import { SeaImportQuotation } from '../../domain/seaImportQuotation';
 import { createEmptySeaImportQuotation } from '../../domain/seaImportQuotationFactory';
-import { seaImportQuotationRepo, nextSeaImportQuotationNo, ensureSeaImportQuotationDemo } from '../../data/seaImportQuotationService';
+import {
+  seaImportQuotationRepo,
+  nextSeaImportQuotationNo,
+  nextRelatedQuoteNo,
+  ensureSeaImportQuotationDemo,
+  restoreCargomindSampleQuotation,
+  CARGOMIND_SAMPLE_QUOTATION_NO,
+} from '../../data/seaImportQuotationService';
 import { recomputeQuotationTotals } from './quotationCalculations';
 import { SeaImportQuotationEntryForm } from './SeaImportQuotationEntryForm';
 import { SeaImportQuotationGrid } from './SeaImportQuotationGrid';
@@ -52,6 +60,11 @@ export function SeaImportQuotationPage() {
     setIsPrintingView(true);
   };
 
+  const restoreSample = () => {
+    restoreCargomindSampleQuotation();
+    setMessage({ severity: 'success', text: `Sample quotation ${CARGOMIND_SAMPLE_QUOTATION_NO} restored with its original data.` });
+  };
+
   const backToList = () => {
     setShowList(true);
     setQuotation(null);
@@ -65,6 +78,7 @@ export function SeaImportQuotationPage() {
       case 'new': {
         const draft = createEmptySeaImportQuotation();
         draft.quotationNo = nextSeaImportQuotationNo(draft.branch);
+        draft.relatedQuoteNo = nextRelatedQuoteNo(draft.branch);
         setQuotation(draft);
         setEditable(true);
         setShowList(false);
@@ -129,7 +143,12 @@ export function SeaImportQuotationPage() {
 
       {showList ? (
         <>
-          <TransactionToolbar actions={['new']} onAction={handleAction} />
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+            <TransactionToolbar actions={['new']} onAction={handleAction} />
+            <Button size="small" variant="outlined" startIcon={<RestoreIcon />} onClick={restoreSample}>
+              Restore Sample ({CARGOMIND_SAMPLE_QUOTATION_NO})
+            </Button>
+          </Stack>
           <SeaImportQuotationGrid
             quotations={seaImportQuotationRepo.list()}
             onOpen={loadQuotation}
