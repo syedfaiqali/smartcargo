@@ -31,6 +31,7 @@ export type ToolbarAction =
   | 'final'
   | 'void'
   | 'copy'
+  | 'check'
   | 'close'
   | 'cancel';
 
@@ -52,6 +53,7 @@ const ALL_BUTTONS: ToolbarButtonDef[] = [
   { action: 'edit', label: 'Edit', icon: <EditIcon fontSize="small" /> },
   { action: 'delete', label: 'Delete', icon: <DeleteIcon fontSize="small" />, color: 'error' },
   { action: 'final', label: 'Final', icon: <LockIcon fontSize="small" /> },
+  { action: 'check', label: 'Check', icon: <TaskAltIcon fontSize="small" /> },
   { action: 'close', label: 'Close', icon: <TaskAltIcon fontSize="small" /> },
   { action: 'void', label: 'Void', icon: <BlockIcon fontSize="small" /> },
   { action: 'copy', label: 'Copy', icon: <ContentCopyIcon fontSize="small" /> },

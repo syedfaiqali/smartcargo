@@ -205,7 +205,12 @@ export function BankReceiptCostTab({
             />
           </FormField>
           <FormField>
-            <TextField label="Voucher Type" fullWidth value="BRV" disabled />
+            <TextField
+              label="Voucher Type"
+              fullWidth
+              value={voucher.kind === "JOURNAL" ? "JVR" : "BRV"}
+              disabled
+            />
           </FormField>
           <FormField>
             <TextField

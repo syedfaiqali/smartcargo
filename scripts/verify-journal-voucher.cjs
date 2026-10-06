@@ -1,0 +1,130 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ts = require('typescript');
+const { JSDOM } = require('jsdom');
+const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost/', pretendToBeVisual: true });
+// nwsapi's :focus-within matcher can pass a non-node activeElement in jsdom.
+const contains = dom.window.Node.prototype.contains;
+dom.window.Node.prototype.contains = function(node) {
+  if (node != null && !(node instanceof dom.window.Node)) return false;
+  return contains.call(this, node);
+};
+global.window = dom.window;
+global.document = dom.window.document;
+global.FileReader = dom.window.FileReader;
+global.fetch = async () => ({ ok: true, blob: async () => new dom.window.Blob([
+  fs.readFileSync(require('node:path').join(__dirname, '../public/masum-logistics-header.png')),
+], { type: 'image/png' }) });
+Object.defineProperty(global, 'navigator', { value: dom.window.navigator, configurable: true });
+for (const key of ['HTMLElement', 'Element', 'Node', 'DocumentFragment', 'MutationObserver', 'getComputedStyle']) global[key] = dom.window[key];
+global.requestAnimationFrame = dom.window.requestAnimationFrame.bind(dom.window);
+global.cancelAnimationFrame = dom.window.cancelAnimationFrame.bind(dom.window);
+function compile(module, filename) {
+  const result = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
+  });
+  module._compile(result.outputText, filename);
+}
+require.extensions['.ts'] = compile;
+require.extensions['.tsx'] = compile;
+const React = require('react');
+const { Provider } = require('react-redux');
+const { createAppStore } = require('../src/store/store.ts');
+const testStore = createAppStore();
+const { MemoryRouter } = require('react-router-dom');
+const { render, fireEvent, screen, waitFor, cleanup, configure } = require('@testing-library/react');
+
+const { JournalVoucherPage } = require('../src/features/voucher/JournalVoucherPage.tsx');
+const { DeleteConfirmationDialog } = require('../src/components/DeleteConfirmationDialog.tsx');
+const { createEmptyVoucher } = require('../src/domain/voucherFactory.ts');
+const { withReceiptEntryLines } = require('../src/domain/receiptEntry.ts');
+const { voucherRepo } = require('../src/data/voucherService.ts');
+const { buildVoucherPrintReport, createVoucherPdf, createVoucherExcel } = require('../src/features/voucher/voucherPrinting.ts');
+const { unzipSync, strFromU8 } = require('fflate');
+const line = { id: 'j-debit', dc: 'DEBIT', accountCode: 'BANK-CTRL', accountDescription: 'Bank Control', particulars: 'Journal adjustment', analysisCode: '', billNo: 'B-1', billDate: '2026-10-05', currencyCode: 'PKR', exchangeRate: '1', amount: '1000' };
+const journal = withReceiptEntryLines({ ...createEmptyVoucher('JOURNAL'), voucherNo: 'KHI-JV-101' }, [line, { ...line, id: 'j-credit', dc: 'CREDIT', accountCode: 'CASH-CTRL', accountDescription: 'Cash Control' }]);
+const receipt = { ...createEmptyVoucher('RECEIPT'), voucherNo: 'DO-NOT-SHOW-RECEIPT' };
+const app = () => React.createElement(Provider, { store: testStore }, React.createElement(MemoryRouter, null, React.createElement(DeleteConfirmationDialog), React.createElement(JournalVoucherPage)));
+(async () => {
+  voucherRepo.replaceAll([journal, receipt]);
+  render(app());
+  console.log('Journal list');
+  assert.ok(screen.getByRole('table', { name: 'Journal Vouchers' }));
+  assert.equal(screen.queryByText('DO-NOT-SHOW-RECEIPT') === null, true);
+  fireEvent.click(screen.getByRole('button', { name: 'Print voucher' }));
+  assert.equal(screen.queryByRole('radio', { name: 'Cheque' }) === null, true);
+  assert.equal(screen.getAllByRole('radio').length, 3);
+  fireEvent.click(screen.getByRole('radio', { name: 'Debit Note' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Foreign Currency' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+  await waitFor(() => assert.equal(!!screen.queryByTitle('Report PDF preview'), true));
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+  await waitFor(() => assert.equal(screen.queryByRole('dialog') === null, true));
+  fireEvent.click(screen.getByRole('button', { name: 'Back to List' }));
+  console.log('Journal editor');
+  fireEvent.click(screen.getByRole('button', { name: 'Edit voucher' }));
+  assert.deepEqual(screen.getAllByRole('tab').map(tab => tab.textContent), ['Entry', 'Docs. Knock Off', 'COST']);
+  assert.equal(screen.queryByRole('textbox', { name: 'Received From' }) === null, true);
+  assert.equal(screen.queryByRole('textbox', { name: 'Cheque No.' }) === null, true);
+  fireEvent.click(screen.getByRole('tab', { name: 'COST' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Add Cost' }));
+  assert.equal(screen.getByRole('textbox', { name: 'Voucher Type' }).value, 'JVR');
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Docs. Knock Off' }));
+  assert.ok(screen.getByRole('button', { name: 'Add Invoice' }).disabled);
+  const knockOffSection = screen.getByRole('button', { name: /Docs\. Knock Off/ });
+  assert.equal(knockOffSection.getAttribute('aria-expanded'), 'true');
+  fireEvent.click(knockOffSection);
+  assert.equal(knockOffSection.getAttribute('aria-expanded'), 'false');
+  fireEvent.click(screen.getByRole('tab', { name: 'Entry' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  assert.ok(screen.getByRole('alert').textContent.includes('KHI-JV-101 saved successfully.'));
+  assert.equal(screen.getByRole('textbox', { name: 'Voucher No.' }).value, 'KHI-JV-102');
+  assert.equal(screen.queryAllByRole('textbox', { name: 'FC Amount' }).length, 0);
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+  await waitFor(() => assert.equal(screen.queryByRole('alert') === null, true));
+  console.log('Journal new entry');
+  fireEvent.click(screen.getByRole('button', { name: 'Add Row' }));
+  fireEvent.mouseDown(screen.getAllByRole('combobox', { name: /Account Code/ })[0]);
+  fireEvent.click(await screen.findByRole('option', { name: /BANK-CTRL/ }));
+  const amount = screen.getByRole('textbox', { name: 'FC Amount' });
+  fireEvent.change(amount, { target: { value: '200' } }); fireEvent.blur(amount);
+  assert.equal(screen.getAllByRole('textbox', { name: 'FC Amount' }).length, 2);
+  fireEvent.mouseDown(screen.getAllByRole('combobox', { name: /Account Code/ })[1]);
+  fireEvent.click(await screen.findByRole('option', { name: /CASH-CTRL/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  assert.equal(voucherRepo.find(v => v.kind === 'JOURNAL').length, 2);
+  const saved = voucherRepo.find(v => v.voucherNo === 'KHI-JV-102')[0];
+  assert.equal(saved.amount, 200);
+  assert.equal(saved.receiptEntryLines[1].dc, 'CREDIT');
+  assert.equal(screen.getByRole('textbox', { name: 'Voucher No.' }).value, 'KHI-JV-103');
+  fireEvent.click(screen.getByRole('button', { name: 'Back to List' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Search vouchers' }), { target: { value: 'KHI-JV-102' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Open voucher' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Final' }));
+  assert.equal(voucherRepo.get(saved.id).final, true, 'Balanced journal must finalize without invoice allocations');
+  assert.equal(screen.getByRole('button', { name: 'Edit' }).disabled, true);
+  fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+  assert.equal(voucherRepo.get(saved.id).checked, true);
+  fireEvent.click(screen.getByRole('button', { name: 'Back to List' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Search vouchers' }), { target: { value: 'KHI-JV-101' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Delete voucher' }));
+  assert.ok(voucherRepo.get(journal.id));
+  fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
+  assert.equal(voucherRepo.get(journal.id), undefined);
+  assert.ok(voucherRepo.get(receipt.id), 'Journal actions must leave receipt records alone');
+  const settings = { type: 'Voucher', currency: 'PKR', payTo: '', payeeAccountOnly: true, stamp: false, signatory1: '', signatory2: '' };
+  for (const type of ['Voucher', 'Debit Note', 'Credit Note']) {
+    const report = buildVoucherPrintReport(saved, { ...settings, type });
+    assert.equal(report.layout.journal, true);
+    const pdf = createVoucherPdf(report);
+    assert.equal(pdf.output().includes('Cheque No.'), false);
+    assert.equal(pdf.output().includes('BANK PAYMENT VOUCHER'), false);
+    assert.ok(pdf.output().startsWith('%PDF-'));
+    assert.ok(unzipSync(createVoucherExcel(report))['xl/workbook.xml']);
+  }
+  assert.equal(buildVoucherPrintReport(saved, settings).title, 'JOURNAL VOUCHER');
+  assert.throws(() => buildVoucherPrintReport(saved, { ...settings, type: 'Cheque' }), /not available/);
+  cleanup();
+  console.log('Journal checks passed: isolated schema list, header fields, printing, amount blur/opposite row, save/toast/reset, balanced finalization, check flag and confirmed deletion.');
+})().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => { cleanup(); dom.window.close(); });
