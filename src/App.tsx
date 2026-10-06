@@ -74,41 +74,24 @@ function App() {
         <DeleteConfirmationDialog />
         <AppShell>
           <Routes>
-            <Route path="/finance" element={<ClearingVoucherPage kind="PAYMENT" mode="BANK" />} />
-            <Route path="/finance" element={<ClearingVoucherPage kind="PAYMENT" title="BPV - Bank Payment Voucher" />} />
+            <Route path="/finance" element={<ClearingVoucherPage kind="PAYMENT" mode="BANK" title="BPV - Bank Payment Voucher" />} />
             <Route path="/finance/initial-setup/group-codes" element={<GroupCodesPage />} />
             <Route path="/finance/initial-setup/control-codes" element={<ControlCodesPage />} />
-            <Route path="/finance/bank-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="BPV - Bank Payment Voucher" />} />
-            <Route path="/finance/bank-receipt-voucher" element={<BankReceiptPage />} />
-            <Route path="/finance/cash-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" title="CPV - Cash Payment Voucher" />} />
-            <Route path="/finance/cash-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" title="CRV - Cash Receipt Voucher" />} />
             <Route
               path="/finance/initial-setup/chart-of-accounts"
               element={<ComingSoonPage breadcrumbs={['Finance', 'Initial Setup', 'Chart of Accounts']} title="Chart of Accounts" />}
             />
-            <Route path="/finance/bank-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" mode="BANK" />} />
-            <Route path="/finance/bank-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="BANK" />} />
-            <Route path="/finance/cash-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" mode="CASH" />} />
-            <Route path="/finance/cash-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="CASH" />} />
+            <Route path="/finance/bank-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" mode="BANK" title="BPV - Bank Payment Voucher" />} />
+            <Route path="/finance/bank-receipt-voucher" element={<BankReceiptPage />} />
+            <Route path="/finance/cash-payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" mode="CASH" title="CPV - Cash Payment Voucher" />} />
+            <Route path="/finance/cash-receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="CASH" title="CRV - Cash Receipt Voucher" />} />
             <Route path="/finance/journal-voucher" element={<JournalVoucherPage />} />
             <Route path="/finance/post-dated-cheques-received" element={<FinanceUtilityPage kind="post-dated-cheques" />} />
             <Route path="/finance/cheque-book" element={<FinanceUtilityPage kind="cheque-book" />} />
             <Route path="/finance/bank-reconciliation" element={<FinanceUtilityPage kind="bank-reconciliation" />} />
-            <Route
-              path="/finance/post-dated-cheques-received"
-              element={<ComingSoonPage breadcrumbs={['Finance', 'Post Dated Cheques Received']} title="Post Dated Cheques Received" />}
-            />
-            <Route
-              path="/finance/cheque-book"
-              element={<ComingSoonPage breadcrumbs={['Finance', 'Cheque Book']} title="Cheque Book" />}
-            />
-            <Route
-              path="/finance/bank-reconciliation"
-              element={<ComingSoonPage breadcrumbs={['Finance', 'Bank Reconciliation']} title="Bank Reconciliation" />}
-            />
             {/* Legacy voucher routes kept for backward compatibility with any saved links. */}
-            <Route path="/finance/receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="BANK" />} />
-            <Route path="/finance/payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" mode="BANK" />} />
+            <Route path="/finance/receipt-voucher" element={<ClearingVoucherPage kind="RECEIPT" mode="BANK" title="BRV - Bank Receipt Voucher" />} />
+            <Route path="/finance/payment-voucher" element={<ClearingVoucherPage kind="PAYMENT" mode="BANK" title="BPV - Bank Payment Voucher" />} />
             <Route path="/finance/reports/ar-aging" element={<AgingReportPage kind="AR" />} />
             <Route path="/finance/reports/ap-aging" element={<AgingReportPage kind="AP" />} />
             <Route path="/finance/reports/bank-cash-ledger" element={<BankCashLedgerPage />} />

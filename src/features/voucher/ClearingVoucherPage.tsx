@@ -67,8 +67,6 @@ const newCostLine = (): CostLine => ({
   masterJob: '', houseJob: '', airwayBill: '', houseCnNo: '', expenseAmount: 0,
 });
 
-export function ClearingVoucherPage({ kind, title: titleOverride }: ClearingVoucherPageProps) {
-  const title = titleOverride ?? (kind === 'RECEIPT' ? 'Receipt Voucher' : 'Payment Voucher');
 const TITLES: Record<string, string> = {
   RECEIPT_BANK: 'BRV - Bank Receipt Voucher',
   RECEIPT_CASH: 'CRV - Cash Receipt Voucher',
@@ -76,8 +74,8 @@ const TITLES: Record<string, string> = {
   PAYMENT_CASH: 'CPV - Cash Payment Voucher',
 };
 
-export function ClearingVoucherPage({ kind, mode }: ClearingVoucherPageProps) {
-  const title = TITLES[`${kind}_${mode}`];
+export function ClearingVoucherPage({ kind, mode, title: titleOverride }: ClearingVoucherPageProps) {
+  const title = titleOverride ?? TITLES[`${kind}_${mode}`];
   const parties = partyRepo.list();
   const banks = bankRepo.list();
   const currencies = currencyRepo.list();
