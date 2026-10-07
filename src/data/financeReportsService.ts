@@ -157,7 +157,15 @@ export function getAccountsLedger(filter: { branch?: string; fromDate?: string; 
         debit: 0,
         credit: voucher.amount,
       })),
-  ].sort((left, right) => left.date.localeCompare(right.date) || left.type.localeCompare(right.type) || left.no.localeCompare(right.no));
+  ].sort((left, right) => {
+    const dateOrder = left.date.localeCompare(right.date);
+    if (dateOrder) return dateOrder;
+
+    // An invoice establishes the receivable; a receipt settles it.  Keep that
+    // business sequence when both postings have the same voucher date.
+    const typeOrder = (left.type === 'LOCAL INV' ? 0 : 1) - (right.type === 'LOCAL INV' ? 0 : 1);
+    return typeOrder || left.no.localeCompare(right.no);
+  });
 
   let runningBalance = 0;
   return entries.map((entry) => {
