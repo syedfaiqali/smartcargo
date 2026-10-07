@@ -44,16 +44,18 @@ export function syncLocalInvoiceLinks(invoice: LocalInvoice, previous?: LocalInv
   });
 }
 
-let invoiceSequence = 100;
-
+/**
+ * Previews the next available invoice number from persisted invoices.
+ * A draft is not a saved invoice, so clicking New repeatedly must not consume
+ * a number. The number advances only after the invoice has been saved.
+ */
 export function nextInvoiceNo(branch: string): string {
   const existing = localInvoiceRepo.find((i) => i.branch === branch);
   const maxSeq = existing.reduce((max, i) => {
     const seq = parseInt(i.invoiceNo.split('-').pop() ?? '', 10);
     return Number.isFinite(seq) ? Math.max(max, seq) : max;
-  }, invoiceSequence);
-  invoiceSequence = maxSeq + 1;
-  return `${branch}-INV-${invoiceSequence}`;
+  }, 100);
+  return `${branch}-INV-${maxSeq + 1}`;
 }
 
 /** Pulls the HOUSE/MASTER job-reference panel (docs 4.2) from a selected Job No. */
