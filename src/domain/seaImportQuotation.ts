@@ -30,6 +30,16 @@ export interface QuotationCarrierOption {
   currencyCode: string;
 }
 
+/** Snapshot of the carrier option chosen as final on a quotation, copied onto Job entry when the quotation is referenced. */
+export interface QuotationFinalCarrier {
+  optionId: string;
+  optionCode: string;
+  carrierName: string;
+  routing: string;
+  ratePerKg: number;
+  currencyCode: string;
+}
+
 /** A local/handling charge line shown ahead of carrier options on a vendor rate quotation. */
 export interface QuotationLocalCharge {
   id: string;
@@ -163,6 +173,9 @@ export interface SeaImportQuotation extends AuditFields {
   dimWeightDivisor: number;
   dimCbm: number;
   dimCbmDivisor: number;
+
+  /** The carrier option (from carrierOptions) chosen as final for this quotation, if any. */
+  finalCarrier: QuotationFinalCarrier | null;
 
   status: {
     final: boolean;

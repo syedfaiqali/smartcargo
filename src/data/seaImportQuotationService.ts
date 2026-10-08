@@ -44,7 +44,8 @@ function backfillMissingFields(): void {
     const needsLocalCharges = !q.localCharges;
     const needsCarrierOptions = !q.carrierOptions;
     const needsPackageType = q.packageType === undefined;
-    if (!needsAirlineRates && !needsModeFix && !needsRelatedQuoteNo && !needsLocalCharges && !needsCarrierOptions && !needsPackageType) return q;
+    const needsFinalCarrier = q.finalCarrier === undefined;
+    if (!needsAirlineRates && !needsModeFix && !needsRelatedQuoteNo && !needsLocalCharges && !needsCarrierOptions && !needsPackageType && !needsFinalCarrier) return q;
     changed = true;
     const fixed: SeaImportQuotation = {
       ...q,
@@ -54,6 +55,7 @@ function backfillMissingFields(): void {
       localCharges: q.localCharges ?? [],
       carrierOptions: q.carrierOptions ?? [],
       packageType: q.packageType ?? '',
+      finalCarrier: q.finalCarrier ?? null,
     };
     return recomputeQuotationTotals(fixed);
   });
@@ -152,6 +154,7 @@ function buildCargomindSampleQuotation(): SeaImportQuotation {
   };
   demo.serviceChargesOrigin = [];
   demo.serviceChargesDestination = [];
+  demo.finalCarrier = null;
   demo.status = { final: false };
   return recomputeQuotationTotals(demo);
 }
