@@ -109,7 +109,8 @@ export function FlyoutPanel({
         borderRadius: '12px',
         boxShadow: themeColors.sidebarFlyoutShadow,
         p: 1.75,
-        maxHeight: isMobile ? '100%' : '80vh',
+        height: '100%',
+        maxHeight: '100%',
         overflowY: 'auto',
       }}
     >

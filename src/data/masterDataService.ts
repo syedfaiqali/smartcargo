@@ -187,13 +187,16 @@ function seedIfEmpty() {
     [
       { code: 'GEN-01', name: 'General Format', address: 'Site Area, Karachi', creditLimit: 500000 },
       { code: 'MSL-01', name: 'Masum Logistics', address: 'SITE-II, Karachi', creditLimit: 250000 },
+      { code: 'PC-002', name: 'ARHAM ENTERPRISES.', address: 'OFFICE NO:01 DASHTIYAR CENTER\nBLOCK 13 D GULSHAN-E-IQBAL KARACHI\n75340 PAKISTAN. TEL:+92-311-1199311', creditLimit: 0 },
     ].map(withAudit)
   );
 
   foreignAgentRepo.replaceAll(
     [
       { code: 'FA-201', name: 'Gulf Cargo Partners LLC', address: 'Dubai, UAE' },
-      { code: 'FA-202', name: 'Far East Freight Co.', address: 'Hong Kong' },
+      { code: 'FA-202', name: 'KAAFSAN GENERAL TRADING CO.', address: 'BAKARO STREET NO.02 HOWLADOG\nDISTRICT MOGADISHU SOMALIA.' },
+      { code: 'FA-203', name: 'SkyBridge Logistics GmbH', address: 'Frankfurt, Germany' },
+      { code: 'FA-204', name: 'Pacific Gateway Cargo Ltd.', address: 'Singapore' },
     ].map(withAudit)
   );
 
@@ -204,6 +207,7 @@ function seedIfEmpty() {
       { code: 'DOH', name: 'Hamad International Airport', countryCode: 'QA', sectorCode: '' },
       { code: 'IST', name: 'Istanbul Airport', countryCode: 'TR', sectorCode: '' },
       { code: 'HKG', name: 'Hong Kong International Airport', countryCode: 'HK', sectorCode: '' },
+      { code: 'MGQ', name: 'MGQ', countryCode: '', sectorCode: '' },
     ].map(withAudit)
   );
 
@@ -550,6 +554,69 @@ if (!isSeeded('agentCodesV2')) {
     website: agent.website ?? '',
   })));
   markSeeded('agentCodesV2');
+}
+
+// Merge the newer Foreign Agent Code samples into existing browser data without affecting user entries.
+if (!isSeeded('foreignAgentCodesV2')) {
+  const currentForeignAgents = foreignAgentRepo.list();
+  const existingCodes = new Set(currentForeignAgents.map((agent) => agent.code));
+  const sampleForeignAgents = [
+    { code: 'FA-203', name: 'SkyBridge Logistics GmbH', address: 'Frankfurt, Germany' },
+    { code: 'FA-204', name: 'Pacific Gateway Cargo Ltd.', address: 'Singapore' },
+  ];
+  const missingForeignAgents = sampleForeignAgents.filter((agent) => !existingCodes.has(agent.code));
+
+  if (missingForeignAgents.length) {
+    foreignAgentRepo.replaceAll([...currentForeignAgents, ...missingForeignAgents.map(withAudit)]);
+  }
+  markSeeded('foreignAgentCodesV2');
+}
+
+// Correct the original FA-202 sample while leaving user-maintained records untouched.
+if (!isSeeded('foreignAgentCodesV3')) {
+  foreignAgentRepo.replaceAll(foreignAgentRepo.list().map((agent) => (
+    agent.code === 'FA-202'
+      && agent.name === 'Far East Freight Co.'
+      && agent.address === 'Hong Kong'
+      ? {
+          ...agent,
+          name: 'KAAFSAN GENERAL TRADING CO.',
+          address: 'BAKARO STREET NO.02 HOWLADOG\nDISTRICT MOGADISHU SOMALIA.',
+        }
+      : agent
+  )));
+  markSeeded('foreignAgentCodesV3');
+}
+
+// Merge the Party Code sample into existing browser data without affecting user entries.
+if (!isSeeded('partyCodesV2')) {
+  const currentPartyCodes = partyRepo.list();
+  const hasArhamEnterprises = currentPartyCodes.some((party) => party.code === 'PC-002');
+
+  if (!hasArhamEnterprises) {
+    partyRepo.replaceAll([
+      ...currentPartyCodes,
+      withAudit({
+        code: 'PC-002',
+        name: 'ARHAM ENTERPRISES.',
+        address: 'OFFICE NO:01 DASHTIYAR CENTER\nBLOCK 13 D GULSHAN-E-IQBAL KARACHI\n75340 PAKISTAN. TEL:+92-311-1199311',
+        creditLimit: 0,
+      }),
+    ]);
+  }
+  markSeeded('partyCodesV2');
+}
+
+// Merge the Airport / Destination Code sample into existing browser data without affecting user entries.
+if (!isSeeded('airportCodesV3')) {
+  const currentAirportCodes = airportRepo.list();
+  if (!currentAirportCodes.some((airport) => airport.code === 'MGQ')) {
+    airportRepo.replaceAll([
+      ...currentAirportCodes,
+      withAudit({ code: 'MGQ', name: 'MGQ', countryCode: '', sectorCode: '' }),
+    ]);
+  }
+  markSeeded('airportCodesV3');
 }
 
 // Add the Vendor Code / department expense-income matrix fields to saved Payable Type Codes while retaining all existing entries.
