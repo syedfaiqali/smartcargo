@@ -76,6 +76,7 @@ export function createEmptySeaImportQuotation(branch = 'KHI'): SeaImportQuotatio
     dimWeightDivisor: 0,
     dimCbm: 0,
     dimCbmDivisor: 0,
+    finalCarrier: null,
     status: { final: false },
   };
 }

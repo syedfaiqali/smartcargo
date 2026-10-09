@@ -12,12 +12,15 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { FormField } from '../../components/FormGrid';
 import { SeaImportQuotation, QuotationVendorInfo } from '../../domain/seaImportQuotation';
 import {
@@ -123,9 +126,29 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
       ],
     });
   const updateCarrierOption = (id: string, patch: Partial<SeaImportQuotation['carrierOptions'][number]>) => {
-    apply({ carrierOptions: quotation.carrierOptions.map((row) => (row.id === id ? { ...row, ...patch } : row)) });
+    const carrierOptions = quotation.carrierOptions.map((row) => (row.id === id ? { ...row, ...patch } : row));
+    const updated = carrierOptions.find((row) => row.id === id);
+    const finalCarrier =
+      quotation.finalCarrier?.optionId === id && updated
+        ? { optionId: updated.id, optionCode: updated.optionCode, carrierName: updated.carrierName, routing: updated.routing, ratePerKg: updated.ratePerKg, currencyCode: updated.currencyCode }
+        : quotation.finalCarrier;
+    apply({ carrierOptions, finalCarrier });
   };
-  const removeCarrierOption = (id: string) => apply({ carrierOptions: quotation.carrierOptions.filter((row) => row.id !== id) });
+  const removeCarrierOption = (id: string) => {
+    const carrierOptions = quotation.carrierOptions.filter((row) => row.id !== id);
+    const finalCarrier = quotation.finalCarrier?.optionId === id ? null : quotation.finalCarrier;
+    apply({ carrierOptions, finalCarrier });
+  };
+  const setFinalCarrierOption = (id: string) => {
+    const opt = quotation.carrierOptions.find((row) => row.id === id);
+    if (!opt) return;
+    const alreadyFinal = quotation.finalCarrier?.optionId === id;
+    apply({
+      finalCarrier: alreadyFinal
+        ? null
+        : { optionId: opt.id, optionCode: opt.optionCode, carrierName: opt.carrierName, routing: opt.routing, ratePerKg: opt.ratePerKg, currencyCode: opt.currencyCode },
+    });
+  };
 
   // --- Service Charges (Origin / Destination) ---
   const addServiceChargeLine = (side: 'serviceChargesOrigin' | 'serviceChargesDestination') => {
@@ -827,11 +850,37 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
               {/* Carrier Options grid */}
               <Box sx={{ mt: 2 }}>
                 <Box sx={{ fontWeight: 700, fontSize: 13, color: '#075a9d', mb: 0.5 }}>Carrier Options</Box>
-                {quotation.carrierOptions.map((opt, i) => (
-                  <Paper key={opt.id} variant="outlined" sx={{ p: 1.5, mb: 1 }}>
+                {quotation.carrierOptions.map((opt, i) => {
+                  const isFinal = quotation.finalCarrier?.optionId === opt.id;
+                  return (
+                  <Paper
+                    key={opt.id}
+                    variant="outlined"
+                    sx={{ p: 1.5, mb: 1, ...(isFinal ? { borderColor: '#16a34a', borderWidth: 2, bgcolor: '#f0fdf4' } : {}) }}
+                  >
                     <Grid container spacing={1}>
-                      <Grid item xs={11}>
+                      <Grid item xs={7}>
                         <Box sx={{ fontWeight: 700, fontSize: 12, color: '#5a6270' }}>Option {i + 1}</Box>
+                      </Grid>
+                      <Grid item xs={4} sx={{ textAlign: 'right' }}>
+                        {isFinal ? (
+                          <Chip
+                            size="small"
+                            color="success"
+                            icon={<CheckCircleIcon />}
+                            label="Final Carrier"
+                            onClick={editable ? () => setFinalCarrierOption(opt.id) : undefined}
+                          />
+                        ) : (
+                          <Button
+                            size="small"
+                            startIcon={<RadioButtonUncheckedIcon />}
+                            disabled={!editable}
+                            onClick={() => setFinalCarrierOption(opt.id)}
+                          >
+                            Select as Final
+                          </Button>
+                        )}
                       </Grid>
                       <Grid item xs={1} sx={{ textAlign: 'right' }}>
                         <IconButton size="small" disabled={!editable} onClick={() => removeCarrierOption(opt.id)}>
@@ -840,13 +889,25 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
                       </Grid>
                       <FormField md={6}>
                         <TextField
-                          label="Option Code & Carrier (e.g. TK - Turkish Airlines)"
+                          select
+                          label="Option Code & Carrier"
                           fullWidth
                           size="small"
                           value={opt.optionCode}
                           disabled={!editable}
-                          onChange={(e) => updateCarrierOption(opt.id, { optionCode: e.target.value })}
-                        />
+                          onChange={(e) => {
+                            const code = e.target.value;
+                            const a = airlines.find((x) => x.code === code);
+                            updateCarrierOption(opt.id, { optionCode: code, carrierName: a?.name ?? opt.carrierName });
+                          }}
+                        >
+                          <MenuItem value="">(none)</MenuItem>
+                          {airlines.map((a) => (
+                            <MenuItem key={a.code} value={a.code}>
+                              {a.code} — {a.name}
+                            </MenuItem>
+                          ))}
+                        </TextField>
                       </FormField>
                       <FormField md={6}>
                         <TextField label="Carrier Name" fullWidth size="small" value={opt.carrierName} disabled={!editable} onChange={(e) => updateCarrierOption(opt.id, { carrierName: e.target.value })} />
@@ -881,7 +942,8 @@ export function SeaImportQuotationEntryForm({ quotation, editable, onChange }: S
                       </FormField>
                     </Grid>
                   </Paper>
-                ))}
+                  );
+                })}
                 <Button size="small" startIcon={<AddIcon />} disabled={!editable} onClick={addCarrierOption}>
                   Add Carrier Option
                 </Button>

@@ -95,6 +95,30 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
     onChange({ ...job, consignee: { ...job.consignee, code, name: a?.name ?? '', address: a?.address ?? '' } });
   };
 
+  // Pulls the quotation's chosen Final Carrier Option (rate, currency, routing) onto this
+  // job's first charge line so a finalized quotation drives the AWB freight rate directly.
+  const setQuotationRef = (quotationNo: string) => {
+    const quotation = quotations.find((q) => q.quotationNo === quotationNo);
+    const finalCarrier = quotation?.finalCarrier;
+    if (!finalCarrier) {
+      onChange({ ...job, quotRefNo: quotationNo });
+      return;
+    }
+    const exRate = currencies.find((c) => c.code === finalCarrier.currencyCode)?.defaultExchangeRate ?? job.exRate;
+    const chargeLines = job.chargeLines.map((line, i) => (i === 0 ? recomputeChargeLineTotal({ ...line, rate: finalCarrier.ratePerKg }, exRate) : line));
+    const legs = job.routing.legs.map((leg, i) => (i === 0 ? { ...leg, by: finalCarrier.optionCode } : leg));
+    const updatedJob: Job = {
+      ...job,
+      quotRefNo: quotationNo,
+      currency: finalCarrier.currencyCode || job.currency,
+      exRate,
+      printableExRate: exRate,
+      chargeLines,
+      routing: { ...job.routing, legs },
+    };
+    onChange({ ...updatedJob, totals: recomputeJobTotals(updatedJob) });
+  };
+
   const setParentJobNo = (parentJobNo: string) => {
     const master = masterJobs.find((m) => m.jobNo === parentJobNo);
     onChange({
@@ -195,13 +219,26 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   getOptionLabel={(quotation) => quotation.quotationNo}
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                   disabled={!editable}
-                  onChange={(_, quotation) => set('quotRefNo', quotation?.quotationNo ?? '')}
+                  onChange={(_, quotation) => setQuotationRef(quotation?.quotationNo ?? '')}
                   renderOption={(props, quotation) => (
                     <li {...props} key={quotation.id}>
                       {quotation.quotationNo} — {quotation.name || quotation.partyCode || 'Unnamed quotation'}
+                      {quotation.finalCarrier ? ` (Final: ${quotation.finalCarrier.optionCode})` : ''}
                     </li>
                   )}
-                  renderInput={(params) => <TextField {...params} label="Quotation Reference" fullWidth placeholder="Search quotation" />}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Quotation Reference"
+                      fullWidth
+                      placeholder="Search quotation"
+                      helperText={
+                        quotations.find((q) => q.quotationNo === job.quotRefNo)?.finalCarrier
+                          ? `Rate pulled from final carrier: ${quotations.find((q) => q.quotationNo === job.quotRefNo)?.finalCarrier?.optionCode}`
+                          : undefined
+                      }
+                    />
+                  )}
                 />
               </SectionCardField>
             </SectionCardRow>
