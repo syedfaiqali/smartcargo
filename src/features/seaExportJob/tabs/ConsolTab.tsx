@@ -1,27 +1,29 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
 import Grid from '@mui/material/Grid';
-import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Checkbox from '@mui/material/Checkbox';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import TablePagination from '@mui/material/TablePagination';
-import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
-import { SeaExportJob } from '../../../domain/seaExportJob';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import { FormField, FormRow } from '../../../components/FormGrid';
+import { WorkflowSection } from '../../../components/WorkflowSection';
 import { findConsolCandidateJobs, seaExportJobRepo } from '../../../data/seaExportJobService';
-import { foreignAgentRepo, seaPortRepo, shippingLineRepo } from '../../../data/masterDataService';
+import { agentRepo, containerTypeRepo, foreignAgentRepo, partyRepo, seaPortRepo, shippingLineRepo } from '../../../data/masterDataService';
+import { SeaExportJob } from '../../../domain/seaExportJob';
 
 interface ConsolTabProps {
   job: SeaExportJob;
@@ -33,335 +35,239 @@ export function ConsolTab({ job, editable, onChange }: ConsolTabProps) {
   const foreignAgents = foreignAgentRepo.list();
   const shippingLines = shippingLineRepo.list();
   const seaPorts = seaPortRepo.list();
+  const parties = partyRepo.list();
+  const agents = agentRepo.list();
+  const sizes = [...new Set(containerTypeRepo.list().map((item) => item.size).filter(Boolean))];
   const consol = job.consol;
-  const setConsol = (patch: Partial<SeaExportJob['consol']>) => onChange({ ...job, consol: { ...consol, ...patch } });
-
+  const [openSections, setOpenSections] = useState({ filters: true, details: true, voyage: true, grid: true });
+  const [branch, setBranch] = useState(job.branch);
+  const [checkDate, setCheckDate] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [checkDate, setCheckDate] = useState(false);
-  const [marked, setMarked] = useState<'Y' | 'N' | 'BOTH'>('BOTH');
+  const [marked, setMarked] = useState<'Y' | 'N' | 'BOTH'>('Y');
+  const [consolFilter, setConsolFilter] = useState('');
   const [candidates, setCandidates] = useState<SeaExportJob[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [gridFilter, setGridFilter] = useState('');
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
-  const [gridPage, setGridPage] = useState(0);
-  const [gridRowsPerPage, setGridRowsPerPage] = useState(10);
-  const filteredCandidates = candidates.filter((candidate) => {
-    const searchable = [candidate.consolNo, candidate.jobNo, candidate.date, candidate.branch, candidate.jobType, candidate.mblNo, candidate.hblNo, candidate.lclFcl, candidate.partyName, candidate.shippingLine, candidate.portOfLoad, candidate.destination].join(' ').toLowerCase();
-    return searchable.includes(gridFilter.toLowerCase()) && Object.values(columnFilters).every((value) => searchable.includes(value.toLowerCase()));
-  });
-  const paginatedCandidates = filteredCandidates.slice(gridPage * gridRowsPerPage, gridPage * gridRowsPerPage + gridRowsPerPage);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const lastConsolNo = seaExportJobRepo.find((j) => j.branch === job.branch && !!j.consol.consolNo).slice(-1)[0]?.consol.consolNo ?? '';
+  const setConsol = (patch: Partial<SeaExportJob['consol']>) =>
+    onChange({ ...job, consol: { ...consol, ...patch } });
+  const toggleSection = (key: keyof typeof openSections) =>
+    setOpenSections((current) => ({ ...current, [key]: !current[key] }));
+  const branches = [...new Set([job.branch, ...seaExportJobRepo.list().map((item) => item.branch)].filter(Boolean))];
+  const lastConsolNo = seaExportJobRepo.find((item) => item.branch === branch && !!item.consol.consolNo).slice(-1)[0]?.consol.consolNo ?? '';
+  const filteredCandidates = useMemo(() => candidates.filter((candidate) => {
+    const searchable = [candidate.consolNo, candidate.jobNo, candidate.date, candidate.branch, candidate.jobType,
+      candidate.mblNo, candidate.hblNo, candidate.lclFcl, candidate.vessel, candidate.voyage,
+      candidate.partyName, candidate.partyCode, candidate.foreignAgent, candidate.spoCode,
+      candidate.shippingLine, candidate.portOfLoad, candidate.destination,
+      ...candidate.containers.map((container) => container.containerNo),
+    ].join(' ').toLowerCase();
+    return searchable.includes(gridFilter.trim().toLowerCase()) &&
+      (!consolFilter || candidate.consolNo.toLowerCase().includes(consolFilter.trim().toLowerCase()));
+  }), [candidates, gridFilter, consolFilter]);
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(filteredCandidates.length / rowsPerPage) - 1));
+  const paginatedCandidates = filteredCandidates.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
 
-  const handleShowDetail = () => {
-    setCandidates(findConsolCandidateJobs({ branch: job.branch, startDate: checkDate ? startDate : undefined, endDate: checkDate ? endDate : undefined, marked }));
-  };
-
-  const toggleSelect = (id: string) => {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelected(next);
-  };
-
-  const handleUpdate = () => {
-    if (!editable || !consol.consolNo) return;
-    selected.forEach((id) => {
-      const candidate = candidates.find((c) => c.id === id);
-      if (!candidate) return;
-      seaExportJobRepo.save({ ...candidate, consolNo: consol.consolNo, consolYN: 'Y' });
-    });
+  const showDetail = () => {
+    setCandidates(findConsolCandidateJobs({
+      branch,
+      startDate: checkDate ? startDate || undefined : undefined,
+      endDate: checkDate ? endDate || undefined : undefined,
+      marked,
+    }));
     setSelected(new Set());
-    handleShowDetail();
+    setPage(0);
   };
+  const toggleSelect = (id: string) => setSelected((current) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const updateSelected = () => {
+    if (!editable || !consol.consolNo || selected.size === 0) return;
+    selected.forEach((id) => {
+      const candidate = candidates.find((item) => item.id === id);
+      if (candidate) seaExportJobRepo.save({ ...candidate, consolNo: consol.consolNo, consolYN: 'Y' });
+    });
+    showDetail();
+  };
+  const select = (label: string, value: string, options: Array<{ value: string; label: string }>, onSelect: (value: string) => void, disabled = !editable) => (
+    <TextField select label={label} fullWidth value={value} disabled={disabled} onChange={(event) => onSelect(event.target.value)}>
+      <MenuItem value="">Select {label}</MenuItem>
+      {value && !options.some((option) => option.value === value) && <MenuItem value={value}>{value}</MenuItem>}
+      {options.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+    </TextField>
+  );
+  const portOptions = seaPorts.map((port) => ({ value: port.code, label: `${port.code} — ${port.name}` }));
+  const containerNumbers = (candidate: SeaExportJob) => candidate.containers.map((container) => container.containerNo).filter(Boolean).join(', ');
+  const partySummary = (candidate: SeaExportJob) => [candidate.partyName || candidate.partyCode, candidate.foreignAgent, candidate.spoCode].filter(Boolean).join(' / ');
 
   return (
     <Box>
-      <Typography component="div" sx={{ display: 'inline-block', px: 1.5, py: 0.65, mb: 1.25, borderRadius: 1, bgcolor: '#075a9d', color: 'white', fontSize: 19, fontWeight: 700, boxShadow: 2 }}>
+      <Typography component="div" sx={{ display: 'inline-block', px: 1.5, py: 0.65, mb: 1.25, borderRadius: 1, bgcolor: 'primary.main', color: 'primary.contrastText', fontSize: 16, fontWeight: 700 }}>
         JOBS (SEA-EXPORT)
       </Typography>
+
       <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <WorkflowSection title="Job Filters" subtitle="Choose the branch, dates and consol status for job search" open={openSections.filters} onToggle={() => toggleSection('filters')}>
+            <FormRow>
+              <FormField><TextField select label="Branch" fullWidth value={branch} onChange={(event) => setBranch(event.target.value)}>
+                {branches.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
+              </TextField></FormField>
+              <FormField><TextField label="Last Consol No." fullWidth value={lastConsolNo} disabled /></FormField>
+              <FormField><TextField select label="LCL/FCL" fullWidth value={consol.lclFcl} disabled={!editable} onChange={(event) => setConsol({ lclFcl: event.target.value as 'LCL' | 'FCL' })}>
+                <MenuItem value="LCL">LCL</MenuItem><MenuItem value="FCL">FCL</MenuItem>
+              </TextField></FormField>
+            </FormRow>
+            <FormRow>
+              <FormField><FormControl component="fieldset">
+                <FormLabel>Check Date</FormLabel>
+                <RadioGroup row value={checkDate ? 'Y' : 'N'} onChange={(event) => setCheckDate(event.target.value === 'Y')}>
+                  <FormControlLabel value="Y" control={<Radio size="small" />} label="Yes" />
+                  <FormControlLabel value="N" control={<Radio size="small" />} label="No" />
+                </RadioGroup>
+              </FormControl></FormField>
+              <FormField><TextField label="Give Starting Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={startDate} disabled={!checkDate} onChange={(event) => setStartDate(event.target.value)} /></FormField>
+              <FormField><TextField label="Give Ending Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={endDate} disabled={!checkDate} onChange={(event) => setEndDate(event.target.value)} /></FormField>
+            </FormRow>
+            <FormRow>
+              <FormField><TextField label="Consol No. Filter" fullWidth value={consolFilter} onChange={(event) => setConsolFilter(event.target.value)} /></FormField>
+              <FormField><FormControl component="fieldset">
+                <FormLabel>Show Jobs Consol</FormLabel>
+                <RadioGroup row value={marked} onChange={(event) => setMarked(event.target.value as 'Y' | 'N' | 'BOTH')}>
+                  <FormControlLabel value="Y" control={<Radio size="small" />} label="Marked Yes" />
+                  <FormControlLabel value="N" control={<Radio size="small" />} label="Marked No" />
+                  <FormControlLabel value="BOTH" control={<Radio size="small" />} label="Both" />
+                </RadioGroup>
+              </FormControl></FormField>
+            </FormRow>
+            <Stack direction="row" spacing={1}>
+              <Button variant="contained" onClick={showDetail}>Show Detail</Button>
+              <Button variant="outlined" disabled={!editable || !consol.consolNo || selected.size === 0} onClick={updateSelected}>Update ({selected.size})</Button>
+            </Stack>
+          </WorkflowSection>
+        </Grid>
+
+        <Grid item xs={12} md={5}>
+          <WorkflowSection title="Consol Details" subtitle="Set consolidation number, agents, ports and master B/L" open={openSections.details} onToggle={() => toggleSection('details')}>
+            <FormRow>
+              <FormField><TextField label="Consol No." fullWidth value={consol.consolNo} disabled={!editable} onChange={(event) => setConsol({ consolNo: event.target.value })} /></FormField>
+              <FormField>{select('Foreign Agent', consol.foreignAgent, foreignAgents.map((item) => ({ value: item.code, label: `${item.code} — ${item.name}` })), (value) => setConsol({ foreignAgent: value }))}</FormField>
+              <FormField>{select('Shipping Line', consol.shippingLine, shippingLines.map((item) => ({ value: item.code, label: `${item.code} — ${item.name}` })), (value) => setConsol({ shippingLine: value }))}</FormField>
+            </FormRow>
+            <FormRow>
+              <FormField>{select('S/Line Agent', consol.sLineAgent, parties.map((item) => ({ value: item.code, label: `${item.code} — ${item.name}` })), (value) => setConsol({ sLineAgent: value }))}</FormField>
+              <FormField>{select('Port of Load', consol.portOfLoad, portOptions, (value) => setConsol({ portOfLoad: value }))}</FormField>
+              <FormField>{select('Port of Discharge', consol.portOfDischarge, portOptions, (value) => setConsol({ portOfDischarge: value }))}</FormField>
+            </FormRow>
+            <FormRow>
+              <FormField><TextField label="Wharf" fullWidth value={consol.wharf} disabled={!editable} onChange={(event) => setConsol({ wharf: event.target.value })} /></FormField>
+              <FormField><TextField label="Terminal" fullWidth value={consol.terminal} disabled={!editable} onChange={(event) => setConsol({ terminal: event.target.value })} /></FormField>
+              <FormField><TextField label="MBL No." fullWidth value={consol.mblNo} disabled={!editable} onChange={(event) => setConsol({ mblNo: event.target.value })} /></FormField>
+            </FormRow>
+            <FormRow><FormField><TextField label="MBL Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.mblDate} disabled={!editable} onChange={(event) => setConsol({ mblDate: event.target.value })} /></FormField></FormRow>
+          </WorkflowSection>
+        </Grid>
+
         <Grid item xs={12} md={3}>
-          <SectionHeader>Filter Jobs</SectionHeader>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Branch" fullWidth value={job.branch} disabled />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Last Consol No." fullWidth value={lastConsolNo} disabled />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField select label="LCL-FCL" fullWidth value={consol.lclFcl} disabled={!editable} onChange={(e) => setConsol({ lclFcl: e.target.value as 'LCL' | 'FCL' })}>
-                <MenuItem value="LCL">LCL</MenuItem>
-                <MenuItem value="FCL">FCL</MenuItem>
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <FormControlLabel control={<Checkbox checked={checkDate} onChange={(e) => setCheckDate(e.target.checked)} />} label="Check Date" />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Starting Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={startDate} disabled={!checkDate} onChange={(e) => setStartDate(e.target.value)} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Ending Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={endDate} disabled={!checkDate} onChange={(e) => setEndDate(e.target.value)} />
-            </FormField>
-          </FormRow>
-          <FormControl sx={{ mb: 1 }}>
-            <FormLabel>Show Jobs Consol</FormLabel>
-            <RadioGroup value={marked} onChange={(e) => setMarked(e.target.value as 'Y' | 'N' | 'BOTH')}>
-              <FormControlLabel value="Y" control={<Radio size="small" />} label="Marked Yes" />
-              <FormControlLabel value="N" control={<Radio size="small" />} label="Marked No" />
-              <FormControlLabel value="BOTH" control={<Radio size="small" />} label="Both" />
-            </RadioGroup>
-          </FormControl>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" onClick={handleShowDetail}>Show Detail</Button>
-            <Button variant="contained" disabled={!editable || !consol.consolNo || selected.size === 0} onClick={handleUpdate}>Update</Button>
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} md={4.5}>
-          <SectionHeader>Consol Details</SectionHeader>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Consol No." fullWidth value={consol.consolNo} disabled={!editable} onChange={(e) => setConsol({ consolNo: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField select label="Foreign Agent" fullWidth value={consol.foreignAgent} disabled={!editable} onChange={(e) => setConsol({ foreignAgent: e.target.value })}>
-                {foreignAgents.map((a) => (
-                  <MenuItem key={a.code} value={a.code}>
-                    {a.code} — {a.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField select label="Shipping Line" fullWidth value={consol.shippingLine} disabled={!editable} onChange={(e) => setConsol({ shippingLine: e.target.value })}>
-                {shippingLines.map((s) => (
-                  <MenuItem key={s.code} value={s.code}>
-                    {s.code} — {s.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField label="S/Line Agent" fullWidth value={consol.sLineAgent} disabled={!editable} onChange={(e) => setConsol({ sLineAgent: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField select label="Port of Load" fullWidth value={consol.portOfLoad} disabled={!editable} onChange={(e) => setConsol({ portOfLoad: e.target.value })}>
-                {seaPorts.map((p) => (
-                  <MenuItem key={p.code} value={p.code}>
-                    {p.code}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-            <FormField md={6}>
-              <TextField select label="Port of Discharge" fullWidth value={consol.portOfDischarge} disabled={!editable} onChange={(e) => setConsol({ portOfDischarge: e.target.value })}>
-                {seaPorts.map((p) => (
-                  <MenuItem key={p.code} value={p.code}>
-                    {p.code}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Wharf" fullWidth value={consol.wharf} disabled={!editable} onChange={(e) => setConsol({ wharf: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Terminal" fullWidth value={consol.terminal} disabled={!editable} onChange={(e) => setConsol({ terminal: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="MBL No." fullWidth value={consol.mblNo} disabled={!editable} onChange={(e) => setConsol({ mblNo: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.mblDate} disabled={!editable} onChange={(e) => setConsol({ mblDate: e.target.value })} />
-            </FormField>
-          </FormRow>
-        </Grid>
-
-        <Grid item xs={12} md={4.5}>
-          <SectionHeader>Voyage &amp; Container</SectionHeader>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Vessel" fullWidth value={consol.vessel} disabled={!editable} onChange={(e) => setConsol({ vessel: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Voyage" fullWidth value={consol.voyage} disabled={!editable} onChange={(e) => setConsol({ voyage: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Rotation No." fullWidth value={consol.rotationNo} disabled={!editable} onChange={(e) => setConsol({ rotationNo: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField label="Container No." fullWidth value={consol.containerNo} disabled={!editable} onChange={(e) => setConsol({ containerNo: e.target.value })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Size" fullWidth value={consol.size} disabled={!editable} onChange={(e) => setConsol({ size: e.target.value })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Seal No." fullWidth value={consol.sealNo} disabled={!editable} onChange={(e) => setConsol({ sealNo: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Container Types" fullWidth value={consol.containerTypes} disabled={!editable} onChange={(e) => setConsol({ containerTypes: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField
-                label="PickUp/Stuffing"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={consol.pickupStuffing}
-                disabled={!editable}
-                onChange={(e) => setConsol({ pickupStuffing: e.target.value })}
-              />
-            </FormField>
-            <FormField md={6}>
-              <TextField
-                label="Cut Off Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={consol.cutOffDate}
-                disabled={!editable}
-                onChange={(e) => setConsol({ cutOffDate: e.target.value })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={4}>
-              <TextField
-                label="Sailing Date"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={consol.sailingDate}
-                disabled={!editable}
-                onChange={(e) => setConsol({ sailingDate: e.target.value })}
-              />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="POL ETA" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.polEta} disabled={!editable} onChange={(e) => setConsol({ polEta: e.target.value })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="POL ETD" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.polEtd} disabled={!editable} onChange={(e) => setConsol({ polEtd: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField
-                label="ETA At Dest"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={consol.etaAtDest}
-                disabled={!editable}
-                onChange={(e) => setConsol({ etaAtDest: e.target.value })}
-              />
-            </FormField>
-          </FormRow>
-          <Button variant="contained" disabled={!editable || !consol.consolNo || selected.size === 0} onClick={handleUpdate}>
-            Update ({selected.size} selected)
-          </Button>
+          <WorkflowSection title="Vessel & Container" subtitle="Enter vessel schedule and container details" open={openSections.voyage} onToggle={() => toggleSection('voyage')}>
+            <FormRow>
+              <FormField><TextField label="Vessel" fullWidth value={consol.vessel} disabled={!editable} onChange={(event) => setConsol({ vessel: event.target.value })} /></FormField>
+              <FormField><TextField label="Voyage" fullWidth value={consol.voyage} disabled={!editable} onChange={(event) => setConsol({ voyage: event.target.value })} /></FormField>
+            </FormRow>
+            <FormRow>
+              <FormField><TextField label="Rotation No." fullWidth value={consol.rotationNo} disabled={!editable} onChange={(event) => setConsol({ rotationNo: event.target.value })} /></FormField>
+              <FormField><TextField label="Container No." fullWidth value={consol.containerNo} disabled={!editable} onChange={(event) => setConsol({ containerNo: event.target.value })} /></FormField>
+            </FormRow>
+            <FormRow>
+              <FormField>{select('Size', consol.size, sizes.map((size) => ({ value: size, label: size })), (value) => setConsol({ size: value }))}</FormField>
+              <FormField><TextField label="Seal No." fullWidth value={consol.sealNo} disabled={!editable} onChange={(event) => setConsol({ sealNo: event.target.value })} /></FormField>
+            </FormRow>
+            <FormRow><FormField md={12}><TextField label="Container Types" fullWidth value={consol.containerTypes} disabled={!editable} onChange={(event) => setConsol({ containerTypes: event.target.value })} /></FormField></FormRow>
+            <FormRow>
+              <FormField><TextField label="PickUp/Stuffing" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.pickupStuffing} disabled={!editable} onChange={(event) => setConsol({ pickupStuffing: event.target.value })} /></FormField>
+              <FormField><TextField label="Cut Off Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.cutOffDate} disabled={!editable} onChange={(event) => setConsol({ cutOffDate: event.target.value })} /></FormField>
+            </FormRow>
+            <FormRow>
+              <FormField><TextField label="Sailing Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.sailingDate} disabled={!editable} onChange={(event) => setConsol({ sailingDate: event.target.value })} /></FormField>
+              <FormField><TextField label="POL ETA" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.polEta} disabled={!editable} onChange={(event) => setConsol({ polEta: event.target.value })} /></FormField>
+              <FormField><TextField label="ETA Time" type="time" fullWidth value={consol.polEtaTime ?? ''} disabled={!editable} onChange={(event) => setConsol({ polEtaTime: event.target.value })} /></FormField>
+            </FormRow>
+            <FormRow>
+              <FormField><TextField label="POL ETD" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.polEtd} disabled={!editable} onChange={(event) => setConsol({ polEtd: event.target.value })} /></FormField>
+              <FormField><TextField label="ETD Time" type="time" fullWidth value={consol.polEtdTime ?? ''} disabled={!editable} onChange={(event) => setConsol({ polEtdTime: event.target.value })} /></FormField>
+              <FormField><TextField label="ETA At Dest" type="date" fullWidth InputLabelProps={{ shrink: true }} value={consol.etaAtDest} disabled={!editable} onChange={(event) => setConsol({ etaAtDest: event.target.value })} /></FormField>
+            </FormRow>
+            <FormRow><FormField><TextField label="Destination ETA Time" type="time" fullWidth value={consol.etaAtDestTime ?? ''} disabled={!editable} onChange={(event) => setConsol({ etaAtDestTime: event.target.value })} /></FormField></FormRow>
+          </WorkflowSection>
         </Grid>
       </Grid>
 
-      <SectionHeader>Job Selection Grid</SectionHeader>
-      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-        <Table size="small" sx={{ minWidth: 1700, '& .MuiTableCell-root': { borderRight: '1px solid #d7dee8' }, '& .MuiTableHead-root .MuiTableCell-root': { fontWeight: 700, borderColor: '#315a9a', bgcolor: '#f8fafc' } }}>
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox" />
-              <TableCell>Sr.No.</TableCell>
-              <TableCell>Consol No.</TableCell>
-              <TableCell>Job No.</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Branch</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>MBL/HBL No.</TableCell>
-              <TableCell>LCL/FCL</TableCell>
-              <TableCell>Container Nos.</TableCell><TableCell>Vessel</TableCell><TableCell>Voyage</TableCell><TableCell>ETD</TableCell><TableCell>PCS</TableCell><TableCell>Grs. Weight</TableCell><TableCell>Party/Agent Party Name/SPO Name</TableCell><TableCell>Shipping Line</TableCell><TableCell>Loading Place</TableCell><TableCell>Discharge Place</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell padding="checkbox" />
-              {['Sr.', 'Consol', 'Job', 'Date', 'Branch', 'Type', 'MBL/HBL', 'LCL/FCL', 'Container', 'Vessel', 'Voyage', 'ETD', 'PCS', 'Weight', 'Party', 'Shipping', 'Loading', 'Discharge'].map((placeholder) => (
-                <TableCell key={placeholder}>
-                  <TextField size="small" select={['Branch', 'Type', 'LCL/FCL'].includes(placeholder)} placeholder={placeholder} value={columnFilters[placeholder] ?? ''} onChange={(event) => { setColumnFilters({ ...columnFilters, [placeholder]: event.target.value }); setGridPage(0); }} SelectProps={{ displayEmpty: true }} sx={{ minWidth: 75, '& .MuiInputBase-input, & .MuiSelect-select': { py: 0.55, fontSize: 12 } }}>
-                    {['Branch', 'Type', 'LCL/FCL'].includes(placeholder) && <MenuItem value="">All</MenuItem>}
-                    {placeholder === 'Branch' && ['KHI', 'LHE', 'ISB'].map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
-                    {placeholder === 'Type' && ['EXPORT', 'IMPORT', 'Freight'].map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
-                    {placeholder === 'LCL/FCL' && ['LCL', 'FCL'].map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
-                  </TextField>
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredCandidates.length === 0 ? (
+      <WorkflowSection title="Job Selection Grid" subtitle="Select eligible export jobs to attach to this consolidation" open={openSections.grid} onToggle={() => toggleSection('grid')}>
+        <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1.5 }}>
+          <TextField label="Search jobs" value={gridFilter} onChange={(event) => { setGridFilter(event.target.value); setPage(0); }} />
+        </Stack>
+        <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 1850, '& .MuiTableCell-root': { whiteSpace: 'nowrap' } }}>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={19} align="center">
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                    No jobs — adjust filters and click Show Detail.
-                  </Typography>
-                </TableCell>
+                <TableCell rowSpan={2} padding="checkbox"><Checkbox size="small" checked={paginatedCandidates.length > 0 && paginatedCandidates.every((item) => selected.has(item.id))} indeterminate={paginatedCandidates.some((item) => selected.has(item.id)) && !paginatedCandidates.every((item) => selected.has(item.id))} onChange={(event) => setSelected((current) => {
+                  const next = new Set(current);
+                  paginatedCandidates.forEach((item) => event.target.checked ? next.add(item.id) : next.delete(item.id));
+                  return next;
+                })} /></TableCell>
+                <TableCell rowSpan={2}>Sr.No.</TableCell>
+                <TableCell rowSpan={2}>Consol No.</TableCell>
+                <TableCell colSpan={4} align="center">Job</TableCell>
+                <TableCell rowSpan={2}>MBL/HBL No.</TableCell>
+                <TableCell rowSpan={2}>LCL/FCL</TableCell>
+                <TableCell rowSpan={2}>Container Nos.</TableCell>
+                <TableCell rowSpan={2}>Vessel</TableCell>
+                <TableCell rowSpan={2}>Voyage</TableCell>
+                <TableCell rowSpan={2}>ETD</TableCell>
+                <TableCell rowSpan={2}>PCS</TableCell>
+                <TableCell rowSpan={2}>Grs. Weight</TableCell>
+                <TableCell rowSpan={2}>Party / Agent / SPO</TableCell>
+                <TableCell rowSpan={2}>Shipping Line</TableCell>
+                <TableCell rowSpan={2}>Loading Place</TableCell>
+                <TableCell rowSpan={2}>Discharge Place</TableCell>
               </TableRow>
-            ) : (
-              paginatedCandidates.map((c, index) => (
-                <TableRow key={c.id} hover selected={selected.has(c.id)}>
-                  <TableCell padding="checkbox">
-                    <Checkbox size="small" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} />
-                  </TableCell>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{c.consolNo}</TableCell>
-                  <TableCell>
-                    {c.jobNo} / {c.date}
-                  </TableCell>
-                  <TableCell>
-                    {c.mblNo} / {c.hblNo}
-                  </TableCell>
-                  <TableCell>{c.lclFcl}</TableCell>
-                  <TableCell>
-                    {c.vessel} / {c.voyage}
-                  </TableCell>
-                  <TableCell>{c.partyName || c.partyCode}</TableCell>
-                  <TableCell>
-                    {c.portOfLoad} → {c.destination}
-                  </TableCell>
+              <TableRow><TableCell>No.</TableCell><TableCell>Date</TableCell><TableCell>Branch</TableCell><TableCell>Type</TableCell></TableRow>
+            </TableHead>
+            <TableBody>
+              {paginatedCandidates.length === 0 ? <TableRow><TableCell colSpan={20} align="center" sx={{ py: 3 }}>No jobs found. Set filters and select Show Detail.</TableCell></TableRow> : paginatedCandidates.map((candidate, index) => (
+                <TableRow key={candidate.id} hover selected={selected.has(candidate.id)}>
+                  <TableCell padding="checkbox"><Checkbox size="small" checked={selected.has(candidate.id)} onChange={() => toggleSelect(candidate.id)} /></TableCell>
+                  <TableCell>{currentPage * rowsPerPage + index + 1}</TableCell>
+                  <TableCell>{candidate.consolNo}</TableCell>
+                  <TableCell>{candidate.jobNo}</TableCell>
+                  <TableCell>{candidate.date}</TableCell>
+                  <TableCell>{candidate.branch}</TableCell>
+                  <TableCell>{candidate.jobType}</TableCell>
+                  <TableCell>{[candidate.mblNo, candidate.hblNo].filter(Boolean).join(' / ')}</TableCell>
+                  <TableCell>{candidate.lclFcl}</TableCell>
+                  <TableCell>{containerNumbers(candidate)}</TableCell>
+                  <TableCell>{candidate.vessel}</TableCell>
+                  <TableCell>{candidate.voyage}</TableCell>
+                  <TableCell>{candidate.polEtd}</TableCell>
+                  <TableCell>{candidate.noOfPackages}</TableCell>
+                  <TableCell>{candidate.grossWeight}</TableCell>
+                  <TableCell>{partySummary(candidate)}</TableCell>
+                  <TableCell>{candidate.shippingLine}</TableCell>
+                  <TableCell>{candidate.portOfLoad}</TableCell>
+                  <TableCell>{candidate.destination}</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination component="div" count={filteredCandidates.length} page={gridPage} rowsPerPage={gridRowsPerPage} onPageChange={(_, nextPage) => setGridPage(nextPage)} onRowsPerPageChange={(event) => { setGridRowsPerPage(Number(event.target.value)); setGridPage(0); }} rowsPerPageOptions={[5, 10, 25, 50]} labelRowsPerPage="Rows per page" />
-      </Paper>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+        <TablePagination component="div" count={filteredCandidates.length} page={currentPage} rowsPerPage={rowsPerPage} onPageChange={(_, nextPage) => setPage(nextPage)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[5, 10, 25, 50]} labelRowsPerPage="Rows per page" />
+        <Button variant="contained" disabled={!editable || !consol.consolNo || selected.size === 0} onClick={updateSelected}>Update Selected Jobs ({selected.size})</Button>
+      </WorkflowSection>
     </Box>
   );
 }

@@ -33,7 +33,7 @@ import {
   currencyRepo,
   partyRepo,
 } from "../../data/masterDataService";
-import { controlCodeRepo } from "../../data/financeSetupService";
+import { chartAccountRepo, controlCodeRepo } from "../../data/financeSetupService";
 
 export function BankReceiptEntryGrid({
   voucher,
@@ -60,6 +60,11 @@ export function BankReceiptEntryGrid({
       kind: "Party",
     })),
     ...controlCodeRepo.list().map((account) => ({
+      code: account.code,
+      name: account.name,
+      kind: "Account",
+    })),
+    ...chartAccountRepo.list().map((account) => ({
       code: account.code,
       name: account.name,
       kind: "Account",

@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { AnalysisCode, ControlCode, GroupCode } from '../domain/finance';
+import { AnalysisCode, ChartAccount, ControlCode, GroupCode } from '../domain/finance';
 import { isSeeded, markSeeded } from './localStore';
 import { Repository } from './repository';
 
@@ -13,6 +13,7 @@ const withAudit = <T extends object>(item: T) => ({
 
 export const groupCodeRepo = new Repository<GroupCode>('groupCodes');
 export const controlCodeRepo = new Repository<ControlCode>('controlCodes');
+export const chartAccountRepo = new Repository<ChartAccount>('chartAccounts');
 export const analysisCodeRepo = new Repository<AnalysisCode>('analysisCodes');
 
 function seedIfEmpty() {

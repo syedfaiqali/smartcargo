@@ -1,10 +1,11 @@
+import { ReactNode, useState } from 'react';
 import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
-import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
+import TextField from '@mui/material/TextField';
+import { FormField, FormRow } from '../../../components/FormGrid';
+import { WorkflowSection } from '../../../components/WorkflowSection';
+import { agentRepo, partyRepo, seaPortRepo } from '../../../data/masterDataService';
 import { SeaExportJob } from '../../../domain/seaExportJob';
-import { partyRepo } from '../../../data/masterDataService';
 
 interface InstructionLetterTabProps {
   job: SeaExportJob;
@@ -12,180 +13,133 @@ interface InstructionLetterTabProps {
   onChange: (job: SeaExportJob) => void;
 }
 
+const formETypes = [
+  { code: '001', name: 'Form E No.' },
+  { code: '002', name: 'Fin. Inst. No.' },
+  { code: '003', name: 'EPZ NOC No.' },
+  { code: '004', name: 'GD No.' },
+];
+
 export function InstructionLetterTab({ job, editable, onChange }: InstructionLetterTabProps) {
-  const parties = partyRepo.list();
+  const [openSection, setOpenSection] = useState('identification');
   const il = job.instructionLetter;
-  const setIl = (patch: Partial<SeaExportJob['instructionLetter']>) => onChange({ ...job, instructionLetter: { ...il, ...patch } });
+  const parties = partyRepo.list();
+  const deliveryAgents = agentRepo.find((agent) => agent.kind === 'DELIVERY');
+  const ports = seaPortRepo.list();
+  const selectedDeliveryAgent = deliveryAgents.find((agent) => agent.code === il.deliveryAgent);
+  const setIl = (patch: Partial<SeaExportJob['instructionLetter']>) =>
+    onChange({ ...job, instructionLetter: { ...il, ...patch } });
+  const section = (id: string, title: string, subtitle: string, children: ReactNode) => (
+    <WorkflowSection key={id} title={title} subtitle={subtitle} open={openSection === id} onToggle={() => setOpenSection(openSection === id ? '' : id)}>
+      {children}
+    </WorkflowSection>
+  );
+  const portSelect = (label: string, value: string, onSelect: (next: string) => void) => (
+    <TextField select label={label} fullWidth value={value} disabled={!editable} onChange={(event) => onSelect(event.target.value)}>
+      <MenuItem value="">Select {label}</MenuItem>
+      {value && !ports.some((port) => port.code === value) && <MenuItem value={value}>{value}</MenuItem>}
+      {ports.map((port) => <MenuItem key={port.code} value={port.code}>{port.code} — {port.name}</MenuItem>)}
+    </TextField>
+  );
 
   return (
     <Box>
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
-          <SectionHeader>Identification</SectionHeader>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="MBL No." fullWidth value={il.mblNo} disabled={!editable} onChange={(e) => setIl({ mblNo: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="HBL No." fullWidth value={il.hblNo} disabled={!editable} onChange={(e) => setIl({ hblNo: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Doc/Ref. #" fullWidth value={il.docRefNo} disabled={!editable} onChange={(e) => setIl({ docRefNo: e.target.value })} />
-            </FormField>
-          </FormRow>
+      {section('identification', 'B/L Identification', 'Enter master, house and document reference numbers', <FormRow>
+        <FormField><TextField label="MBL No." fullWidth value={il.mblNo} disabled={!editable} onChange={(event) => setIl({ mblNo: event.target.value })} /></FormField>
+        <FormField><TextField label="HBL No." fullWidth value={il.hblNo} disabled={!editable} onChange={(event) => setIl({ hblNo: event.target.value })} /></FormField>
+        <FormField><TextField label="Doc/Ref. #" fullWidth value={il.docRefNo} disabled={!editable} onChange={(event) => setIl({ docRefNo: event.target.value })} /></FormField>
+      </FormRow>)}
 
-          <SectionHeader>Party</SectionHeader>
-          <FormRow>
-            <FormField md={12}>
-              <TextField select label="Party Code" fullWidth value={il.partyCode} disabled={!editable} onChange={(e) => setIl({ partyCode: e.target.value })}>
-                {parties.map((p) => (
-                  <MenuItem key={p.code} value={p.code}>
-                    {p.code} — {p.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Agent Party" fullWidth value={il.agentParty} disabled={!editable} onChange={(e) => setIl({ agentParty: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Address" fullWidth multiline minRows={2} value={il.address} disabled={!editable} onChange={(e) => setIl({ address: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Consignee" fullWidth multiline minRows={2} value={il.consignee} disabled={!editable} onChange={(e) => setIl({ consignee: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Notify" fullWidth multiline minRows={2} value={il.notify} disabled={!editable} onChange={(e) => setIl({ notify: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Also Notify" fullWidth multiline minRows={2} value={il.alsoNotify} disabled={!editable} onChange={(e) => setIl({ alsoNotify: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Delivery Agent" fullWidth value={il.deliveryAgent} disabled={!editable} onChange={(e) => setIl({ deliveryAgent: e.target.value })} />
-            </FormField>
-          </FormRow>
-        </Grid>
+      {section('parties', 'Parties & Addresses', 'Select the party and agent, then complete the letter recipients', <>
+        <FormRow>
+          <FormField><TextField select label="Party Code" fullWidth value={il.partyCode} disabled={!editable} onChange={(event) => {
+            const party = parties.find((item) => item.code === event.target.value);
+            setIl({ partyCode: event.target.value, ...(party ? { address: party.address } : {}) });
+          }}>
+            <MenuItem value="">Select Party Code</MenuItem>
+            {il.partyCode && !parties.some((party) => party.code === il.partyCode) && <MenuItem value={il.partyCode}>{il.partyCode}</MenuItem>}
+            {parties.map((party) => <MenuItem key={party.code} value={party.code}>{party.code} — {party.name}</MenuItem>)}
+          </TextField></FormField>
+          <FormField><TextField select label="Agent Party" fullWidth value={il.agentParty} disabled={!editable} onChange={(event) => setIl({ agentParty: event.target.value })}>
+            <MenuItem value="">Select Agent Party</MenuItem>
+            {il.agentParty && !parties.some((party) => party.code === il.agentParty) && <MenuItem value={il.agentParty}>{il.agentParty}</MenuItem>}
+            {parties.map((party) => <MenuItem key={party.code} value={party.code}>{party.code} — {party.name}</MenuItem>)}
+          </TextField></FormField>
+          <FormField><TextField label="Address" fullWidth multiline minRows={2} value={il.address} disabled={!editable} onChange={(event) => setIl({ address: event.target.value })} /></FormField>
+        </FormRow>
+        <FormRow>
+          <FormField><TextField label="Consignee" fullWidth multiline minRows={3} value={il.consignee} disabled={!editable} onChange={(event) => setIl({ consignee: event.target.value })} /></FormField>
+          <FormField><TextField label="Notify" fullWidth multiline minRows={3} value={il.notify} disabled={!editable} onChange={(event) => setIl({ notify: event.target.value })} /></FormField>
+          <FormField><TextField label="Also Notify" fullWidth multiline minRows={3} value={il.alsoNotify} disabled={!editable} onChange={(event) => setIl({ alsoNotify: event.target.value })} /></FormField>
+        </FormRow>
+        <FormRow>
+          <FormField><TextField select label="Delivery Agent" fullWidth value={il.deliveryAgent} disabled={!editable} onChange={(event) => setIl({ deliveryAgent: event.target.value })}>
+            <MenuItem value="">Select Delivery Agent</MenuItem>
+            {il.deliveryAgent && !deliveryAgents.some((agent) => agent.code === il.deliveryAgent) && <MenuItem value={il.deliveryAgent}>{il.deliveryAgent}</MenuItem>}
+            {deliveryAgents.map((agent) => <MenuItem key={agent.code} value={agent.code}>{agent.code} — {agent.name}</MenuItem>)}
+          </TextField></FormField>
+        </FormRow>
+        {selectedDeliveryAgent && <FormRow>
+          <FormField md={12}><TextField label="Delivery Agent Contact Details" fullWidth multiline minRows={3} value={[
+            selectedDeliveryAgent.name,
+            selectedDeliveryAgent.address,
+            selectedDeliveryAgent.phoneNo && `Tel: ${selectedDeliveryAgent.phoneNo}`,
+            selectedDeliveryAgent.contactPerson && `POC: ${selectedDeliveryAgent.contactPerson}`,
+            selectedDeliveryAgent.email && `Email: ${selectedDeliveryAgent.email}`,
+          ].filter(Boolean).join('\n')} InputProps={{ readOnly: true }} /></FormField>
+        </FormRow>}
+      </>)}
 
-        <Grid item xs={12} md={4}>
-          <SectionHeader>Export &amp; Voyage</SectionHeader>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Form E No." fullWidth value={il.formENo} disabled={!editable} onChange={(e) => setIl({ formENo: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={il.formEDate} disabled={!editable} onChange={(e) => setIl({ formEDate: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Vessel" fullWidth value={il.vessel} disabled={!editable} onChange={(e) => setIl({ vessel: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Voyage" fullWidth value={il.voyage} disabled={!editable} onChange={(e) => setIl({ voyage: e.target.value })} />
-            </FormField>
-          </FormRow>
+      {section('voyage', 'Export Document & Voyage', 'Enter Form E, vessel and voyage information', <FormRow>
+        <FormField><TextField select label="Form E Type" fullWidth value={job.selectFromE} disabled={!editable} onChange={(event) => onChange({ ...job, selectFromE: event.target.value })}>
+          <MenuItem value="">Select Form E Type</MenuItem>
+          {formETypes.map((type) => <MenuItem key={type.code} value={type.code}>{type.code} — {type.name}</MenuItem>)}
+        </TextField></FormField>
+        <FormField><TextField label="Form E No." fullWidth value={il.formENo} disabled={!editable} onChange={(event) => setIl({ formENo: event.target.value })} /></FormField>
+        <FormField><TextField label="Date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={il.formEDate} disabled={!editable} onChange={(event) => setIl({ formEDate: event.target.value })} /></FormField>
+        <FormField><TextField label="Vessel" fullWidth value={il.vessel} disabled={!editable} onChange={(event) => setIl({ vessel: event.target.value })} /></FormField>
+        <FormField><TextField label="Voyage" fullWidth value={il.voyage} disabled={!editable} onChange={(event) => setIl({ voyage: event.target.value })} /></FormField>
+      </FormRow>)}
 
-          <SectionHeader>Movement Route</SectionHeader>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Place of Receipt" fullWidth value={il.placeOfReceipt} disabled={!editable} onChange={(e) => setIl({ placeOfReceipt: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Place of Loading" fullWidth value={il.placeOfLoading} disabled={!editable} onChange={(e) => setIl({ placeOfLoading: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Place of Discharge" fullWidth value={il.placeOfDischarge} disabled={!editable} onChange={(e) => setIl({ placeOfDischarge: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Place of Delivery" fullWidth value={il.placeOfDelivery} disabled={!editable} onChange={(e) => setIl({ placeOfDelivery: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Freight Payable At" fullWidth value={il.freightPayableAt} disabled={!editable} onChange={(e) => setIl({ freightPayableAt: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="No. of Orig B/Ls" type="number" fullWidth value={il.noOfOrigBLs} disabled={!editable} onChange={(e) => setIl({ noOfOrigBLs: Number(e.target.value) })} />
-            </FormField>
-          </FormRow>
-        </Grid>
+      {section('route', 'Movement Route & Freight Terms', 'Set the shipment route and B/L freight terms', <>
+        <FormRow>
+          <FormField><TextField label="Place of Receipt" fullWidth value={il.placeOfReceipt} disabled={!editable} onChange={(event) => setIl({ placeOfReceipt: event.target.value })} /></FormField>
+          <FormField>{portSelect('Place of Loading', il.placeOfLoading, (value) => setIl({ placeOfLoading: value }))}</FormField>
+          <FormField>{portSelect('Port of Discharge', il.placeOfDischarge, (value) => setIl({ placeOfDischarge: value }))}</FormField>
+          <FormField>{portSelect('Place of Delivery', il.placeOfDelivery, (value) => setIl({ placeOfDelivery: value }))}</FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>{portSelect('Freight Payable At', il.freightPayableAt, (value) => setIl({ freightPayableAt: value }))}</FormField>
+          <FormField><TextField label="No. of Orig B/Ls" type="number" fullWidth value={il.noOfOrigBLs} disabled={!editable} onChange={(event) => setIl({ noOfOrigBLs: Number(event.target.value) })} /></FormField>
+        </FormRow>
+      </>)}
 
-        <Grid item xs={12} md={4}>
-          <SectionHeader>Measurements &amp; Booking</SectionHeader>
-          <FormRow>
-            <FormField md={4}>
-              <TextField label="CBM" type="number" fullWidth value={il.cbm} disabled={!editable} onChange={(e) => setIl({ cbm: Number(e.target.value) })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Gross Weight" type="number" fullWidth value={il.grossWeight} disabled={!editable} onChange={(e) => setIl({ grossWeight: Number(e.target.value) })} />
-            </FormField>
-            <FormField md={4}>
-              <TextField label="Vol. Weight" type="number" fullWidth value={il.volWeight} disabled={!editable} onChange={(e) => setIl({ volWeight: Number(e.target.value) })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Net Weight" type="number" fullWidth value={il.netWeight} disabled={!editable} onChange={(e) => setIl({ netWeight: Number(e.target.value) })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="Booking No." fullWidth value={il.bookingNo} disabled={!editable} onChange={(e) => setIl({ bookingNo: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={6}>
-              <TextField label="Reference" fullWidth value={il.reference} disabled={!editable} onChange={(e) => setIl({ reference: e.target.value })} />
-            </FormField>
-            <FormField md={6}>
-              <TextField label="MOP" fullWidth value={il.mop} disabled={!editable} onChange={(e) => setIl({ mop: e.target.value })} />
-            </FormField>
-          </FormRow>
+      {section('measurements', 'Measurements & Booking', 'Enter cargo measurements, booking reference and payment method', <>
+        <FormRow>
+          <FormField><TextField label="CBM" type="number" fullWidth value={il.cbm} disabled={!editable} onChange={(event) => setIl({ cbm: Number(event.target.value) })} /></FormField>
+          <FormField><TextField label="Gross Weight" type="number" fullWidth value={il.grossWeight} disabled={!editable} onChange={(event) => setIl({ grossWeight: Number(event.target.value) })} /></FormField>
+          <FormField><TextField label="Vol. Weight" type="number" fullWidth value={il.volWeight} disabled={!editable} onChange={(event) => setIl({ volWeight: Number(event.target.value) })} /></FormField>
+        </FormRow>
+        <FormRow>
+          <FormField><TextField label="Net Weight" type="number" fullWidth value={il.netWeight} disabled={!editable} onChange={(event) => setIl({ netWeight: Number(event.target.value) })} /></FormField>
+          <FormField><TextField label="Booking No." fullWidth value={il.bookingNo} disabled={!editable} onChange={(event) => setIl({ bookingNo: event.target.value })} /></FormField>
+          <FormField><TextField label="Reference" fullWidth value={il.reference} disabled={!editable} onChange={(event) => setIl({ reference: event.target.value })} /></FormField>
+        </FormRow>
+        <FormRow><FormField><TextField select label="MOP" fullWidth value={il.mop} disabled={!editable} onChange={(event) => setIl({ mop: event.target.value })}>
+          <MenuItem value="">Select MOP</MenuItem>
+          {il.mop && !['PP', 'CC'].includes(il.mop) && <MenuItem value={il.mop}>{il.mop}</MenuItem>}
+          <MenuItem value="PP">PP</MenuItem><MenuItem value="CC">CC</MenuItem>
+        </TextField></FormField></FormRow>
+      </>)}
 
-          <SectionHeader>Instructions</SectionHeader>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Marks &amp; Nos." fullWidth multiline minRows={3} value={il.marksAndNos} disabled={!editable} onChange={(e) => setIl({ marksAndNos: e.target.value })} />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField
-                label="Description of Packages and Goods"
-                fullWidth
-                multiline
-                minRows={3}
-                value={il.descriptionOfGoods}
-                disabled={!editable}
-                onChange={(e) => setIl({ descriptionOfGoods: e.target.value })}
-              />
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField md={12}>
-              <TextField label="Sheet (continuation)" fullWidth multiline minRows={2} value={il.sheet} disabled={!editable} onChange={(e) => setIl({ sheet: e.target.value })} />
-            </FormField>
-          </FormRow>
-        </Grid>
-      </Grid>
+      {section('instructions', 'Cargo Instructions', 'Enter marks, package and goods descriptions for the letter', <>
+        <FormRow><FormField md={12}><TextField label="Marks & Nos." fullWidth multiline minRows={3} value={il.marksAndNos} disabled={!editable} onChange={(event) => setIl({ marksAndNos: event.target.value })} /></FormField></FormRow>
+        <FormRow><FormField md={12}><TextField label="Description of Packages and Goods" fullWidth multiline minRows={4} value={il.descriptionOfGoods} disabled={!editable} onChange={(event) => setIl({ descriptionOfGoods: event.target.value })} /></FormField></FormRow>
+      </>)}
+
+      {section('sheet', 'Sheet', 'Enter any continuation text for the instruction letter', <FormRow>
+        <FormField md={12}><TextField label="Sheet (continuation)" fullWidth multiline minRows={6} value={il.sheet} disabled={!editable} onChange={(event) => setIl({ sheet: event.target.value })} /></FormField>
+      </FormRow>)}
     </Box>
   );
 }

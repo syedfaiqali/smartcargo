@@ -1,22 +1,22 @@
+import { useEffect, useMemo, useState } from 'react';
 import { confirmDelete } from '../../../components/deleteConfirmation';
-import { useState } from 'react';
 import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import TablePagination from '@mui/material/TablePagination';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { FormRow, FormField, SectionHeader } from '../../../components/FormGrid';
-import { SeaExportJob } from '../../../domain/seaExportJob';
-import { SeaContainerRef } from '../../../domain/seaExportJob';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import { FormField, FormRow } from '../../../components/FormGrid';
+import { WorkflowSection } from '../../../components/WorkflowSection';
+import { agentRepo, containerTypeRepo, shippingLineRepo } from '../../../data/masterDataService';
+import { SeaContainerRef, SeaExportJob } from '../../../domain/seaExportJob';
 import { createEmptyContainer } from '../../../domain/seaExportJobFactory';
 
 interface ContainerTabProps {
@@ -25,206 +25,183 @@ interface ContainerTabProps {
   onChange: (job: SeaExportJob) => void;
 }
 
+const vehicleTypes = ['Truck', 'Trailer', 'Pickup', 'Other'];
+
 export function ContainerTab({ job, editable, onChange }: ContainerTabProps) {
   const [draft, setDraft] = useState<SeaContainerRef | null>(null);
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [detailsOpen, setDetailsOpen] = useState(true);
+  const [gridOpen, setGridOpen] = useState(true);
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const containerValues = (container: SeaContainerRef) => [container.serialNo, container.containerNo, container.sizeType, container.containerTypes, container.sealNo, container.pcd, container.vehicleNo, container.vehicleDate].map(String);
-  const filteredContainers = job.containers.filter((container) => containerValues(container).every((value, index) => value.toLowerCase().includes((filters[String(index)] ?? '').toLowerCase())));
-  const paginatedContainers = filteredContainers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const containerTypes = containerTypeRepo.list();
+  const transporters = [
+    ...shippingLineRepo.list().map((item) => item.name),
+    ...agentRepo.list().map((item) => item.name),
+  ].filter((name, index, all) => name && all.indexOf(name) === index);
 
-  const startNew = () => setDraft({ ...createEmptyContainer(), serialNo: job.containers.length + 1 });
+  useEffect(() => {
+    setDraft(editable ? { ...createEmptyContainer(), serialNo: Math.max(0, ...job.containers.map((item) => item.serialNo)) + 1 } : null);
+  }, [editable, job.id]);
 
-  const saveDraft = () => {
-    if (!draft) return;
-    onChange({ ...job, containers: [...job.containers, draft] });
-    setDraft(null);
-  };
-
-  const removeContainer = (id: string) => onChange({ ...job, containers: job.containers.filter((c) => c.id !== id) });
+  const filteredContainers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return job.containers;
+    return job.containers.filter((container) =>
+      [container.serialNo, container.containerNo, container.sizeType, container.containerTypes,
+        container.sealNo, container.pcd, container.vehicleNo, container.vehicleDate]
+        .join(' ').toLowerCase().includes(query),
+    );
+  }, [job.containers, search]);
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(filteredContainers.length / rowsPerPage) - 1));
 
   const setDraftField = <K extends keyof SeaContainerRef>(key: K, value: SeaContainerRef[K]) => {
-    if (!draft) return;
-    setDraft({ ...draft, [key]: value });
+    if (draft) setDraft({ ...draft, [key]: value });
+  };
+  const startNew = () => setDraft({ ...createEmptyContainer(), serialNo: Math.max(0, ...job.containers.map((item) => item.serialNo)) + 1 });
+  const saveDraft = () => {
+    if (!draft || !editable) return;
+    const exists = job.containers.some((container) => container.id === draft.id);
+    onChange({
+      ...job,
+      containers: exists
+        ? job.containers.map((container) => container.id === draft.id ? draft : container)
+        : [...job.containers, draft],
+    });
+    setDraft(null);
+  };
+  const editContainer = (container: SeaContainerRef) => {
+    setDraft({ ...container });
+    setDetailsOpen(true);
+  };
+  const removeContainer = (id: string) => onChange({ ...job, containers: job.containers.filter((container) => container.id !== id) });
+
+  const field = (label: string, key: keyof SeaContainerRef, type: string = 'text') => (
+    <TextField
+      label={label}
+      type={type}
+      fullWidth
+      value={draft?.[key] ?? ''}
+      disabled={!editable || !draft}
+      onChange={(event) => setDraftField(key, (type === 'number' ? Number(event.target.value) : event.target.value) as SeaContainerRef[typeof key])}
+      InputLabelProps={type === 'date' ? { shrink: true } : undefined}
+    />
+  );
+  const selectField = (label: string, key: keyof SeaContainerRef, options: string[]) => {
+    const value = String(draft?.[key] ?? '');
+    return (
+      <TextField select label={label} fullWidth value={value} disabled={!editable || !draft} onChange={(event) => setDraftField(key, event.target.value as SeaContainerRef[typeof key])}>
+        <MenuItem value="">Select {label}</MenuItem>
+        {value && !options.includes(value) && <MenuItem value={value}>{value}</MenuItem>}
+        {options.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+      </TextField>
+    );
   };
 
   return (
     <Box>
-      <SectionHeader>New Container Entry</SectionHeader>
-      {!draft ? (
-        <Button variant="outlined" disabled={!editable} onClick={startNew} sx={{ mb: 2 }}>
-          NEW
-        </Button>
-      ) : (
-        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <FormRow>
-                <FormField md={4}>
-                  <TextField label="Serial No." type="number" fullWidth value={draft.serialNo} disabled />
-                </FormField>
-                <FormField md={8}>
-                  <TextField label="Container No." fullWidth value={draft.containerNo} onChange={(e) => setDraftField('containerNo', e.target.value)} />
-                </FormField>
-              </FormRow>
-              <FormRow>
-                <FormField md={4}>
-                  <TextField label="Size" fullWidth value={draft.sizeType} onChange={(e) => setDraftField('sizeType', e.target.value)} />
-                </FormField>
-                <FormField md={4}>
-                  <TextField label="ISO Code" fullWidth value={draft.isoCode} onChange={(e) => setDraftField('isoCode', e.target.value)} />
-                </FormField>
-                <FormField md={4}>
-                  <TextField label="Container Types" fullWidth value={draft.containerTypes} onChange={(e) => setDraftField('containerTypes', e.target.value)} />
-                </FormField>
-              </FormRow>
-              <FormRow>
-                <FormField md={12}>
-                  <TextField label="Seal No." fullWidth value={draft.sealNo} onChange={(e) => setDraftField('sealNo', e.target.value)} />
-                </FormField>
-              </FormRow>
-              <FormRow>
-                <FormField md={4}>
-                  <TextField label="Vehicle Type" fullWidth value={draft.vehicleType} onChange={(e) => setDraftField('vehicleType', e.target.value)} />
-                </FormField>
-                <FormField md={4}>
-                  <TextField label="Vehicle No." fullWidth value={draft.vehicleNo} onChange={(e) => setDraftField('vehicleNo', e.target.value)} />
-                </FormField>
-                <FormField md={4}>
-                  <TextField
-                    label="Vehicle Date"
-                    type="date"
-                    fullWidth
-                    InputLabelProps={{ shrink: true }}
-                    value={draft.vehicleDate}
-                    onChange={(e) => setDraftField('vehicleDate', e.target.value)}
-                  />
-                </FormField>
-              </FormRow>
-              <FormRow>
-                <FormField md={4}>
-                  <TextField label="POL ETA" type="date" fullWidth InputLabelProps={{ shrink: true }} value={draft.polEta} onChange={(e) => setDraftField('polEta', e.target.value)} />
-                </FormField>
-                <FormField md={4}>
-                  <TextField label="POL ATA" type="date" fullWidth InputLabelProps={{ shrink: true }} value={draft.polAta} onChange={(e) => setDraftField('polAta', e.target.value)} />
-                </FormField>
-                <FormField md={4}>
-                  <TextField label="PCD" type="date" fullWidth InputLabelProps={{ shrink: true }} value={draft.pcd} onChange={(e) => setDraftField('pcd', e.target.value)} helperText="Confirm exact meaning" />
-                </FormField>
-              </FormRow>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormRow>
-                <FormField md={6}>
-                  <TextField label="Transporter Name" fullWidth value={draft.transporterName} onChange={(e) => setDraftField('transporterName', e.target.value)} />
-                </FormField>
-                <FormField md={6}>
-                  <TextField label="Driver Name" fullWidth value={draft.driverName} onChange={(e) => setDraftField('driverName', e.target.value)} />
-                </FormField>
-              </FormRow>
-              <FormRow>
-                <FormField md={6}>
-                  <TextField label="Mobile No." fullWidth value={draft.mobileNo} onChange={(e) => setDraftField('mobileNo', e.target.value)} />
-                </FormField>
-                <FormField md={6}>
-                  <TextField label="Charges" type="number" fullWidth value={draft.charges} onChange={(e) => setDraftField('charges', Number(e.target.value))} />
-                </FormField>
-              </FormRow>
-              <FormRow>
-                <FormField md={6}>
-                  <TextField label="From (POL)" fullWidth value={draft.fromPol} onChange={(e) => setDraftField('fromPol', e.target.value)} />
-                </FormField>
-                <FormField md={6}>
-                  <TextField label="To (POD)" fullWidth value={draft.toPod} onChange={(e) => setDraftField('toPod', e.target.value)} />
-                </FormField>
-              </FormRow>
-              <FormRow>
-                <FormField md={3}>
-                  <TextField label="No. of Pkgs" type="number" fullWidth value={draft.noOfPkgs} onChange={(e) => setDraftField('noOfPkgs', Number(e.target.value))} />
-                </FormField>
-                <FormField md={3}>
-                  <TextField label="Unit" fullWidth value={draft.unit} onChange={(e) => setDraftField('unit', e.target.value)} />
-                </FormField>
-                <FormField md={3}>
-                  <TextField label="CBM" type="number" fullWidth value={draft.cbm} onChange={(e) => setDraftField('cbm', Number(e.target.value))} />
-                </FormField>
-                <FormField md={3}>
-                  <TextField label="Gross Weight" type="number" fullWidth value={draft.grossWeight} onChange={(e) => setDraftField('grossWeight', Number(e.target.value))} />
-                </FormField>
-              </FormRow>
-              <FormRow>
-                <FormField md={6}>
-                  <TextField label="Net Weight" type="number" fullWidth value={draft.netWeight} onChange={(e) => setDraftField('netWeight', Number(e.target.value))} />
-                </FormField>
-              </FormRow>
-            </Grid>
-          </Grid>
-          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-            <Button variant="contained" onClick={saveDraft}>
-              Save Container
-            </Button>
-            <Button variant="text" onClick={() => setDraft(null)}>
-              Cancel
-            </Button>
-          </Box>
-        </Paper>
-      )}
+      <WorkflowSection
+        title="Container Details"
+        subtitle="Enter container, transport, pickup and cargo measurements"
+        open={detailsOpen}
+        onToggle={() => setDetailsOpen(!detailsOpen)}
+      >
+        {draft ? <>
+        <FormRow>
+          <FormField><TextField label="Serial No." type="number" fullWidth value={draft?.serialNo ?? ''} disabled /></FormField>
+          <FormField><>{field('Container No.', 'containerNo')}</></FormField>
+          <FormField>{selectField('Size', 'sizeType', containerTypes.map((item) => item.size).filter(Boolean))}</FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>{field('ISO Code', 'isoCode')}</FormField>
+          <FormField>{field('Container Types', 'containerTypes')}</FormField>
+          <FormField>{field('Seal No.', 'sealNo')}</FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>{selectField('Vehicle Type', 'vehicleType', vehicleTypes)}</FormField>
+          <FormField>{field('Vehicle No.', 'vehicleNo')}</FormField>
+          <FormField>{field('Vehicle Date', 'vehicleDate', 'date')}</FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>{field('POL ETA', 'polEta', 'date')}</FormField>
+          <FormField>{field('POL ATA', 'polAta', 'date')}</FormField>
+          <FormField>{field('PCD', 'pcd', 'date')}</FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>{selectField('Transporter Name', 'transporterName', transporters)}</FormField>
+          <FormField>{field('Driver Name', 'driverName')}</FormField>
+          <FormField>{field('Mobile No.', 'mobileNo')}</FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>{field('Charges', 'charges', 'number')}</FormField>
+          <FormField>{field('From (POL)', 'fromPol')}</FormField>
+          <FormField>{field('To (POD)', 'toPod')}</FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>{field('No. of Pkgs', 'noOfPkgs', 'number')}</FormField>
+          <FormField>{field('Unit', 'unit')}</FormField>
+          <FormField>{field('CBM', 'cbm', 'number')}</FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>{field('Gross Weight (kg)', 'grossWeight', 'number')}</FormField>
+          <FormField>{field('Net Weight (kg)', 'netWeight', 'number')}</FormField>
+        </FormRow>
+        <Stack direction="row" spacing={1}>
+          <Button variant="contained" disabled={!editable || !draft} onClick={saveDraft}>Save Container</Button>
+          <Button variant="outlined" disabled={!draft} onClick={() => setDraft(null)}>Cancel</Button>
+        </Stack>
+        </> : <Button variant="outlined" disabled={!editable} onClick={startNew}>New Container</Button>}
+      </WorkflowSection>
 
-      <SectionHeader>Container Grid</SectionHeader>
-      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Action</TableCell>
-              <TableCell>Serial No.</TableCell>
-              <TableCell>Container No.</TableCell>
-              <TableCell>Size</TableCell>
-              <TableCell>Container Types</TableCell>
-              <TableCell>Seal No.</TableCell>
-              <TableCell>PCD</TableCell>
-              <TableCell>Vehicle No.</TableCell>
-              <TableCell>Vehicle Date</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell />
-              {['Serial No.', 'Container No.', 'Size', 'Container Types', 'Seal No.', 'PCD', 'Vehicle No.', 'Vehicle Date'].map((placeholder, index) => (
-                <TableCell key={placeholder}><TextField size="small" type={placeholder.includes('Date') || placeholder === 'PCD' ? 'date' : 'text'} placeholder={placeholder} value={filters[String(index)] ?? ''} onChange={(event) => { setFilters({ ...filters, [String(index)]: event.target.value }); setPage(0); }} sx={{ minWidth: 95, '& .MuiInputBase-input': { py: 0.55, fontSize: 12 } }} /></TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredContainers.length === 0 ? (
+      <WorkflowSection
+        title="Container Grid"
+        subtitle="Search, review, edit or remove saved container rows"
+        open={gridOpen}
+        onToggle={() => setGridOpen(!gridOpen)}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1.5 }}>
+          <TextField label="Search containers" value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} />
+        </Box>
+        <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 1050, '& .MuiTableCell-root': { whiteSpace: 'nowrap' } }}>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={9} align="center">
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                    No containers registered.
-                  </Typography>
-                </TableCell>
+                {['Action', 'Serial No.', 'Container No.', 'Size', 'Container Types', 'Seal No.', 'PCD', 'Vehicle No.', 'Vehicle Date'].map((label) => <TableCell key={label}>{label}</TableCell>)}
               </TableRow>
-            ) : (
-              paginatedContainers.map((c) => (
-                <TableRow key={c.id} hover>
+            </TableHead>
+            <TableBody>
+              {filteredContainers.length === 0 ? (
+                <TableRow><TableCell colSpan={9} align="center" sx={{ py: 3 }}><Typography variant="body2" color="text.secondary">No containers found.</Typography></TableCell></TableRow>
+              ) : filteredContainers.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage).map((container) => (
+                <TableRow key={container.id} hover>
                   <TableCell>
-                    <IconButton size="small" disabled={!editable} onClick={() => confirmDelete(() => removeContainer(c.id))}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    <Button size="small" disabled={!editable} onClick={() => editContainer(container)}>Edit</Button>
+                    <Button size="small" color="error" disabled={!editable} onClick={() => confirmDelete(() => removeContainer(container.id))}>Delete</Button>
                   </TableCell>
-                  <TableCell>{c.serialNo}</TableCell>
-                  <TableCell>{c.containerNo}</TableCell>
-                  <TableCell>{c.sizeType}</TableCell>
-                  <TableCell>{c.containerTypes}</TableCell>
-                  <TableCell>{c.sealNo}</TableCell>
-                  <TableCell>{c.pcd}</TableCell>
-                  <TableCell>{c.vehicleNo}</TableCell>
-                  <TableCell>{c.vehicleDate}</TableCell>
+                  <TableCell>{container.serialNo}</TableCell>
+                  <TableCell>{container.containerNo}</TableCell>
+                  <TableCell>{container.sizeType}</TableCell>
+                  <TableCell>{container.containerTypes}</TableCell>
+                  <TableCell>{container.sealNo}</TableCell>
+                  <TableCell>{container.pcd}</TableCell>
+                  <TableCell>{container.vehicleNo}</TableCell>
+                  <TableCell>{container.vehicleDate}</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination component="div" count={filteredContainers.length} page={page} rowsPerPage={rowsPerPage} onPageChange={(_, nextPage) => setPage(nextPage)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} rowsPerPageOptions={[5, 10, 25, 50]} labelRowsPerPage="Rows per page" />
-      </Paper>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+        <TablePagination
+          component="div"
+          count={filteredContainers.length}
+          page={currentPage}
+          rowsPerPage={rowsPerPage}
+          onPageChange={(_, nextPage) => setPage(nextPage)}
+          onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          labelRowsPerPage="Rows per page"
+        />
+      </WorkflowSection>
     </Box>
   );
 }

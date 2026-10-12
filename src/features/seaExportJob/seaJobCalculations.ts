@@ -10,8 +10,10 @@ function sum<T>(items: T[], selector: (item: T) => number): number {
  * subtracted from gross profit until the real calculation rule is confirmed.
  */
 export function recomputeJobChargesTotals(job: SeaExportJob, kbAdjustment = 0): SeaExportJob {
-  const totalSellCharges = sum(job.jobCharges.lines, (l) => l.sellFAmount);
-  const totalBuyCharges = sum(job.jobCharges.lines, (l) => l.buyFAmount);
+  const rateFor = (currency: string) =>
+    job.jobCharges.currencies.find((item) => item.curr === currency)?.exRate ?? 0;
+  const totalSellCharges = sum(job.jobCharges.lines, (line) => line.sellFAmount * rateFor(line.curr));
+  const totalBuyCharges = sum(job.jobCharges.lines, (line) => line.buyFAmount * rateFor(line.curr));
   const totalGpAmount = totalSellCharges - totalBuyCharges;
   const totalGpLessKb = totalGpAmount - kbAdjustment;
 

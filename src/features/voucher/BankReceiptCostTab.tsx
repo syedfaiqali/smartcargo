@@ -20,7 +20,7 @@ import { NumberField } from "../../components/NumberField";
 import { SearchField } from "../../components/SearchField";
 import { confirmDelete } from "../../components/deleteConfirmation";
 import { Voucher, VoucherCostLine } from "../../domain/voucher";
-import { controlCodeRepo } from "../../data/financeSetupService";
+import { chartAccountRepo, controlCodeRepo } from "../../data/financeSetupService";
 import { bankRepo, partyRepo } from "../../data/masterDataService";
 
 interface Props {
@@ -69,6 +69,11 @@ export function BankReceiptCostTab({
   ];
   const options = [
     ...controlCodeRepo.list().map((a) => ({
+      value: a.code,
+      label: `${a.code} — ${a.name}`,
+      description: a.name,
+    })),
+    ...chartAccountRepo.list().map((a) => ({
       value: a.code,
       label: `${a.code} — ${a.name}`,
       description: a.name,

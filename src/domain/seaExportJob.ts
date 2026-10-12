@@ -136,7 +136,7 @@ export interface SeaExportJob extends AuditFields {
 
   lclFcl: "LL" | "LF" | "FL" | "FF" | "PF";
   mPpCc: string;
-  cyCfs: "CY" | "CFS";
+  cyCfs: "CYCFS" | "CFSCY" | "CYCY" | "CFCFS" | "CYSD" | "CY" | "CFS";
   hPpCc: string;
   cyCfsCutOff: IsoDate | "";
   roNo: string;
@@ -320,8 +320,11 @@ export interface SeaExportJob extends AuditFields {
     cutOffDate: IsoDate | "";
     sailingDate: IsoDate | "";
     polEta: IsoDate | "";
+    polEtaTime: string;
     polEtd: IsoDate | "";
+    polEtdTime: string;
     etaAtDest: IsoDate | "";
+    etaAtDestTime: string;
   };
 
   // --- 12.8 Instruction Letter Tab ---
@@ -365,6 +368,30 @@ export interface SeaExportJob extends AuditFields {
     todaysDate: IsoDate;
     attention: string;
     note: string;
+    hbl: {
+      printContainerSize: boolean;
+      watermark: "DRAFT_COPY" | "CERTIFIED_TRUE_COPY" | "NON_NEGOTIABLE_COPY" | "ORIGINAL" | "BL_SURRENDER" | "EXPRESS_RELEASED" | "TELEX_RELEASED" | "RECEIVED_FOR_SHIPMENT" | "NONE";
+      nonNegotiableText: string;
+      copies: { original: boolean; firstOriginal: boolean; secondOriginal: boolean; thirdOriginal: boolean; nonNegotiable: boolean; extra: number };
+      stamp: "ON_BOARD" | "SHIPPED_ON_BOARD" | "CLEAN_ON_BOARD" | "DO_NOT_PRINT";
+      printExtraSheet: boolean;
+      printContainersOnExtraSheet: boolean;
+      printCarrierName: boolean;
+      paper: "PRE_PRINTED" | "PLAIN_PAPER";
+      printBelowStamp: boolean;
+      stampText: string[];
+      additionalPrintText: string;
+      signatoryCode: string;
+      stampDate: IsoDate | "";
+    };
+    stuffingDetail: { printSpoName: boolean };
+    outer: { paper: "LETTER_PAD" | "PLAIN_PAPER" };
+    masterBlSpecimen: {
+      shipperAs: "COMPANY_NAME" | "SHIPPER_NAME";
+      consigneeAs: "CONSIGNEE_NAME" | "DELIVERY_AGENT";
+      notifyAs: "NOTIFY_NAME" | "DELIVERY_AGENT";
+      paper: "LETTER_PAD" | "PLAIN_PAPER";
+    };
   };
 
   status: RecordStatus & { closed: boolean };

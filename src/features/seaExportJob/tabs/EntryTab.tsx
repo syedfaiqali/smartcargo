@@ -1,5 +1,6 @@
 import { confirmDelete } from '../../../components/deleteConfirmation';
 import Box from "@mui/material/Box";
+import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -59,6 +60,9 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
   const [selectedContainerIds, setSelectedContainerIds] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const parties = partyRepo.list();
+  const partyOptions = job.partyCode && !parties.some((party) => party.code === job.partyCode)
+    ? [...parties, { code: job.partyCode, name: job.partyName, address: '', creditLimit: 0, id: '', createdAt: '', updatedAt: '' }]
+    : parties;
   const foreignAgents = foreignAgentRepo.list();
   const shippingLines = shippingLineRepo.list();
   const seaPorts = seaPortRepo.list();
@@ -202,16 +206,12 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
             </FormField>
             <FormField md={4}>
               <TextField
-                select
                 label="Quot. Ref No."
                 fullWidth
                 value={job.quotRefNo}
                 disabled={!editable}
                 onChange={(e) => set("quotRefNo", e.target.value)}
-              >
-                <MenuItem value="N">N</MenuItem>
-                <MenuItem value="Y">Y</MenuItem>
-              </TextField>
+              />
             </FormField>
           </FormRow>
           <SectionHeader>Parties</SectionHeader>
@@ -228,21 +228,15 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                   />
                 </FormField>
                 <FormField md={6}>
-                  <TextField
-                    select
-                    label="Party Code"
-                    required
-                    fullWidth
-                    value={job.partyCode}
+                  <Autocomplete
+                    options={partyOptions}
+                    value={partyOptions.find((party) => party.code === job.partyCode) ?? null}
                     disabled={!editable}
-                    onChange={(e) => setPartyCode(e.target.value)}
-                  >
-                    {parties.map((p) => (
-                      <MenuItem key={p.code} value={p.code}>
-                        {p.code} — {p.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                    getOptionLabel={(party) => `${party.code} — ${party.name}`}
+                    isOptionEqualToValue={(option, value) => option.code === value.code}
+                    onChange={(_, party) => setPartyCode(party?.code ?? '')}
+                    renderInput={(params) => <TextField {...params} label="Party Code" placeholder="Type code or party name to search" required />}
+                  />
                 </FormField>
               </FormRow>
               <FormRow>
@@ -1003,7 +997,7 @@ export function EntryTab({ job, editable, onChange }: EntryTabProps) {
                 fullWidth
                 value={job.cyCfs}
                 disabled={!editable}
-                onChange={(e) => set("cyCfs", e.target.value as "CY" | "CFS")}
+                onChange={(e) => set("cyCfs", e.target.value as SeaExportJob["cyCfs"])}
               >
                 <MenuItem value="CYCFS">CY/CFS</MenuItem>
                 <MenuItem value="CFSCY">CFS/CY</MenuItem>

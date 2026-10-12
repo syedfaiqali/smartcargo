@@ -38,7 +38,7 @@ import {
   ClearableSource,
 } from '../../data/voucherService';
 import { partyRepo, bankRepo, currencyRepo } from '../../data/masterDataService';
-import { controlCodeRepo } from '../../data/financeSetupService';
+import { chartAccountRepo, controlCodeRepo } from '../../data/financeSetupService';
 import { VoucherGrid } from './VoucherGrid';
 import { VoucherPrintingTab } from './VoucherPrintingTab';
 
@@ -79,7 +79,8 @@ export function ClearingVoucherPage({ kind, mode, title: titleOverride }: Cleari
   const parties = partyRepo.list();
   const banks = bankRepo.list();
   const currencies = currencyRepo.list();
-  const controlCodes = controlCodeRepo.list();
+  const controlCodes = [...controlCodeRepo.list(), ...chartAccountRepo.list()]
+    .filter((item, index, all) => all.findIndex((candidate) => candidate.code === item.code) === index);
 
   const [voucher, setVoucher] = useState<Voucher | null>(null);
   const [editable, setEditable] = useState(false);

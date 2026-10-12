@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { bankRepo } from '../../data/masterDataService';
-import { controlCodeRepo } from '../../data/financeSetupService';
+import { chartAccountRepo, controlCodeRepo } from '../../data/financeSetupService';
 import { Voucher } from '../../domain/voucher';
 
 export type VoucherPrintDocument = 'VOUCHER' | 'DEBIT_NOTE' | 'CREDIT_NOTE' | 'CHEQUE';
@@ -50,7 +50,7 @@ function amountInWords(value: number, currency: string): string {
 }
 
 function reportLines(voucher: Voucher): ReportLine[] {
-  const codes = controlCodeRepo.list();
+  const codes = [...controlCodeRepo.list(), ...chartAccountRepo.list()];
   const describe = (code: string) => codes.find((item) => item.code === code)?.name || code || '—';
   if (voucher.accountLines.length) {
     return voucher.accountLines.map((line) => ({

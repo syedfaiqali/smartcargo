@@ -121,9 +121,8 @@ export function findConsolCandidateJobs(input: { branch: string; startDate?: str
     if (j.branch !== input.branch) return false;
     if (j.status.void) return false;
     if (input.marked !== 'BOTH' && j.consolYN !== input.marked) return false;
-    if (input.startDate && input.endDate) {
-      if (j.date < input.startDate || j.date > input.endDate) return false;
-    }
+    if (input.startDate && j.date < input.startDate) return false;
+    if (input.endDate && j.date > input.endDate) return false;
     return true;
   });
 }

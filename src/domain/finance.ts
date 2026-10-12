@@ -14,6 +14,13 @@ export interface ControlCode extends AuditFields {
   groupCode: string;
 }
 
+/** Ledger account maintained beneath a control account in the chart. */
+export interface ChartAccount extends AuditFields {
+  code: string;
+  name: string;
+  controlCode: string;
+}
+
 export interface AnalysisCode extends AuditFields {
   code: string;
   name: string;

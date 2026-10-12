@@ -607,6 +607,30 @@ if (!isSeeded('partyCodesV2')) {
   markSeeded('partyCodesV2');
 }
 
+// Add the customer records shown in the Sea Export workflow reference. Retain all
+// party records already maintained in the browser.
+if (!isSeeded('partyCodesV3')) {
+  const currentPartyCodes = partyRepo.list();
+  const referenceParties: Omit<PartyCode, 'id' | 'createdAt' | 'updatedAt'>[] = [
+    {
+      code: '106010146',
+      name: 'GREEN IMPEX',
+      address: 'OPPOSITE MULTAN CANAL VIEW COLONY\nBAHAWALPUR ROAD, MULTAN, PAKISTAN.\nTEL: +92 61 6529295',
+      creditLimit: 0,
+    },
+    {
+      code: '106010050',
+      name: 'GENOME PHARMACEUTICALS PVT LTD.',
+      address: 'GENOME PHARMACEUTICALS PVT LTD.',
+      creditLimit: 0,
+    },
+  ];
+  const existingCodes = new Set(currentPartyCodes.map((party) => party.code));
+  const missingParties = referenceParties.filter((party) => !existingCodes.has(party.code));
+  if (missingParties.length) partyRepo.replaceAll([...currentPartyCodes, ...missingParties.map(withAudit)]);
+  markSeeded('partyCodesV3');
+}
+
 // Merge the Airport / Destination Code sample into existing browser data without affecting user entries.
 if (!isSeeded('airportCodesV3')) {
   const currentAirportCodes = airportRepo.list();

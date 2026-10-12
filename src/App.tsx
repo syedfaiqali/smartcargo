@@ -51,6 +51,7 @@ import { JobProfitabilityPage } from './features/financeReports/JobProfitability
 import { BankReconciliationPage } from './features/financeReports/BankReconciliationPage';
 import { GroupCodesPage } from './features/financeSetup/GroupCodesPage';
 import { ControlCodesPage } from './features/financeSetup/ControlCodesPage';
+import { ChartOfAccountsPage } from './features/financeSetup/ChartOfAccountsPage';
 import { ComingSoonPage } from './features/common/ComingSoonPage';
 import { FinanceUtilityPage } from './features/financeSetup/FinanceUtilityPage';
 import { SeaOtherChargesPayablePage } from './features/seaOtherChargesPayable/SeaOtherChargesPayablePage';
@@ -86,7 +87,7 @@ function App() {
             <Route path="/finance/initial-setup/control-codes" element={<ControlCodesPage />} />
             <Route
               path="/finance/initial-setup/chart-of-accounts"
-              element={<ComingSoonPage breadcrumbs={['Finance', 'Initial Setup', 'Chart of Accounts']} title="Chart of Accounts" />}
+              element={<ChartOfAccountsPage />}
             />
             <Route path="/finance/bank-payment-voucher" element={<BankPaymentPage />} />
             <Route path="/finance/bank-receipt-voucher" element={<BankReceiptPage />} />

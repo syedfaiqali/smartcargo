@@ -24,7 +24,7 @@ import { SeaExportJobGrid } from './SeaExportJobGrid';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { setCurrentSeaExportJob } from '../../store/seaExportJobSlice';
 
-const TAB_LABELS = ['Entry', 'B/L Screen', 'Container', 'Job Charges', 'Consol', 'Instruction Letter'] as const;
+const TAB_LABELS = ['Entry', 'B/L Screen', 'Container', 'Job Charges', 'Consol', 'Instruction Letter', 'Printing'] as const;
 
 export function SeaExportJobPage() {
   const dispatch = useAppDispatch();
@@ -156,7 +156,7 @@ export function SeaExportJobPage() {
   if (!job) disabledActions.push('edit', 'delete', 'final', 'void', 'copy', 'close');
   if (job?.status.final) disabledActions.push('edit', 'delete', 'final');
   if (job?.status.void || job?.status.closed) disabledActions.push('final', 'edit', 'close');
-  if (!editable || isPrintingView) disabledActions.push('save');
+  if (!editable && !isPrintingView) disabledActions.push('save');
 
   return (
     <PageShell breadcrumbs={['Freight', 'Transactions Menu (Sea Export)', 'Jobs Entry and Documents Printing (Sea-Export)']} title="Jobs Entry and Documents Printing (Sea-Export)" actions={!showList ? <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => { setShowList(true); setJob(null); setEditable(false); setTab(0); setIsPrintingView(false); setMessage(null); }}>Back to List</Button> : undefined}>
@@ -166,7 +166,7 @@ export function SeaExportJobPage() {
         </Alert>
       )}
 
-      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction} /><SeaExportJobGrid jobs={seaExportJobRepo.list()} onOpen={loadJob} onEdit={editJobFromList} onDelete={deleteJobFromList} onPrint={printJobFromList} /></> : <>{!isPrintingView && <TransactionToolbar
+      {showList ? <><TransactionToolbar actions={['new']} onAction={handleAction} /><SeaExportJobGrid jobs={seaExportJobRepo.list()} onOpen={loadJob} onEdit={editJobFromList} onDelete={deleteJobFromList} onPrint={printJobFromList} /></> : <>{isPrintingView ? <TransactionToolbar actions={['save']} disabledActions={disabledActions} onAction={handleAction} /> : <TransactionToolbar
         actions={['save', 'final', 'void', 'copy']}
         disabledActions={disabledActions}
         onAction={handleAction}
@@ -199,7 +199,7 @@ export function SeaExportJobPage() {
             {tab === 2 && <ContainerTab job={job} editable={editable} onChange={setJob} />}
             {tab === 3 && <JobChargesTab job={job} editable={editable} onChange={setJob} />}
           </>}
-          {isPrintingView ? <PrintingTab job={job} editable={editable} onChange={setJob} /> : <><>{tab === 4 && <ConsolTab job={job} editable={editable} onChange={setJob} />}</>{tab === 5 && <InstructionLetterTab job={job} editable={editable} onChange={setJob} />}</>}
+          {isPrintingView ? <PrintingTab job={job} editable={true} onChange={setJob} /> : <><>{tab === 4 && <ConsolTab job={job} editable={editable} onChange={setJob} />}</>{tab === 5 && <InstructionLetterTab job={job} editable={editable} onChange={setJob} />}{tab === 6 && <PrintingTab job={job} editable={true} onChange={setJob} />}</>}
 
         </>
       )}
